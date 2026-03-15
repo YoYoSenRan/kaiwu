@@ -9,3 +9,8 @@ apps/*/next-env.d.ts
 packages/*/node_modules
 
 artifacts/exports
+
+# 环境变量（.env.example 保留在 git 中作为模板）
+.env
+.env.local
+.env.*.local
