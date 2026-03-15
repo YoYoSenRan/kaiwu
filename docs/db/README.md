@@ -16,7 +16,6 @@ docs/db/
 │   ├── 03-themes.md           ← 主题：主题定义
 │   ├── 04-pipelines.md        ← 主题：流水线阶段
 │   ├── 05-agents.md           ← Agent：角色定义
-│   ├── 06-models.md           ← Agent：LLM 模型
 │   ├── 07-proposals.md        ← 内容：选题/灵感
 │   ├── 08-productions.md      ← 内容：正式作品
 │   ├── 09-production-stages.md← 内容：流转审计
@@ -32,15 +31,15 @@ docs/db/
 
 ## 快速概览
 
-| 分组   | 表                                                               | 核心职责                          |
-| ------ | ---------------------------------------------------------------- | --------------------------------- |
-| 身份   | `users` `sessions`                                               | Console 登录与会话管理            |
-| 主题   | `themes` `pipelines`                                             | 可替换的叙事皮肤 + 流水线阶段定义 |
-| Agent  | `agents` `models`                                                | 角色定义与 LLM 模型管理           |
-| 内容   | `proposals` `productions` `production_stages` `production_tasks` | 从选题到实施的完整流水线          |
-| 发布   | `publications`                                                   | 自动部署发布的全过程追踪          |
-| 可观测 | `production_events`                                              | 全量事件记录，支持时间线回放      |
-| 系统   | `settings`                                                       | 键值配置                          |
+| 分组   | 表                                                               | 核心职责                               |
+| ------ | ---------------------------------------------------------------- | -------------------------------------- |
+| 身份   | `users` `sessions`                                               | Console 登录与会话管理                 |
+| 主题   | `themes` `pipelines`                                             | 可替换的叙事皮肤 + 流水线阶段定义      |
+| Agent  | `agents`                                                         | 角色定义（模型配置读 OpenClaw 运行时） |
+| 内容   | `proposals` `productions` `production_stages` `production_tasks` | 从选题到实施的完整流水线               |
+| 发布   | `publications`                                                   | 自动部署发布的全过程追踪               |
+| 可观测 | `production_events`                                              | 全量事件记录，支持时间线回放           |
+| 系统   | `settings`                                                       | 键值配置                               |
 
 ## 技术栈
 

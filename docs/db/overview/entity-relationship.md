@@ -31,19 +31,10 @@
 
 
  ┌──────────┐
- │  models  │
+ │  agents  │
  │──────────│
- │ id (PK)  │
- │ provider │◀─────────────────────┐
- │ label    │                      │
- └──────────┘                      │
-                                   │ N:1
- ┌──────────┐                      │
- │  agents  │──────────────────────┘
- │──────────│              agents.model_id → models.id
- │ id (PK)  │
+ │ id (PK)  │  模型配置从 openclaw.json 实时读取，不入库
  │ stage_type│
- │ model_id │
  └──────────┘
 
 
@@ -77,7 +68,6 @@
 | ------------------------------- | ---- | ---------------------------------- |
 | users → sessions                | 1:N  | 一个用户多个登录会话               |
 | themes → pipelines              | 1:N  | 一个主题定义多个流水线阶段         |
-| models → agents                 | 1:N  | 一个模型可被多个 Agent 使用        |
 | proposals → productions         | 1:N  | 一个选题可能被多次立项（不同角度） |
 | productions → production_stages | 1:N  | 一个作品经历多个审议阶段           |
 | productions → production_tasks  | 1:N  | 一个作品拆分为多个子任务           |
@@ -92,4 +82,3 @@
 | ---------------------------- | ------------------------ |
 | `productions.proposal_id`    | 手动创建的作品不关联选题 |
 | `production_tasks.parent_id` | 顶层子任务没有父级       |
-| `agents.model_id`            | Agent 可能暂未分配模型   |

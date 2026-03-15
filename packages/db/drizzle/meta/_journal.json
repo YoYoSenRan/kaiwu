@@ -1,1 +1,9 @@
-{ "version": "7", "dialect": "postgresql", "entries": [{ "idx": 0, "version": "7", "when": 1773580712951, "tag": "0000_init", "breakpoints": true }] }
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    { "idx": 0, "version": "7", "when": 1773580712951, "tag": "0000_init", "breakpoints": true },
+    { "idx": 1, "version": "7", "when": 1773581946594, "tag": "0001_remove-agent-workspace-fields", "breakpoints": true },
+    { "idx": 2, "version": "7", "when": 1773582632585, "tag": "0002_remove-models-table", "breakpoints": true }
+  ]
+}

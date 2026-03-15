@@ -6,23 +6,23 @@ Agent 体系
 
 ## 职责
 
-定义系统中的 AI Agent 角色。每个 Agent 通过 `stage_type` 关联流水线阶段，决定它在流程中扮演什么逻辑角色。主题切换时，Agent 的展示信息从 pipelines 表读取。
+存储 Kaiwu 侧的 Agent 管理元数据。每个 Agent 通过 `stage_type` 关联流水线阶段，决定它在流程中扮演什么逻辑角色。主题切换时，Agent 的展示信息从 pipelines 表读取。
+
+**数据来源：** Agent ID 从 OpenClaw 运行时（`~/.openclaw/openclaw.json`）同步入库。`stage_type`、`sub_role`、`config` 等 Kaiwu 独有字段由 Kaiwu 自身管理。
+
+**不入库的内容：** 工作区文件（SOUL.md、Skills 目录、workspace 路径）和模型配置直接读 OpenClaw 运行时（`~/.openclaw/openclaw.json` 和 `~/.openclaw/workspace-{id}/`），不存数据库。Console 修改模型也是直接写 openclaw.json 后重启 Gateway。
 
 ## 字段
 
-| 字段          | 类型      | 约束                    | 说明                                                                          |
-| ------------- | --------- | ----------------------- | ----------------------------------------------------------------------------- |
-| `id`          | text      | PK                      | Agent 标识符，如 `zhongshu`、`bingbu`                                         |
-| `stage_type`  | text      | NOT NULL                | 逻辑角色：`planning`、`review`、`execute` 等                                  |
-| `sub_role`    | text      |                         | 执行阶段的细分角色，如 `code`、`doc`、`infra`、`audit`（仅 execute 阶段使用） |
-| `model_id`    | integer   | FK → models.id          | 当前绑定的 LLM 模型                                                           |
-| `workspace`   | text      |                         | Agent 工作目录路径                                                            |
-| `soul_prompt` | text      |                         | Agent 人格 prompt（SOUL.md 内容）                                             |
-| `skills`      | jsonb     | NOT NULL, DEFAULT '[]'  | 已安装技能列表 `[{name, description, path}]`                                  |
-| `config`      | jsonb     | NOT NULL, DEFAULT '{}'  | Agent 级配置（超时、重试等）                                                  |
-| `is_enabled`  | boolean   | NOT NULL, DEFAULT true  | 是否启用                                                                      |
-| `created_at`  | timestamp | NOT NULL, DEFAULT now() | 创建时间                                                                      |
-| `updated_at`  | timestamp | NOT NULL, DEFAULT now() | 更新时间                                                                      |
+| 字段         | 类型      | 约束                    | 说明                                                                                       |
+| ------------ | --------- | ----------------------- | ------------------------------------------------------------------------------------------ |
+| `id`         | text      | PK                      | Agent 标识符，如 `zhongshu`、`bingbu`（同步自 openclaw.json）                              |
+| `stage_type` | text      | NOT NULL                | 流水线逻辑角色：`triage` / `planning` / `review` / `dispatch` / `execute` / `publish`      |
+| `sub_role`   | text      |                         | execute 阶段的细分角色：`code` / `doc` / `data` / `audit` / `infra` / `hr`（其他阶段为空） |
+| `config`     | jsonb     | NOT NULL, DEFAULT '{}'  | Kaiwu 侧配置（超时、重试等）                                                               |
+| `is_enabled` | boolean   | NOT NULL, DEFAULT true  | 是否启用                                                                                   |
+| `created_at` | timestamp | NOT NULL, DEFAULT now() | 创建时间                                                                                   |
+| `updated_at` | timestamp | NOT NULL, DEFAULT now() | 更新时间                                                                                   |
 
 ## 索引
 
@@ -32,7 +32,6 @@ Agent 体系
 
 ## 关联
 
-- `agents.model_id` → `models.id`
 - `production_stages.agent_id` → `agents.id`
 - `production_tasks.agent_id` → `agents.id`
 
@@ -55,15 +54,36 @@ Agent 体系
 | `gongbu`   | `execute`  | `infra`  | 工部（基建） |
 | `libu_hr`  | `execute`  | `hr`     | 吏部（人事） |
 
-## skills JSONB 结构示例
+## 数据同步策略
 
-```json
-[{ "name": "code_review", "description": "代码审查（Python/JS/Go）", "path": "/skills/code_review/SKILL.md" }]
 ```
+OpenClaw 运行时（source of truth）
+  ~/.openclaw/openclaw.json         → 同步 id 到 agents 表
+  ~/.openclaw/workspace-{id}/       → 不入库，需要时实时读取
+    ├── soul.md                       SOUL.md 直接读文件
+    └── skills/                       Skills 直接扫目录
+
+Console 修改配置（如切换模型）
+  → 直接写 openclaw.json → 重启 Gateway
+  → 不经过数据库
+```
+
+- 新增 Agent：同步时自动 upsert 入库
+- 删除 Agent：同步时标记 `is_enabled = false`
+
+## 文件系统读取接口（不入库，应用层实现）
+
+| 数据           | 读取路径                                               | 说明                      |
+| -------------- | ------------------------------------------------------ | ------------------------- |
+| workspace 路径 | `openclaw.json → agents.list[].workspace`              | Agent 工作目录            |
+| 当前模型       | `openclaw.json → agents.list[].model`                  | Agent 绑定的 LLM 模型     |
+| 可用模型列表   | `openclaw.json → agents.defaults.model` + 已知模型枚举 | Console 模型切换下拉框    |
+| SOUL.md        | `{workspace}/soul.md`                                  | Agent 人格提示词          |
+| Skills 列表    | `{workspace}/skills/`                                  | 扫描子目录，读取 SKILL.md |
+| 权限矩阵       | `openclaw.json → agents.list[].subagents.allowAgents`  | 谁能给谁发消息            |
 
 ## 备注
 
 - Agent ID 是稳定标识，即使换主题也不变
 - 展示名称/emoji 不存在 agents 表里，从当前激活主题的 pipelines 表中获取
-- `soul_prompt` 存储完整的人格提示词，对应 Edict 中的 SOUL.md
-- `skills` 用 JSONB 而非独立表——当前 Agent 数量固定（约 12 个），skills 数量有限，独立表收益不大
+- 数据库是 OpenClaw 运行时的**只读镜像**，不是配置源

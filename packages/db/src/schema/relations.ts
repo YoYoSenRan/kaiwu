@@ -3,7 +3,6 @@ import { users } from "./users"
 import { sessions } from "./sessions"
 import { themes } from "./themes"
 import { pipelines } from "./pipelines"
-import { models } from "./models"
 import { agents } from "./agents"
 import { proposals } from "./proposals"
 import { productions } from "./productions"
@@ -21,11 +20,6 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({ user: one(u
 export const themesRelations = relations(themes, ({ many }) => ({ pipelines: many(pipelines) }))
 
 export const pipelinesRelations = relations(pipelines, ({ one }) => ({ theme: one(themes, { fields: [pipelines.themeId], references: [themes.id] }) }))
-
-/** models ↔ agents */
-export const modelsRelations = relations(models, ({ many }) => ({ agents: many(agents) }))
-
-export const agentsRelations = relations(agents, ({ one }) => ({ model: one(models, { fields: [agents.modelId], references: [models.id] }) }))
 
 /** proposals ↔ productions */
 export const proposalsRelations = relations(proposals, ({ many }) => ({ productions: many(productions) }))
