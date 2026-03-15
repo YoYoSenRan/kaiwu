@@ -1,0 +1,15 @@
+{
+  "eslint.enable": false,
+  "prettier.enable": false,
+  "oxc.enable": true,
+  "oxc.configPath": ".oxlintrc.json",
+  "oxc.lint.run": "onType",
+  "oxc.fmt.configPath": ".oxfmtrc.json",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": { "source.fixAll.oxc": "always" },
+  "editor.quickSuggestions": { "other": true, "comments": true, "strings": true },
+  "[typescript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[javascript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[javascriptreact]": { "editor.defaultFormatter": "oxc.oxc-vscode" }
+}

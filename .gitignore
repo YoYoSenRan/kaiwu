@@ -1,0 +1,11 @@
+.DS_Store
+.turbo
+node_modules
+
+apps/*/.next
+apps/*/node_modules
+apps/*/next-env.d.ts
+
+packages/*/node_modules
+
+artifacts/exports
