@@ -1,0 +1,53 @@
+{
+  "slug": "sansheng-liubu",
+  "name": "三省六部",
+  "description": "以中国唐代三省六部制为骨架的多 Agent 协作体系",
+  "version": "1.0.0",
+
+  "theme": {
+    "config": {
+      "colors": { "primary": "#D4AF37", "background": "#0A0A0A", "accent": "#FFBF00" },
+      "typography": { "heading": "Noto Serif SC", "body": "Inter" },
+      "flavor": { "production": "圣旨", "proposal": "奏折", "approve": "准奏", "reject": "封驳", "complete": "回奏", "publish": "颁行天下" }
+    }
+  },
+
+  "pipelines": [
+    { "stageType": "triage", "sortOrder": 1, "label": "太子", "emoji": "🤴", "color": "#e8a040", "description": "消息分拣，判断是否值得立项" },
+    { "stageType": "planning", "sortOrder": 2, "label": "中书省", "emoji": "📜", "color": "#a07aff", "description": "接旨、规划、拆解子任务" },
+    { "stageType": "review", "sortOrder": 3, "label": "门下省", "emoji": "🔍", "color": "#6a9eff", "description": "审议方案，准奏或封驳" },
+    { "stageType": "dispatch", "sortOrder": 4, "label": "尚书省", "emoji": "📮", "color": "#6aef9a", "description": "派发任务，协调六部" },
+    { "stageType": "execute", "sortOrder": 5, "label": "六部", "emoji": "⚙️", "color": "#ff9a6a", "description": "并行实施" },
+    { "stageType": "publish", "sortOrder": 6, "label": "回奏", "emoji": "✅", "color": "#2ecc8a", "description": "汇总结果，自动发布" }
+  ],
+
+  "agents": [
+    { "id": "taizi", "stageType": "triage", "subRole": null },
+    { "id": "zhongshu", "stageType": "planning", "subRole": null },
+    { "id": "menxia", "stageType": "review", "subRole": null },
+    { "id": "shangshu", "stageType": "dispatch", "subRole": null },
+    { "id": "hubu", "stageType": "execute", "subRole": "data" },
+    { "id": "libu", "stageType": "execute", "subRole": "doc" },
+    { "id": "bingbu", "stageType": "execute", "subRole": "code" },
+    { "id": "xingbu", "stageType": "execute", "subRole": "audit" },
+    { "id": "gongbu", "stageType": "execute", "subRole": "infra" },
+    { "id": "libu_hr", "stageType": "execute", "subRole": "hr" },
+    { "id": "zaochao", "stageType": "execute", "subRole": null }
+  ],
+
+  "permissions": {
+    "taizi": { "allowAgents": ["zhongshu"] },
+    "zhongshu": { "allowAgents": ["menxia", "shangshu"] },
+    "menxia": { "allowAgents": ["shangshu", "zhongshu"] },
+    "shangshu": { "allowAgents": ["zhongshu", "menxia", "hubu", "libu", "bingbu", "xingbu", "gongbu", "libu_hr"] },
+    "hubu": { "allowAgents": ["shangshu"] },
+    "libu": { "allowAgents": ["shangshu"] },
+    "bingbu": { "allowAgents": ["shangshu"] },
+    "xingbu": { "allowAgents": ["shangshu"] },
+    "gongbu": { "allowAgents": ["shangshu"] },
+    "libu_hr": { "allowAgents": ["shangshu"] },
+    "zaochao": { "allowAgents": [] }
+  },
+
+  "workProtocol": "1. 接到任务先回复\"已接旨\"。\n2. 输出必须包含：任务ID、结果、证据/文件路径、阻塞项。\n3. 需要协作时，回复尚书省请求转派，不跨部直连。\n4. 涉及删除/外发动作必须明确标注并等待批准。"
+}

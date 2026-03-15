@@ -1,5 +1,5 @@
 {
-  "name": "@kaiwu/openclaw",
+  "name": "@kaiwu/templates",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@kaiwu/templates": "workspace:*"
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@types/node": "^20",
