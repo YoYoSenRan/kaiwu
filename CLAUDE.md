@@ -35,6 +35,7 @@ pnpm build            # 全量构建
 @.claude/rules/style.md
 @.claude/rules/pages.md
 @.claude/rules/api.md
+@.claude/rules/docs.md
 
 ## 代码模板（生成新页面时参照）
 
