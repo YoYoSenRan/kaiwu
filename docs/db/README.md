@@ -25,8 +25,10 @@ docs/db/
 │   └── 13-settings.md         ← 系统：键值配置
 ├── pipeline/
 │   └── lifecycle.md           ← 内容生命周期与状态机
-└── theme/
-    └── theme-system.md        ← 主题系统设计与换肤机制
+├── theme/
+│   └── theme-system.md        ← 主题系统设计与换肤机制
+└── templates/
+    └── template-system.md     ← 模板系统设计（Agent 初始化与工作区部署）
 ```
 
 ## 快速概览
