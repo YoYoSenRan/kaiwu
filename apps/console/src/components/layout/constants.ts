@@ -17,8 +17,8 @@ export const NAV_ITEMS: NavGroup[] = [
   {
     group: "系统",
     items: [
-      { label: "Agent 管理", href: "/agents", icon: Bot },
-      { label: "模板管理", href: "/templates", icon: Layers },
+      { label: "智能体", href: "/agents", icon: Bot },
+      { label: "模板", href: "/templates", icon: Layers },
     ],
   },
   {
@@ -37,8 +37,8 @@ export const NAV_ITEMS: NavGroup[] = [
 export const ROUTE_LABELS: Record<string, string> = {
   "/": "首页",
   "/tasks": "任务看板",
-  "/agents": "Agent 管理",
-  "/templates": "模板管理",
+  "/agents": "智能体",
+  "/templates": "模板",
   "/costs": "成本追踪",
   "/events": "事件日志",
   "/settings": "系统设置",

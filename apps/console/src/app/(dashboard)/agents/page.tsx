@@ -1,11 +1,12 @@
 import { AgentGrid } from "./components/AgentGrid"
 import { SyncButton } from "./components/SyncButton"
-import { getAgents } from "./queries"
+import { getAgents } from "./services"
 
 export const metadata = { title: "Agent 管理 | Kaiwu Console" }
 
 export default async function AgentsPage() {
   const agents = await getAgents()
+  console.log("🚀 ~ AgentsPage ~ agents:", agents)
 
   return (
     <div className="p-4 md:p-6">

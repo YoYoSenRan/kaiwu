@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { getAgentById } from "../queries"
+import { getAgentById } from "../services"
 import { AgentDetailTabs } from "../components/AgentDetailTabs"
 import { AgentOverview } from "../components/AgentOverview"
 import { AgentFiles } from "../components/AgentFiles"
