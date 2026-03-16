@@ -1,6 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { toast } from "sonner"
+import { request } from "@/lib/request"
 
 interface AgentFileEditorProps {
   agentId: string
@@ -19,16 +21,10 @@ export function AgentFileEditor({ agentId, filename, label, onClose }: AgentFile
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/agents/${agentId}/workspace/${encodeURIComponent(filename)}`)
-      if (!res.ok) {
-        const body = await res.json()
-        setError(body.error ?? "加载失败")
-        return
-      }
-      const data = await res.json()
+      const data = await request<{ content: string }>(`/api/agents/${agentId}/workspace/${encodeURIComponent(filename)}`)
       setContent(data.content ?? "")
-    } catch {
-      setError("网络错误，无法加载文件")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "加载失败")
     } finally {
       setLoading(false)
     }
@@ -42,19 +38,13 @@ export function AgentFileEditor({ agentId, filename, label, onClose }: AgentFile
     setSaving(true)
     setError(null)
     try {
-      const res = await fetch(`/api/agents/${agentId}/workspace/${encodeURIComponent(filename)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-      })
-      if (!res.ok) {
-        const body = await res.json()
-        setError(body.error ?? "保存失败")
-        return
-      }
+      await request(`/api/agents/${agentId}/workspace/${encodeURIComponent(filename)}`, { method: "PUT", body: JSON.stringify({ content }) })
+      toast.success("保存成功")
       onClose()
-    } catch {
-      setError("网络错误，无法保存文件")
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "保存失败"
+      setError(msg)
+      toast.error(msg)
     } finally {
       setSaving(false)
     }

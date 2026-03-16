@@ -1,51 +1,72 @@
 /**
  * 控制台 HTTP 请求封装
- * 包括默认的 token 拦截、通用错误处理等
+ * 统一解析 { ok, data, code, message } 格式
+ * 开发环境自动在浏览器控制台输出请求/响应日志
  */
+
+import { logger } from "./logger"
+import type { ApiResponse } from "@/types/api"
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? ""
 
 interface FetchOptions extends RequestInit {
-  // 可以在这里扩展自定义选项，例如是否显示全局 loading
+  /** 跳过统一错误处理 */
   skipErrorHandler?: boolean
 }
 
-export async function request<T>(path: string, options?: FetchOptions): Promise<T> {
+/**
+ * 发起请求并解析统一响应格式
+ * 成功时返回 data 字段，失败时抛出 Error（message 为接口返回的 message）
+ */
+export async function request<TData>(path: string, options?: FetchOptions): Promise<TData> {
   const { skipErrorHandler, ...init } = options ?? {}
-
-  // 这里可以从状态库或 cookie 获取 token
-  // const token = useAuthStore.getState().token;
-  const token = ""
+  const method = (init.method ?? "GET").toUpperCase()
+  const url = `${BASE_URL}${path}`
 
   const headers = new Headers(init.headers)
-  headers.set("Content-Type", "application/json")
-
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`)
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json")
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers })
-
-  // 1. HTTP 状态码错误
-  if (!res.ok) {
-    if (!skipErrorHandler) {
-      if (res.status === 401) {
-        // TODO: 处理登出或跳转登录页逻辑
-        console.error("认证失败，请重新登录")
-      } else {
-        // TODO: 全局 toast 提示
-        console.error(`HTTP 错误: ${res.status}`)
-      }
+  // 请求日志
+  let body: unknown
+  if (init.body && typeof init.body === "string") {
+    try {
+      body = JSON.parse(init.body)
+    } catch {
+      body = init.body
     }
-    throw new Error(`HTTP ${res.status}: ${res.statusText}`)
   }
+  logger.request(method, path, body)
 
-  const data = await res.json()
+  const start = performance.now()
 
-  // 2. 业务状态码错误 (假设后端返回结构包含 code 字段)
-  // if (data.code !== 200) {
-  //   throw new Error(data.message || 'Business Error');
-  // }
+  try {
+    const res = await fetch(url, { ...init, headers })
+    const durationMs = Math.round(performance.now() - start)
+    const json: ApiResponse<TData> = await res.json()
 
-  return data as T
+    // 响应日志
+    logger.response(method, path, res.status, json, durationMs)
+
+    // HTTP 层错误
+    if (!res.ok) {
+      if (!skipErrorHandler && res.status === 401) {
+        logger.error(method, path, "认证失败，请重新登录")
+      }
+      throw new Error(json.message ?? `HTTP ${res.status}`)
+    }
+
+    // 业务层错误
+    if (!json.ok) {
+      throw new Error(json.message ?? "请求失败")
+    }
+
+    return json.data as TData
+  } catch (err) {
+    if (!(err instanceof Error && err.message.startsWith("HTTP "))) {
+      logger.error(method, path, err)
+    }
+    throw err
+  }
 }

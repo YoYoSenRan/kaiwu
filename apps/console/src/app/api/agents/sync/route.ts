@@ -1,22 +1,25 @@
-"use server"
-
 import { NextResponse } from "next/server"
 import { db, agents } from "@kaiwu/db"
 import { listAgents } from "@kaiwu/openclaw"
 import { notInArray } from "drizzle-orm"
+import { ok, fail } from "@/lib/response"
+import { ErrorCode } from "@/types/api"
+
+interface SyncData {
+  synced: number
+  unsynced: number
+}
 
 /**
  * POST /api/agents/sync
  * 从 openclaw.json 同步 Agent 列表到 DB
- * - 本地存在的 Agent → upsert 到 DB
- * - DB 中有但本地不存在的 → 标记 status = "unsynced"
  */
 export async function POST(): Promise<NextResponse> {
   try {
     const localAgents = await listAgents()
 
     if (localAgents.length === 0) {
-      return NextResponse.json({ success: true, synced: 0, unsynced: 0, message: "openclaw.json 中没有 Agent 配置" })
+      return ok<SyncData>({ synced: 0, unsynced: 0 }, "openclaw.json 中没有 Agent 配置")
     }
 
     const localIds: string[] = []
@@ -50,9 +53,9 @@ export async function POST(): Promise<NextResponse> {
 
     const unsyncedResult = await db.update(agents).set({ status: "unsynced", updatedAt: new Date() }).where(notInArray(agents.id, localIds)).returning({ id: agents.id })
 
-    return NextResponse.json({ success: true, synced: localIds.length, unsynced: unsyncedResult.length })
+    return ok<SyncData>({ synced: localIds.length, unsynced: unsyncedResult.length })
   } catch (err) {
     const message = err instanceof Error ? err.message : "同步失败"
-    return NextResponse.json({ success: false, error: message }, { status: 500 })
+    return fail(ErrorCode.SYNC_ERROR, message, 500)
   }
 }
