@@ -1,4 +1,4 @@
-import { Bot, Coins, Kanban, Layers, LayoutDashboard, Lightbulb, ScrollText, Send, Settings, type LucideIcon } from "lucide-react"
+import { Bot, Coins, Kanban, Layers, LayoutDashboard, ScrollText, Settings, type LucideIcon } from "lucide-react"
 
 export interface NavItem {
   label: string
@@ -13,14 +13,7 @@ export interface NavGroup {
 
 export const NAV_ITEMS: NavGroup[] = [
   { group: "概览", items: [{ label: "首页", href: "/", icon: LayoutDashboard }] },
-  {
-    group: "生产",
-    items: [
-      { label: "看板", href: "/productions", icon: Kanban },
-      { label: "选题池", href: "/proposals", icon: Lightbulb },
-      { label: "发布管理", href: "/publications", icon: Send },
-    ],
-  },
+  { group: "生产", items: [{ label: "任务看板", href: "/tasks", icon: Kanban }] },
   {
     group: "系统",
     items: [
@@ -43,9 +36,7 @@ export const NAV_ITEMS: NavGroup[] = [
  */
 export const ROUTE_LABELS: Record<string, string> = {
   "/": "首页",
-  "/productions": "看板",
-  "/proposals": "选题池",
-  "/publications": "发布管理",
+  "/tasks": "任务看板",
   "/agents": "Agent 管理",
   "/templates": "模板管理",
   "/costs": "成本追踪",

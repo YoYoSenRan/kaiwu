@@ -1,10 +1,10 @@
-export const metadata = { title: "看板 | Kaiwu Console" }
+export const metadata = { title: "任务看板 | Kaiwu Console" }
 
-export default function ProductionsPage() {
+export default function TasksPage() {
   return (
     <div className="p-4 md:p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">看板</h1>
+        <h1 className="text-2xl font-bold">任务看板</h1>
         <p className="text-muted-foreground">即将上线</p>
       </div>
       <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-border">

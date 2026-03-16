@@ -19,7 +19,6 @@ Kaiwu Console 是多智能体协作系统的管理界面，连接 OpenClaw Gatew
 | **组件设计**   | 组件树 + 文件结构 + 接口        | 标注每个组件的 Server/Client 类型；定义关键组件的 props interface                                               |
 | **数据与状态** | 数据源 + 查询 + 状态归属        | 说明数据来自 DB 还是 Gateway；给出查询代码；明确状态放在 URL searchParams / Zustand store / 组件 state 的哪一层 |
 | **操作与错误** | Server Action + 校验 + 失败处理 | 定义 Action 签名和 Zod 校验；列出每个操作的失败场景和用户看到的提示；无写操作的模块只写错误边界                 |
-| **权限**       | 可见/可操作角色                 | 为未来团队场景预留，标注当前默认值                                                                              |
 
 ## 架构
 
@@ -50,7 +49,7 @@ Kaiwu Console 是多智能体协作系统的管理界面，连接 OpenClaw Gatew
 | [features/dashboard.md](./features/dashboard.md)             | Dashboard 首页    | 第一期 | 单文件（待重构） |
 | [features/openclaw-status.md](./features/openclaw-status.md) | OpenClaw 状态面板 | 第一期 | 单文件（待重构） |
 | [features/productions.md](./features/productions.md)         | 生产看板 + 详情页 | 第一期 | 单文件（待重构） |
-| [features/agents.md](./features/agents.md)                   | Agent 管理        | 第一期 | 单文件（待重构） |
+| [features/agents/](./features/agents/)                       | Agent 管理        | 第一期 | ✅ 标准目录结构  |
 | [features/templates/](./features/templates/)                 | 模板管理          | 第二期 | ✅ 标准目录结构  |
 | [features/costs.md](./features/costs.md)                     | 成本追踪          | 第三期 | 单文件（待重构） |
 | [features/events.md](./features/events.md)                   | 事件日志          | 第三期 | 单文件（待重构） |
