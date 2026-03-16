@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { request } from "@/lib/request"
+import { saveAgentFile } from "../server/actions"
 
 interface AgentFileEditorProps {
   agentId: string
@@ -38,7 +39,15 @@ export function AgentFileEditor({ agentId, filename, label, onClose }: AgentFile
     setSaving(true)
     setError(null)
     try {
-      await request(`/api/agents/${agentId}/workspace/${encodeURIComponent(filename)}`, { method: "PUT", body: JSON.stringify({ content }) })
+      const formData = new FormData()
+      formData.set("agentId", agentId)
+      formData.set("filename", filename)
+      formData.set("content", content)
+
+      const result = await saveAgentFile(formData)
+      if (!result.success) {
+        throw new Error(result.error ?? "保存失败")
+      }
       toast.success("保存成功")
       onClose()
     } catch (err) {
