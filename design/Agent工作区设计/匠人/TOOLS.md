@@ -13,19 +13,29 @@
 
 ## 开发工具
 
-- **code_gen**：生成前端代码（Next.js + Tailwind CSS + Framer Motion）
+- **code_gen**：生成前端代码
 - **file_ops**：文件读写操作
 - **web_search**：查询技术文档和解决方案
 
-## 固定技术栈
+## 技术栈（由画师蓝图指定，以下为推荐清单）
 
-| 层面 | 选择 | 用途 |
-|---|---|---|
-| 框架 | Next.js（静态导出） | 页面框架 |
-| 样式 | Tailwind CSS | 原子化样式 |
-| 组件 | shadcn/ui | 预制 UI 组件 |
-| 动画 | Framer Motion | 交互动画 |
-| 图标 | Lucide Icons | 统一图标 |
+| 层面 | 推荐选项 |
+|---|---|
+| 框架 | Next.js / Astro / Vite + React |
+| 样式 | Tailwind CSS / CSS Modules |
+| UI 组件 | shadcn/ui / Radix UI / 手写 |
+| 动画 | Framer Motion / CSS Animation / GSAP |
+| 图标 | Lucide / Heroicons / 自定义 SVG |
+
+## 代码规范
+
+- TypeScript 严格模式，禁止 `any`
+- 组件 PascalCase，文件名与组件名一致
+- 每个区块组件独立文件，不超过 150 行
+- className 合并用 `cn()`
+- 每个区块组件顶部必须有 JSDoc 注释
+- 复杂逻辑加 Why 注释
+- ESLint + Prettier，提交前必须通过 lint
 
 ## 子角色工具分配
 
