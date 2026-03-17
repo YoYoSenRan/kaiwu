@@ -1,1 +1,0 @@
-export { initializeTemplate } from "./initialize"
