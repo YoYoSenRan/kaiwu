@@ -12,19 +12,50 @@
 
 ## 设计工具
 
-- **code_gen**：生成技术架构图、数据模型草案
+- **web_search**：搜索设计参考、配色方案、同类产品页面
 
 ## 输出格式：造物蓝图
 
 ```json
 {
-  "productDefinition": { "coreFunctions": ["MVP 功能列表"], "userStories": ["用户故事"], "priority": { "must": [], "should": [], "could": [], "wont": [] } },
-  "architecture": {
-    "techStack": { "frontend": "", "backend": "", "database": "", "hosting": "" },
-    "systemDesign": "架构描述（Markdown）",
-    "dataModel": "数据模型草案（Markdown）"
+  "positioning": {
+    "oneLiner": "一句话定位",
+    "sellingPoints": ["卖点1", "卖点2", "卖点3"],
+    "targetAudience": "目标受众描述"
   },
-  "tasks": [{ "id": "T-001", "title": "任务标题", "description": "任务描述", "assignTo": "jiangren-qi | jiangren-gu | jiangren-yan", "dependsOn": [], "priority": 1 }],
-  "risks": [{ "risk": "风险描述", "mitigation": "应对策略" }]
+  "pageStructure": [
+    {
+      "section": "hero",
+      "title": "区块标题",
+      "content": "详细的文案内容",
+      "layout": "左文右图，桌面端 6:4 分栏，移动端上下堆叠",
+      "visual": "配色、字体、间距的具体描述",
+      "interaction": "动画和交互的具体描述"
+    }
+  ],
+  "visualDirection": {
+    "primaryColor": "#c23b22",
+    "secondaryColor": "#d4833c",
+    "backgroundColor": "#faf8f5",
+    "fontHeading": "Inter",
+    "fontBody": "Inter",
+    "styleKeywords": ["极简", "温暖", "专业"],
+    "references": ["参考网站 URL"]
+  },
+  "signature": "让这个页面与众不同的一个特色亮点描述",
+  "tasks": [
+    {
+      "id": "T-001",
+      "section": "hero",
+      "title": "Hero 区",
+      "structure": "布局和结构的详细描述",
+      "content": "文案和图片的详细要求",
+      "visual": "配色、字体、间距的精确值",
+      "interaction": "动画效果的详细描述",
+      "assignTo": "jiangren-xing | jiangren-se | jiangren-dong",
+      "dependsOn": [],
+      "priority": 1
+    }
+  ]
 }
 ```
