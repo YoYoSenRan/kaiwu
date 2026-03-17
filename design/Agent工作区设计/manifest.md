@@ -1,0 +1,94 @@
+# 模板包集成
+
+## manifest.json
+
+```json
+{
+  "slug": "kaiwu-factory",
+  "name": "开物局",
+  "description": "以造物流为骨架的多 Agent 协作体系，八位局中人各司其职",
+  "version": "1.0.0",
+
+  "theme": {
+    "config": {
+      "colors": { "primary": "#c23b22", "background": "#0a0a0f", "accent": "#c9a96e", "success": "#5b9a8b", "warning": "#d4833c", "muted": "#6b6b6b" },
+      "typography": { "heading": "Noto Serif SC", "body": "Noto Sans SC" },
+      "flavor": { "project": "造物令", "product": "器物", "proposal": "物帖", "approve": "造", "reject": "封存", "publish": "鸣锣问世", "heartbeat": "更鼓" }
+    }
+  },
+
+  "pipelines": [
+    { "stageType": "scout", "sortOrder": 1, "label": "采风", "emoji": "🎒", "color": "#d4833c", "description": "游商出门，摸底市面" },
+    { "stageType": "council", "sortOrder": 2, "label": "过堂", "emoji": "⚖️", "color": "#c23b22", "description": "说客与诤臣辩论，掌秤裁决" },
+    { "stageType": "architect", "sortOrder": 3, "label": "绘图", "emoji": "🖌", "color": "#a07aff", "description": "画师绘制造物蓝图" },
+    { "stageType": "builder", "sortOrder": 4, "label": "锻造", "emoji": "🔨", "color": "#d4833c", "description": "匠人进坊，一锤一凿" },
+    { "stageType": "inspector", "sortOrder": 5, "label": "试剑", "emoji": "🗡", "color": "#6a9eff", "description": "试剑人验其利钝" },
+    { "stageType": "deployer", "sortOrder": 6, "label": "鸣锣", "emoji": "🔔", "color": "#5b9a8b", "description": "锣响三声，器物问世" }
+  ],
+
+  "agents": [
+    { "id": "youshang", "stageType": "scout", "subRole": null },
+    { "id": "shuike", "stageType": "council", "subRole": "optimist" },
+    { "id": "zhengchen", "stageType": "council", "subRole": "skeptic" },
+    { "id": "zhangcheng", "stageType": "council", "subRole": "pragmatist" },
+    { "id": "huashi", "stageType": "architect", "subRole": null },
+    { "id": "jiangren", "stageType": "builder", "subRole": null },
+    { "id": "shijian", "stageType": "inspector", "subRole": null },
+    { "id": "mingluo", "stageType": "deployer", "subRole": null }
+  ],
+
+  "permissions": {
+    "youshang": { "allowAgents": [] },
+    "shuike": { "allowAgents": ["zhengchen"] },
+    "zhengchen": { "allowAgents": ["shuike"] },
+    "zhangcheng": { "allowAgents": ["shuike", "zhengchen"] },
+    "huashi": { "allowAgents": ["jiangren"] },
+    "jiangren": { "allowAgents": ["huashi", "shijian"] },
+    "shijian": { "allowAgents": ["jiangren"] },
+    "mingluo": { "allowAgents": [] }
+  },
+
+  "workProtocol": "1. 收到编排层指令后立即开始，不等人工确认。\n2. 输出必须是结构化格式，schema 见各自的 TOOLS.md。\n3. 需要其他局中人的信息时，通过编排层转达，不跨角色直连。\n4. 每步完成后上报状态，编排层负责推送到展示网站。\n5. 遇到无法处理的情况，标记失败并说明原因。"
+}
+```
+
+## 模板目录结构
+
+```
+packages/templates/src/presets/kaiwu-factory/
+├── manifest.json
+└── agents/
+    ├── youshang/
+    │   ├── SOUL.md
+    │   ├── IDENTITY.md
+    │   ├── TOOLS.md
+    │   └── HEARTBEAT.md
+    ├── shuike/
+    │   └── ...（同上四个文件）
+    ├── zhengchen/
+    ├── zhangcheng/
+    ├── huashi/
+    ├── jiangren/
+    ├── shijian/
+    └── mingluo/
+```
+
+## initializeTemplate 流程
+
+```
+initializeTemplate("kaiwu-factory")
+  │
+  ├── 读取 manifest.json
+  ├── 校验所有 Agent 的 SOUL.md 存在
+  │
+  ├── 为每个 Agent 创建 workspace 目录
+  │   ├── 复制 SOUL.md、IDENTITY.md、TOOLS.md、HEARTBEAT.md
+  │   ├── 生成 AGENTS.md（从 workProtocol 格式化）
+  │   └── 创建空的 MEMORY.md（初始模板）
+  │
+  ├── 注册 Agent 到 openclaw.json
+  │   ├── 设置 workspace 路径
+  │   └── 设置 allowAgents 权限
+  │
+  └── 重启 Gateway
+```
