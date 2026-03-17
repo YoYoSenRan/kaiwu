@@ -21,12 +21,40 @@
 ```json
 {
   "keyword": "物帖原文",
-  "dimensions": {
-    "market": { "score": "0-100", "summary": "一句话评价", "data": { "marketSize": "", "trend": "", "competitors": [] } },
-    "userNeed": { "score": "0-100", "summary": "一句话评价", "data": { "targetUser": "", "painPoint": "", "frequency": "" } },
-    "techFeasibility": { "score": "0-100", "summary": "一句话评价", "data": { "techStack": "", "coreChallenge": "", "estimatedEffort": "" } },
-    "businessValue": { "score": "0-100", "summary": "一句话评价", "data": { "monetization": "", "acquisitionCost": "", "moat": "" } }
+  "reason": "提交者的理由",
+
+  "background": {
+    "positioning": "这个器物是什么？一句话描述",
+    "targetUser": "给谁用？用户画像",
+    "corePainPoint": "用户现在怎么解决？为什么不满意？",
+    "productForm": "网站 / App / 工具 / 插件",
+    "coreFeatures": ["功能1", "功能2", "功能3"],
+    "differentiation": "和竞品比，独特之处是什么"
   },
+
+  "dimensions": {
+    "market": {
+      "score": "0-100",
+      "summary": "一句话评价",
+      "data": { "marketSize": "", "trend": "", "competitors": [] }
+    },
+    "userNeed": {
+      "score": "0-100",
+      "summary": "一句话评价",
+      "data": { "painPointValidation": "", "frequency": "", "willingness": "" }
+    },
+    "differentiation": {
+      "score": "0-100",
+      "summary": "一句话评价",
+      "data": { "competitorWeaknesses": [], "entryAngle": "" }
+    },
+    "showcasePotential": {
+      "score": "0-100",
+      "summary": "一句话评价",
+      "data": { "visualStyle": "", "interactionIdea": "", "references": [] }
+    }
+  },
+
   "overallScore": "0-100",
   "verdict": "green | yellow | red",
   "privateNote": "（可选）一句私货"
