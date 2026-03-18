@@ -114,6 +114,9 @@ importers:
       '@kaiwu/openclaw':
         specifier: workspace:*
         version: link:../openclaw
+      drizzle-orm:
+        specifier: ^0.39
+        version: 0.39.3(postgres@3.4.8)
     devDependencies:
       '@types/node':
         specifier: ^20

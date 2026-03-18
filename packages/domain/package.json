@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@kaiwu/db": "workspace:*",
-    "@kaiwu/openclaw": "workspace:*"
+    "@kaiwu/openclaw": "workspace:*",
+    "drizzle-orm": "^0.39"
   },
   "devDependencies": {
     "@types/node": "^20",
