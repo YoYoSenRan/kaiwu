@@ -6,6 +6,7 @@
 
 - [ ] 2.1 创建 `packages/domain/src/memory/extractor.ts`：收集判断 → 对比结果 → LLM 生成 → 评估重要度 → 调用 writer — 验收：造物令完成后 memory/ 有新条目
 - [ ] 2.2 在编排层造物令完成钩子中接入 extractExperience() — 验收：自动触发
+- [ ] 2.3 在编排层复盘逻辑中接入 refineMemory()（7/30/90 天复盘时触发）— 验收：复盘后 MEMORY.md 更新
 
 ## 3. 每日总结
 
@@ -15,6 +16,8 @@
 ## 4. MEMORY.md 精炼
 
 - [ ] 4.1 创建 `packages/domain/src/memory/refiner.ts`：筛选重要度 ≥4 → 压缩 → 写入 MEMORY.md → 200 行上限 — 验收：精炼后 MEMORY.md 不超过 200 行
+- [ ] 4.2 更新 OpenClaw memorySearch.extraPaths 配置（指向 lessons.md / patterns.md / domain/ / relationships.md + 衰减规则）— 验收：memory_search 可索引结构化记忆文件
+- [ ] 4.3 更新各 Agent 的 SOUL.md，引导 Agent 在工作前先调用 memory_search 检索历史经验 — 验收：SOUL.md 中有 memory_search 使用指引
 
 ## 5. 验证
 

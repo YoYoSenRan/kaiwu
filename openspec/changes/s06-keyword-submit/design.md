@@ -18,6 +18,7 @@
 - 不实现邮箱登录或其他 OAuth 提供商
 - 不实现物帖的编辑/删除（提交后不可修改）
 - 不实现物帖墙的动画效果（属于打磨阶段）
+- 不实现内容审核机制（敏感词过滤 + AI 审核 + 举报），属于打磨阶段
 
 ## Decisions
 
@@ -33,9 +34,9 @@
 
 严格按 `用户参与体系.md` 实现：
 ```
-权重 = (green_votes × 3) + (red_votes × 2) + time_decay_bonus + submitter_bonus
+权重 = (seal_votes × 3) + (blank_votes × 2) + time_decay_bonus + submitter_bonus
 ```
-红票也是正向加分——争议本身就是看点。
+留白票也是正向加分——争议本身就是看点。
 
 ### D4: 重复检测 — 简单文本匹配
 

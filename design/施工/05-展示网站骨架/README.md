@@ -150,7 +150,7 @@ npx shadcn@latest add button card badge separator avatar tooltip
 - [ ] 移动端导航正常（汉堡菜单）
 - [ ] 暗色模式切换正常
 - [ ] CSS 变量（朱砂红、墨色、鎏金等）在页面上可见
-- [ ] SSE hook 可连接 `/api/events/stream`
+- [ ] SSE hook 可连接 `/api/pipeline/events/stream`
 - [ ] `pnpm typecheck` 通过
 
 ## 参考文档

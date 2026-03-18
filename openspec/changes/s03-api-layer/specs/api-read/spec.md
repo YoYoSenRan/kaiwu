@@ -51,3 +51,15 @@
 #### Scenario: 有进行中的造物令
 - **WHEN** 存在 status=scouting 的造物令
 - **THEN** 返回该造物令的基本信息
+
+### Requirement: Agent 状态字段
+
+`GET /api/pipeline/agents` 返回的每个 Agent SHALL 包含 status 字段，反映 Agent 当前的工作状态。
+
+#### Scenario: Agent 空闲
+- **WHEN** Agent 没有正在处理的阶段
+- **THEN** status 为 "idle"
+
+#### Scenario: Agent 工作中
+- **WHEN** Agent 正在处理某个阶段
+- **THEN** status 为 "working"，activity 字段描述当前工作内容

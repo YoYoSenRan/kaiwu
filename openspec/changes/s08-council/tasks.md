@@ -18,6 +18,8 @@
 - [ ] 3.4 创建 `apps/site/src/app/agents/components/AgentDetail.tsx`：属性雷达图 + 战绩 + 名场面 — 验收：数据正确展示
 - [ ] 3.5 创建 `apps/site/src/app/agents/components/RivalryCard.tsx`：宿敌谱 — 验收：战绩数据正确
 - [ ] 3.6 更新 `apps/site/src/app/agents/page.tsx` + `[id]/page.tsx` — 验收：页面完整可用
+- [ ] 3.7 实现功勋榜组件（从 events + agent_stats 聚合，展示在 /agents 页面顶部）— 验收：功勋榜数据正确
+- [ ] 3.8 创建 AchievementBadge.tsx：轶事徽章组件 — 验收：已解锁轶事显示徽章
 
 ## 4. 过堂直播
 

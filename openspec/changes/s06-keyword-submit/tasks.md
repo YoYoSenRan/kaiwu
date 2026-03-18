@@ -6,17 +6,18 @@
 
 ## 2. 物帖提交
 
-- [ ] 2.1 创建 `apps/site/src/app/trends/actions.ts`：submitKeyword Server Action（Zod 校验 + 每日限制 + 重复检测 + 写入 keywords）— 验收：合法提交写入成功，非法提交返回错误
+- [ ] 2.1 创建 `apps/site/src/app/trends/actions.ts`：submitKeyword Server Action（Zod 校验 + 每日限制 + 重复检测 + GitHub 账号年龄校验 + 写入 keywords）— 验收：合法提交写入成功，非法提交返回错误
 - [ ] 2.2 创建 `apps/site/src/app/trends/components/SubmitForm.tsx`：提交表单组件（关键词 + 理由 + 提交按钮，未登录显示登录提示）— 验收：表单可提交，校验错误有提示
 
 ## 3. 投票
 
 - [ ] 3.1 在 `actions.ts` 中添加 castVote Server Action（stance 校验 + 限一票 + 更新票数 + 重算权重）— 验收：投票成功更新票数，重复投票返回错误
-- [ ] 3.2 创建 `apps/site/src/app/trends/components/VoteButton.tsx`：盖印/留白按钮（已投票状态 + 未登录跳转）— 验收：按钮状态正确，投票后即时更新
+- [ ] 3.2 实现改票功能（已投票用户可改 seal↔blank，不能撤票）— 验收：改票后票数和权重正确更新
+- [ ] 3.3 创建 `apps/site/src/app/trends/components/VoteButton.tsx`：盖印/留白按钮（已投票状态 + 未登录跳转）— 验收：按钮状态正确，投票后即时更新
 
 ## 4. 权重排序
 
-- [ ] 4.1 创建 `apps/site/src/lib/weight.ts`：calculateWeight()（green×3 + red×2 + timeDecay + submitterBonus）— 验收：示例数据计算结果与设计文档一致
+- [ ] 4.1 创建 `apps/site/src/lib/weight.ts`：calculateWeight()（seal×3 + blank×2 + timeDecay + submitterBonus）— 验收：示例数据计算结果与设计文档一致
 
 ## 5. 物帖墙页面
 

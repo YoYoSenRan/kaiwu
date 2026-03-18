@@ -11,7 +11,7 @@
 - `EVENT_TYPE`：完整事件类型列表（约 30 种，见 `design/数据模型.md → 事件类型`）
 - `KEYWORD_STATUS`：pending / queued / scouting / in_pipeline / completed / dead
 - `TASK_STATUS`：pending / in_progress / completed / blocked / cancelled
-- `VOTE_STANCE`：green / red
+- `VOTE_STANCE`：seal / blank
 - `LOG_TYPE`：thought / action / decision / error
 - `LOG_VISIBILITY`：public / internal
 

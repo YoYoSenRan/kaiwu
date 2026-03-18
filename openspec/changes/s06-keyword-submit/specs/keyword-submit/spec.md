@@ -7,6 +7,7 @@ Server Action `submitKeyword` SHALL 校验：
 - reason：20-200 字，必填
 - 用户必须已登录
 - 每日限提交 1 个物帖（检查 users.last_submit_at）
+- GitHub 账号年龄 > 30 天（检查 users.github_created）
 
 #### Scenario: 提交成功
 - **WHEN** 已登录用户提交合法的物帖
@@ -23,6 +24,10 @@ Server Action `submitKeyword` SHALL 校验：
 #### Scenario: 未登录
 - **WHEN** 未登录用户尝试提交
 - **THEN** 跳转到 GitHub 登录
+
+#### Scenario: 账号太新
+- **WHEN** GitHub 账号创建不足 30 天的用户尝试提交
+- **THEN** 返回"账号年龄不足，暂时无法提交"
 
 ### Requirement: 重复检测
 
