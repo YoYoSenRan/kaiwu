@@ -22,7 +22,7 @@
 | 层面 | 推荐选项 |
 |---|---|
 | 框架 | Next.js / Astro / Vite + React |
-| 样式 | Tailwind CSS / CSS Modules |
+| 样式 | UnoCSS / CSS Modules |
 | UI 组件 | shadcn/ui / Radix UI / 手写 |
 | 动画 | Framer Motion / CSS Animation / GSAP |
 | 图标 | Lucide / Heroicons / 自定义 SVG |
@@ -41,7 +41,7 @@
 
 | 子角色 | 专长 | 典型任务 |
 |---|---|---|
-| 匠人·形 | 结构和布局 | HTML 骨架、Tailwind 布局、响应式断点 |
+| 匠人·形 | 结构和布局 | HTML 骨架、UnoCSS 布局、响应式断点 |
 | 匠人·色 | 视觉和样式 | 配色、字体、间距、阴影、渐变 |
 | 匠人·动 | 交互和动画 | Framer Motion 动画、hover 效果、滚动触发 |
 

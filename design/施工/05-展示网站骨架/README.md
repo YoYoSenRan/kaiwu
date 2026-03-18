@@ -42,8 +42,8 @@ apps/site/
 │   │   └── hooks/
 │   │       └── useSSE.ts            # SSE 连接 hook
 │   └── styles/
-│       └── globals.css              # Tailwind 全局样式 + CSS 变量
-├── tailwind.config.ts               # 开物局主题色配置
+│       └── globals.css              # UnoCSS 全局样式 + CSS 变量
+├── uno.config.ts                    # UnoCSS 主题色配置
 ├── next.config.ts
 ├── package.json
 └── tsconfig.json
@@ -53,13 +53,13 @@ apps/site/
 
 ### Step 1：项目初始化
 
-1. 确认 apps/site 的 Next.js + Tailwind CSS 配置
+1. 确认 apps/site 的 Next.js + UnoCSS 配置
 2. 安装 shadcn/ui：`npx shadcn@latest init`
 3. 配置 `@kaiwu/db` 和 `@kaiwu/ui` 的 workspace 引用
 
-### Step 2：设计系统 — Tailwind 主题
+### Step 2：设计系统 — UnoCSS 主题
 
-文件：`tailwind.config.ts` + `src/styles/globals.css`
+文件：`uno.config.ts` + `src/styles/globals.css`
 
 按 `世界观.md → 色彩` 配置 CSS 变量：
 

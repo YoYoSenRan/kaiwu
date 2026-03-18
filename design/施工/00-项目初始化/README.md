@@ -42,7 +42,7 @@ kaiwu/
 │   │   │   └── styles/              # 全局样式
 │   │   ├── public/                  # 静态资源
 │   │   ├── next.config.ts
-│   │   ├── tailwind.config.ts
+│   │   ├── uno.config.ts
 │   │   ├── tsconfig.json
 │   │   └── package.json
 │   │
@@ -185,7 +185,7 @@ packages:
 |---|---|---|
 | packages/db | @kaiwu/db | drizzle-orm, drizzle-kit, postgres |
 | packages/domain | @kaiwu/domain | @kaiwu/db, @kaiwu/openclaw |
-| packages/ui | @kaiwu/ui | react, tailwindcss |
+| packages/ui | @kaiwu/ui | react, unocss |
 | packages/openclaw | @kaiwu/openclaw | @kaiwu/templates |
 | packages/templates | @kaiwu/templates | zod |
 | apps/site | @kaiwu/site | next, react, @kaiwu/db, @kaiwu/domain, @kaiwu/ui |
@@ -207,12 +207,13 @@ packages:
 
 ```bash
 cd apps/site
-pnpm create next-app@latest . --typescript --tailwind --eslint --app --src-dir
+pnpm create next-app@latest . --typescript --eslint --app --src-dir
+# 然后手动安装 UnoCSS：pnpm add -D unocss @unocss/preset-wind @unocss/preset-icons @unocss/nuxt
 ```
 
 配置：
 - Next.js 16 + React 19
-- Tailwind CSS 4
+- UnoCSS（preset-wind 兼容 Tailwind 类名）
 - App Router
 - TypeScript strict mode
 - 配置 `@kaiwu/*` 的 workspace 引用
@@ -237,7 +238,7 @@ pnpm create next-app@latest . --typescript --tailwind --eslint --app --src-dir
 | ts.md | TypeScript 规范（禁止 any、可选链、空值合并、枚举用 as const） |
 | code-names.md | 命名规范（文件 kebab-case、组件 PascalCase、常量 SCREAMING_SNAKE） |
 | comments.md | 注释规范（公共函数 JSDoc、Why 注释、禁止死代码） |
-| style.md | 样式规范（只用 Tailwind、必须用 cn()、语义 token） |
+| style.md | 样式规范（只用 UnoCSS、必须用 cn()、语义 token） |
 | pages.md | 页面规范（Server Component 默认、page.tsx < 80 行、searchParams 驱动） |
 | api.md | API 规范（Server Action 优先、Zod 校验、函数命名 getXxx/createXxx） |
 
