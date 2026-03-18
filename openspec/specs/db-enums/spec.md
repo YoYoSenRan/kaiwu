@@ -6,7 +6,7 @@
 
 - `PROJECT_STATUS`：scouting / debating / planning / building / inspecting / deploying / launched / dead
 - `PHASE_TYPE`：scout / council / architect / builder / inspector / deployer
-- `PHASE_STATUS`：pending / in_progress / completed / failed / stale / blocked / skipped
+- `PHASE_STATUS`：pending / in_progress / completed / failed / blocked / skipped
 - `AGENT_STATUS`：idle / thinking / working / debating / blocked / done / error
 - `EVENT_TYPE`：完整事件类型列表（约 30 种，见 `design/数据模型.md → 事件类型`）
 - `KEYWORD_STATUS`：pending / queued / scouting / in_pipeline / completed / dead

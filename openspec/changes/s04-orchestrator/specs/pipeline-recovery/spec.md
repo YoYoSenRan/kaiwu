@@ -22,12 +22,16 @@
 
 ### Requirement: 指数退避
 
-`backoff.ts` SHALL 计算退避间隔：正常间隔 × 2^(failCount-2)，上限 120 分钟。
+`backoff.ts` SHALL 计算退避间隔：`getCronInterval(phaseType) × 2^(failCount-2)`，上限 120 分钟。退避通过更新 cron job 的间隔实现，stale 检测阈值自动跟随（因为 stale 阈值从 cron 间隔派生）。
 
 #### Scenario: 退避计算
-- **WHEN** 正常间隔 20 分钟，failCount=3
-- **THEN** 退避间隔 = 20 × 2^1 = 40 分钟
+- **WHEN** 当前 cron 间隔 20 分钟，failCount=3
+- **THEN** 退避间隔 = 20 × 2^1 = 40 分钟，stale 阈值自动变为 40 × 3 = 120 分钟
 
 #### Scenario: 退避上限
-- **WHEN** 正常间隔 20 分钟，failCount=6
-- **THEN** 退避间隔 = 120 分钟（上限）
+- **WHEN** 当前 cron 间隔 20 分钟，failCount=6
+- **THEN** 退避间隔 = 120 分钟（上限），stale 阈值 = 120 × 3 = 360 分钟
+
+#### Scenario: 恢复后间隔还原
+- **WHEN** 退避中 Agent 成功完成
+- **THEN** cron 间隔恢复为阶段默认值，failCount 归零，stale 阈值同步恢复
