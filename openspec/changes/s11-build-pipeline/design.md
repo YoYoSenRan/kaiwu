@@ -27,6 +27,31 @@
 
 每个造物令一个独立目录，用 project.slug 命名。.kaiwu/ 子目录存元数据，src/ 存器物代码。
 
+### D3: OpenClaw 统一目录结构
+
+所有 OpenClaw 相关文件统一放在 `OPENCLAW_DIR`（默认 `~/.openclaw`）下：
+
+```
+~/.openclaw/
+├── workspaces/{agent-id}/          # Agent workspace（s02 创建）
+│   ├── SOUL.md / TOOLS.md          # Agent 人格和工具定义
+│   └── memory/                     # Agent 记忆文件（s10）
+│       ├── MEMORY.md
+│       ├── lessons.md
+│       ├── patterns.md
+│       └── domain/
+├── products/{project-slug}/        # 造物产出（s11）
+│   ├── .kaiwu/                     # 元数据（蓝图快照、锻造日志）
+│   └── src/                        # 器物代码
+├── gateway.yaml                    # Gateway 配置（agents + plugins + tools）
+└── plugins/
+    └── kaiwu-tools/                # 自建 Plugin（s03 第 8 组）
+        ├── openclaw.plugin.json
+        └── index.ts
+```
+
+`scripts/sync-workspaces.ts`（s03 第 9 组）负责从 templates preset 同步到 workspaces/ 并生成 gateway.yaml。
+
 ## Risks / Trade-offs
 
 - **代码生成质量**：匠人产出的代码质量是最大风险。→ 试剑轻检每步介入，全检兜底。

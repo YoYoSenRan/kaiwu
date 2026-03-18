@@ -10,9 +10,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kaiwu/templates": "workspace:*"
+    "@kaiwu/templates": "workspace:*",
+    "@sinclair/typebox": "^0.34.48"
   },
   "devDependencies": {
+    "@types/node": "^20",
     "typescript": "^5.7"
   }
 }

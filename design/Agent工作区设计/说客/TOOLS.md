@@ -4,12 +4,12 @@
 
 | tool                 | 说明                                       |
 | -------------------- | ------------------------------------------ |
-| `getMyStats`         | 读取我的属性面板（口才、博引、韧性、信誉） |
-| `getMyMemories`      | 读取我的历史经验                           |
-| `getProjectContext`  | 读取当前项目上下文和采风报告               |
-| `getDebateHistory`   | 读取当前过堂的辩论记录（专属）             |
-| `writeLog`           | 记录思考过程和关键决策                     |
-| `submitDebateSpeech` | 提交过堂发言（专属）                       |
+| `get_my_stats`         | 读取我的属性面板（口才、博引、韧性、信誉） |
+| `memory_search`      | 读取我的历史经验                           |
+| `get_project_context`  | 读取当前项目上下文和采风报告               |
+| `get_debate_history`   | 读取当前过堂的辩论记录（专属）             |
+| `write_log`           | 记录思考过程和关键决策                     |
+| `submit_debate_speech` | 提交过堂发言（专属）                       |
 
 ## 调研工具
 

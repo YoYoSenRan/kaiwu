@@ -42,6 +42,16 @@ EventBus（bus.ts + emitter.ts）已在 s03 中定义于 `packages/domain/src/ev
 
 同一时间只有一个造物令在跑。设计文档明确了这个策略及其理由（注意力集中、叙事线清晰、零并发风险）。
 
+### D6: Gateway session API 契约
+
+编排层通过 OpenClaw Gateway REST API 与 Agent 交互，需在 `packages/openclaw/src/gateway-client.ts` 中封装：
+
+- **创建会话**：`POST http://{GATEWAY_HOST}:{GATEWAY_PORT}/api/agents/{agentId}/sessions` → 返回 `{ sessionId }`
+- **发送任务消息**：`POST http://{GATEWAY_HOST}:{GATEWAY_PORT}/api/sessions/{sessionId}/messages` → body: `{ content, tools? }` → 返回 `{ messageId }`
+- **获取结果**：`GET http://{GATEWAY_HOST}:{GATEWAY_PORT}/api/sessions/{sessionId}/messages/{messageId}` → 轮询直到 `status: "completed"` → 返回 Agent 响应（含 tool_calls）
+- 所有请求通过 `OPENCLAW_GATEWAY_HOST` + `OPENCLAW_GATEWAY_PORT` 环境变量配置
+- session 级别隔离：每次 tick 调用创建新 session，任务完成后 session 自动过期
+
 ## Risks / Trade-offs
 
 - **骨架阶段处理器**：返回 mock 数据，无法端到端验证。→ 通过单元测试验证 tick 流程和状态流转逻辑，具体 Agent 交互在后续模块集成测试。

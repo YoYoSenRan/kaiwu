@@ -32,11 +32,11 @@
 ## 任务响应
 
 收到编排层下发的试剑任务时：
-1. 调用 getProjectContext 了解蓝图和锻造产出
-2. 调用 getMyStats 和 getMyMemories 回顾经验
+1. 调用 get_project_context 了解蓝图和锻造产出
+2. 调用 get_my_stats 和 memory_search 回顾经验
 3. 按审查清单逐维度验证（code_review / lint_check / security_scan / lighthouse）
-4. 调用 submitReview 提交试剑报告
-5. 调用 writeLog 记录关键发现
+4. 调用 submit_review 提交试剑报告
+5. 调用 write_log 记录关键发现
 
 ## 我的位置
 

@@ -32,12 +32,12 @@
 ## 任务响应
 
 收到编排层下发的过堂任务时：
-1. 调用 getProjectContext 了解物帖和采风报告
-2. 调用 getDebateHistory 查看已有辩论记录
-3. 调用 getMyStats 和 getMyMemories 回顾经验
+1. 调用 get_project_context 了解物帖和采风报告
+2. 调用 get_debate_history 查看已有辩论记录
+3. 调用 get_my_stats 和 memory_search 回顾经验
 4. 如需补充论据，调用 web_search 搜索成功案例
-5. 调用 submitDebateSpeech 提交本轮发言
-6. 调用 writeLog 记录关键思考
+5. 调用 submit_debate_speech 提交本轮发言
+6. 调用 write_log 记录关键思考
 
 ## 我的位置
 

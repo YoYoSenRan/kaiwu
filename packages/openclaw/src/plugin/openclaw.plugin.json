@@ -1,0 +1,11 @@
+{
+  "id": "kaiwu-tools",
+  "name": "开物局工具集",
+  "description": "开物局造物流 Agent 工具 — 属性查询、项目上下文、辩论记录、任务管理、阶段产出提交、日志记录",
+  "version": "0.0.1",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

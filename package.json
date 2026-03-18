@@ -10,13 +10,15 @@
     "format": "oxfmt apps/ packages/",
     "format:check": "oxfmt --check apps/ packages/",
     "typecheck": "turbo typecheck",
-    "setup:openclaw": "./scripts/setup-openclaw.sh"
+    "setup:openclaw": "./scripts/setup-openclaw.sh",
+    "sync:openclaw": "tsx scripts/sync-workspaces.ts"
   },
   "devDependencies": {
-    "turbo": "^2",
-    "typescript": "^5.7",
+    "oxfmt": "^0.41",
     "oxlint": "^1.56",
-    "oxfmt": "^0.41"
+    "tsx": "^4",
+    "turbo": "^2",
+    "typescript": "^5.7"
   },
   "packageManager": "pnpm@9.15.4"
 }

@@ -1,0 +1,115 @@
+# 开物局 Gateway 配置模板
+#
+# 此文件由 sync-workspaces.ts 生成，请勿手动编辑。
+# 复制到 ~/.openclaw/gateway.yaml 后根据环境修改。
+
+plugins:
+  enabled: true
+  load:
+    paths:
+      - "~/.openclaw/plugins/kaiwu-tools"
+  entries:
+    kaiwu-tools:
+      enabled: true
+
+agents:
+  list:
+    # ---- 游商 · 采风使 ----
+    - id: youshang
+      name: 游商
+      tools:
+        allow:
+          - kaiwu-tools
+          - get_my_stats
+          - get_project_context
+          - write_log
+          - submit_scout_report
+          - group:memory
+
+    # ---- 说客 · 立论使 ----
+    - id: shuike
+      name: 说客
+      tools:
+        allow:
+          - kaiwu-tools
+          - get_my_stats
+          - get_project_context
+          - write_log
+          - get_debate_history
+          - submit_debate_speech
+          - group:memory
+
+    # ---- 诤臣 · 驳论使 ----
+    - id: zhengchen
+      name: 诤臣
+      tools:
+        allow:
+          - kaiwu-tools
+          - get_my_stats
+          - get_project_context
+          - write_log
+          - get_debate_history
+          - submit_debate_speech
+          - group:memory
+
+    # ---- 掌秤 · 裁决使 ----
+    - id: zhangcheng
+      name: 掌秤
+      tools:
+        allow:
+          - kaiwu-tools
+          - get_my_stats
+          - get_project_context
+          - write_log
+          - get_debate_history
+          - submit_verdict
+          - group:memory
+
+    # ---- 画师 · 绘图使 ----
+    - id: huashi
+      name: 画师
+      tools:
+        allow:
+          - kaiwu-tools
+          - get_my_stats
+          - get_project_context
+          - write_log
+          - submit_blueprint
+          - group:memory
+
+    # ---- 匠人 · 锻造使 ----
+    - id: jiangren
+      name: 匠人
+      tools:
+        allow:
+          - kaiwu-tools
+          - get_my_stats
+          - get_project_context
+          - write_log
+          - get_my_tasks
+          - complete_task
+          - group:memory
+
+    # ---- 试剑 · 验器使 ----
+    - id: shijian
+      name: 试剑
+      tools:
+        allow:
+          - kaiwu-tools
+          - get_my_stats
+          - get_project_context
+          - write_log
+          - submit_review
+          - group:memory
+
+    # ---- 鸣锣 · 发布使 ----
+    - id: mingluo
+      name: 鸣锣
+      tools:
+        allow:
+          - kaiwu-tools
+          - get_my_stats
+          - get_project_context
+          - write_log
+          - submit_deploy_report
+          - group:memory

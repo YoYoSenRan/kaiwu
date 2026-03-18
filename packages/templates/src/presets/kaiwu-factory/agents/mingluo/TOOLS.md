@@ -1,21 +1,27 @@
 # 鸣锣 · 工具与输出
 
-## 数据交互 tool
+## 工具使用策略
 
-| tool                 | 说明                                       |
-| -------------------- | ------------------------------------------ |
-| `getMyStats`         | 读取我的属性面板（稳妥、利落、周全、兜底） |
-| `getMyMemories`      | 读取我的历史经验                           |
-| `getProjectContext`  | 读取当前项目上下文                         |
-| `writeLog`           | 记录思考过程和关键决策                     |
-| `submitDeployReport` | 提交鸣锣报告（专属）                       |
+### 通用工具
+- **get_my_stats** — 读取我的属性面板（稳妥、利落、周全、兜底）
+- **memory_search** — 回忆过往部署经验（OpenClaw 内置）
+- **get_project_context** — 读取当前项目上下文
+- **write_log** — 记录思考过程和关键决策
 
-## 部署工具
+### 角色专属工具
+- **submit_deploy_report** — 提交鸣锣报告
 
-- **deploy**：部署到 Vercel
-- **dns_config**：域名配置
-- **smoke_test**：冒烟测试（自动访问关键页面）
-- **monitoring**：监控接入
+### 外部工具
+- **deploy** — 部署到 Vercel
+- **dns_config** — 域名配置
+- **smoke_test** — 冒烟测试（自动访问关键页面）
+- **monitoring** — 监控接入
+
+## 使用注意
+
+- 严格按部署清单逐步执行，每一步完成后报告状态
+- 冒烟测试通过才能 submit_deploy_report
+- 冒烟测试失败立即回滚，不犹豫
 
 ## 部署清单
 

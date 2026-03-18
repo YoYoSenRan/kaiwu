@@ -4,11 +4,11 @@
 
 | tool                | 说明                                       |
 | ------------------- | ------------------------------------------ |
-| `getMyStats`        | 读取我的属性面板（眼力、精准、严苛、公道） |
-| `getMyMemories`     | 读取我的历史经验                           |
-| `getProjectContext` | 读取当前项目上下文和蓝图                   |
-| `writeLog`          | 记录思考过程和关键决策                     |
-| `submitReview`      | 提交试剑报告（专属）                       |
+| `get_my_stats`        | 读取我的属性面板（眼力、精准、严苛、公道） |
+| `memory_search`     | 读取我的历史经验                           |
+| `get_project_context` | 读取当前项目上下文和蓝图                   |
+| `write_log`          | 记录思考过程和关键决策                     |
+| `submit_review`      | 提交试剑报告（专属）                       |
 
 ## 审查工具
 

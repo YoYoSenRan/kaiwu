@@ -6,9 +6,9 @@
 ┌─────────────────────────────────────────────────────┐
 │                   OpenClaw Agent                     │
 │                                                     │
-│   useTool("getMyStats")                             │
-│   useTool("submitOutput", { report })               │
-│   useTool("getProjectContext", { projectId })       │
+│   useTool("get_my_stats")                             │
+│   useTool("submit_output", { report })               │
+│   useTool("get_project_context", { projectId })       │
 │                                                     │
 └──────────────────────┬──────────────────────────────┘
                        │
@@ -101,7 +101,7 @@ GET /api/pipeline/agents/:agentId/stats
 
 #### 获取自己的记忆
 
-> **注意**：MVP 阶段记忆走 OpenClaw 原生 `memory_search`，不走自建 Route Handler。`getMyMemories` Tool 直接调用 OpenClaw Gateway API，不经过 `/api/pipeline/`。后续如需自建记忆索引再迁移。
+> **注意**：MVP 阶段记忆走 OpenClaw 原生 `memory_search`，不走自建 Route Handler。`memory_search` Tool 直接调用 OpenClaw Gateway API，不经过 `/api/pipeline/`。后续如需自建记忆索引再迁移。
 
 ```
 OpenClaw memory_search API（非自建端点）
@@ -225,35 +225,35 @@ Body: {
 
 | tool 名称           | 对应 API                    | 说明               |
 | ------------------- | --------------------------- | ------------------ |
-| `getMyStats`        | `GET /agents/:id/stats`     | 读取自己的属性     |
-| `getMyMemories`     | `GET /agents/:id/memories`  | 读取自己的经验记忆 |
-| `getProjectContext` | `GET /projects/:id/context` | 读取当前项目上下文 |
-| `writeLog`          | `POST /agents/:id/logs`     | 写入思考/行动日志  |
+| `get_my_stats`        | `GET /agents/:id/stats`     | 读取自己的属性     |
+| `memory_search`     | `GET /agents/:id/memories`  | 读取自己的经验记忆 |
+| `get_project_context` | `GET /projects/:id/context` | 读取当前项目上下文 |
+| `write_log`          | `POST /agents/:id/logs`     | 写入思考/行动日志  |
 
 ### 角色专属 tool
 
 | 角色      | tool 名称            | 对应 API                   | 说明         |
 | --------- | -------------------- | -------------------------- | ------------ |
-| 游商      | `submitScoutReport`  | `POST /phases/:id/output`  | 提交采风报告 |
-| 说客      | `submitDebateSpeech` | `POST /phases/:id/debates` | 提交过堂发言 |
-| 诤臣      | `submitDebateSpeech` | `POST /phases/:id/debates` | 提交过堂发言 |
-| 说客/诤臣 | `getDebateHistory`   | `GET /phases/:id/debates`  | 读取辩论记录 |
-| 掌秤      | `submitVerdict`      | `POST /phases/:id/output`  | 提交裁决     |
-| 掌秤      | `getDebateHistory`   | `GET /phases/:id/debates`  | 读取辩论记录 |
-| 画师      | `submitBlueprint`    | `POST /phases/:id/output`  | 提交蓝图     |
-| 匠人      | `getMyTasks`         | `GET /projects/:id/tasks`  | 获取待办任务 |
-| 匠人      | `completeTask`       | `POST /tasks/:id/complete` | 提交任务完成 |
-| 试剑      | `submitReview`       | `POST /phases/:id/output`  | 提交审查报告 |
-| 鸣锣      | `submitDeployReport` | `POST /phases/:id/output`  | 提交部署报告 |
+| 游商      | `submit_scout_report`  | `POST /phases/:id/output`  | 提交采风报告 |
+| 说客      | `submit_debate_speech` | `POST /phases/:id/debates` | 提交过堂发言 |
+| 诤臣      | `submit_debate_speech` | `POST /phases/:id/debates` | 提交过堂发言 |
+| 说客/诤臣 | `get_debate_history`   | `GET /phases/:id/debates`  | 读取辩论记录 |
+| 掌秤      | `submit_verdict`      | `POST /phases/:id/output`  | 提交裁决     |
+| 掌秤      | `get_debate_history`   | `GET /phases/:id/debates`  | 读取辩论记录 |
+| 画师      | `submit_blueprint`    | `POST /phases/:id/output`  | 提交蓝图     |
+| 匠人      | `get_my_tasks`         | `GET /projects/:id/tasks`  | 获取待办任务 |
+| 匠人      | `complete_task`       | `POST /tasks/:id/complete` | 提交任务完成 |
+| 试剑      | `submit_review`       | `POST /phases/:id/output`  | 提交审查报告 |
+| 鸣锣      | `submit_deploy_report` | `POST /phases/:id/output`  | 提交部署报告 |
 
 ### Tool 实现示例
 
 ```ts
-// packages/openclaw/src/tools/getMyStats.ts
+// packages/openclaw/src/tools/get_my_stats.ts
 import { defineTool } from "@openclaw/sdk"
 
-export const getMyStats = defineTool({
-  name: "getMyStats",
+export const get_my_stats = defineTool({
+  name: "get_my_stats",
   description: "读取我的属性面板——嗅觉、脚力、见闻、慧眼等当前星级和原始数据",
 
   async execute(ctx) {
@@ -264,7 +264,7 @@ export const getMyStats = defineTool({
 ```
 
 ```ts
-// packages/openclaw/src/tools/submitScoutReport.ts
+// packages/openclaw/src/tools/submit_scout_report.ts
 import { defineTool } from "@openclaw/sdk"
 import { z } from "zod"
 
@@ -278,8 +278,8 @@ const ScoutReportSchema = z.object({
   privateNote: z.string().optional(),
 })
 
-export const submitScoutReport = defineTool({
-  name: "submitScoutReport",
+export const submit_scout_report = defineTool({
+  name: "submit_scout_report",
   description: "提交采风报告——把我在坊间摸到的底，正式交给编排层",
   input: ScoutReportSchema,
 
@@ -308,23 +308,23 @@ export const submitScoutReport = defineTool({
    │
 4. 游商读取 HEARTBEAT.md，发现有活
    │
-5. 游商调用 getProjectContext(projectId)
+5. 游商调用 get_project_context(projectId)
    │  → 获取物帖详情和项目上下文
    │
-6. 游商调用 getMyStats()
+6. 游商调用 get_my_stats()
    │  → 读取自己的属性，发现"工具类"领域专长较高
    │  → 在采风时重点参考工具类历史数据
    │
-7. 游商调用 getMyMemories({ domain: "工具类" })
+7. 游商调用 memory_search({ domain: "工具类" })
    │  → 读取过往工具类项目的经验教训
    │
 8. 游商调用 web_search / trend_analysis / competitor_scan
    │  → 执行实际的市场调研
    │
-9. 游商调用 submitScoutReport({ ... })
+9. 游商调用 submit_scout_report({ ... })
    │  → 提交采风报告到数据库
    │
-10. 游商调用 writeLog({ type: "thought", content: "这个赛道比我想的卷..." })
+10. 游商调用 write_log({ type: "thought", content: "这个赛道比我想的卷..." })
     │  → 记录思考过程，供展示网站展示
     │
 11. 编排层收到产出，检查评分

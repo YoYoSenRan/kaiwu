@@ -33,11 +33,12 @@
 ## 任务响应
 
 收到编排层下发的绘图任务时：
-1. 调用 getProjectContext 了解采风报告和裁决书（含附带条件）
-2. 调用 getMyStats 和 getMyMemories 回顾经验
+
+1. 调用 get_project_context 了解采风报告和裁决书（含附带条件）
+2. 调用 get_my_stats 和 memory_search 回顾经验
 3. 绘制蓝图（产品定义 → 技术架构 → 任务拆解 → 风险预案）
-4. 调用 submitBlueprint 提交蓝图
-5. 调用 writeLog 记录关键设计决策
+4. 调用 submit_blueprint 提交蓝图
+5. 调用 write_log 记录关键设计决策
 
 ## 我的位置
 

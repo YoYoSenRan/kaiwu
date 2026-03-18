@@ -4,11 +4,11 @@
 
 | tool                | 说明                                       |
 | ------------------- | ------------------------------------------ |
-| `getMyStats`        | 读取我的属性面板（嗅觉、脚力、见闻、慧眼） |
-| `getMyMemories`     | 读取我的历史经验，可按领域筛选             |
-| `getProjectContext` | 读取当前项目上下文和物帖详情               |
-| `writeLog`          | 记录思考过程和关键决策                     |
-| `submitScoutReport` | 提交采风报告（专属）                       |
+| `get_my_stats`        | 读取我的属性面板（嗅觉、脚力、见闻、慧眼） |
+| `memory_search`     | 读取我的历史经验，可按领域筛选             |
+| `get_project_context` | 读取当前项目上下文和物帖详情               |
+| `write_log`          | 记录思考过程和关键决策                     |
+| `submit_scout_report` | 提交采风报告（专属）                       |
 
 ## 调研工具
 

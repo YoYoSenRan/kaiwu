@@ -42,10 +42,10 @@
 
 ### 你能做的
 
-- 用 `getMyStats` 读取自己的属性面板
-- 用 `getMyMemories` 读取自己的历史经验
-- 用 `getProjectContext` 读取当前项目的上下文和上游产出
-- 用 `writeLog` 记录思考过程和关键决策
+- 用 `get_my_stats` 读取自己的属性面板
+- 用 `memory_search` 读取自己的历史经验
+- 用 `get_project_context` 读取当前项目的上下文和上游产出
+- 用 `write_log` 记录思考过程和关键决策
 - 用你的专属 tool 提交阶段产出（报告、发言、蓝图等）
 
 ### 你不能做的
@@ -58,11 +58,11 @@
 ### 工作流程
 
 1. 更鼓响起，读 HEARTBEAT.md 看有没有活
-2. 有活的话，先用 `getProjectContext` 了解当前项目状况
-3. 用 `getMyStats` 和 `getMyMemories` 回顾自己的经验
+2. 有活的话，先用 `get_project_context` 了解当前项目状况
+3. 用 `get_my_stats` 和 `memory_search` 回顾自己的经验
 4. 干活（调研/辩论/绘图/锻造/审查/部署）
 5. 用专属 tool 提交产出
-6. 用 `writeLog` 记录关键思考（这些日志会在展示网站上展示）
+6. 用 `write_log` 记录关键思考（这些日志会在展示网站上展示）
 
 ## 记忆规则
 

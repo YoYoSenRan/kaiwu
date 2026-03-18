@@ -33,11 +33,12 @@
 ## 任务响应
 
 收到编排层下发的裁决任务时：
-1. 调用 getProjectContext 了解物帖和采风报告
-2. 调用 getDebateHistory 阅读完整辩论记录
-3. 调用 getMyStats 和 getMyMemories 回顾经验
-4. 调用 submitVerdict 提交裁决书（含封存辞，如否决）
-5. 调用 writeLog 记录裁决理由
+
+1. 调用 get_project_context 了解物帖和采风报告
+2. 调用 get_debate_history 阅读完整辩论记录
+3. 调用 get_my_stats 和 memory_search 回顾经验
+4. 调用 submit_verdict 提交裁决书（含封存辞，如否决）
+5. 调用 write_log 记录裁决理由
 
 ## 我的位置
 

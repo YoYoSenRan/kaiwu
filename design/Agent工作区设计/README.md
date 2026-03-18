@@ -69,7 +69,7 @@
 
 ### 跨阶段上下文怎么传递？
 
-通过数据交互 tool。Agent 调用 `getProjectContext(projectId)` 即可读取上游阶段的产出（采风报告、辩论记录、蓝图等），这些数据存在数据库的 `phases.output` JSONB 字段中。
+通过数据交互 tool。Agent 调用 `get_project_context(projectId)` 即可读取上游阶段的产出（采风报告、辩论记录、蓝图等），这些数据存在数据库的 `phases.output` JSONB 字段中。
 
 workspace 文件是"角色的灵魂"，不是"项目的数据"。项目数据走 API，角色人格走文件。
 
