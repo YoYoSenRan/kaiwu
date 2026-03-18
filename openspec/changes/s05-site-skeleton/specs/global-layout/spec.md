@@ -64,7 +64,7 @@
 - 点击从右侧滑入 Drawer（translateX(100%) → 0，300ms ease）
 - Drawer 宽 80vw，max-width 320px，bg --card
 - 遮罩 bg black/50%，点击遮罩关闭
-- Drawer 内容：关闭按钮 + 5 个导航项（全宽行，右侧箭头）+ 更鼓信息 + 主题切换 + 登录区 slot
+- Drawer 内容：关闭按钮 + 5 个导航项（全宽行，右侧箭头）+ 更鼓信息 + 登录区 slot
 - 基于 Radix Dialog 实现，保证无障碍（ESC 关闭、焦点锁定）
 
 #### Scenario: 汉堡菜单展开

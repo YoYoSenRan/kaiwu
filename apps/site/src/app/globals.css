@@ -1,23 +1,86 @@
 @unocss all;
 
+/* ==========================================================================
+   开物局 · 设计系统 — CSS 变量
+   纯暗色模式，墨色即品牌。
+   ========================================================================== */
+
 :root {
+  /* --- 字体 --- */
+  --font-display: "Noto Serif SC", "Source Han Serif SC", serif;
+  --font-body: "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
+  /* --font-mono 由 next/font JetBrains Mono 注入 */
+
+  /* --- 基础色板 --- */
   --ink: #0a0a0f;
   --paper: #faf8f5;
+  --background: #0a0a0f;
+  --foreground: #e8e4de;
+  --muted: #1a1a22;
+  --muted-fg: #9b9590;
+  --card: #111118;
+  --card-fg: #e8e4de;
+  --border: #2a2a35;
+  --ring: #c23b22;
+
+  /* --- 品牌色 — 朱砂 --- */
   --cinnabar: #c23b22;
+  --cinnabar-light: #d4543d;
+  --cinnabar-dark: #a32e1a;
+  --cinnabar-ghost: #c23b2215;
+
+  /* --- 品牌色 — 鎏金 --- */
   --gold: #c9a96e;
+  --gold-light: #d4b87e;
+  --gold-dark: #b8965a;
+  --gold-ghost: #c9a96e15;
+
+  /* --- 语义色 --- */
   --celadon: #5b9a8b;
+  --celadon-ghost: #5b9a8b15;
   --kiln: #d4833c;
+  --kiln-ghost: #d4833c15;
   --ash: #6b6b6b;
+  --ash-ghost: #6b6b6b15;
+  --crimson: #b83232;
+  --crimson-ghost: #b8323215;
   --bone: #e8e4de;
 
-  --background: var(--paper);
-  --foreground: var(--ink);
+  /* --- 角色专属色 --- */
+  --agent-scout: #a08560;
+  --agent-advocate: #d4833c;
+  --agent-critic: #6b6b6b;
+  --agent-arbiter: #c9a96e;
+  --agent-artist: #4a7a6b;
+  --agent-smith: #8b5e3c;
+  --agent-tester: #7a8a95;
+  --agent-herald: #c23b22;
+
+  /* --- 渐变 --- */
+  --gradient-ink: radial-gradient(ellipse at 50% 0%, #1a1a25 0%, #0a0a0f 70%);
+  --gradient-paper: linear-gradient(145deg, #faf8f5 0%, #f0ece6 100%);
+  --gradient-cinnabar: linear-gradient(135deg, #c23b22 0%, #d4543d 100%);
+  --gradient-gold: linear-gradient(135deg, #b8965a 0%, #d4b87e 50%, #c9a96e 100%);
+
+  /* --- 阴影 --- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.04);
+  --shadow-ink: 0 4px 20px rgba(10, 10, 15, 0.3);
+
+  /* --- 圆角 --- */
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
 }
 
-.dark {
-  --background: var(--ink);
-  --foreground: var(--bone);
-}
+/* ==========================================================================
+   基础重置
+   ========================================================================== */
 
 html,
 body {
@@ -41,4 +104,76 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* ==========================================================================
+   Keyframe 动画
+   ========================================================================== */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes stamp {
+  from { opacity: 0; transform: scale(1.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ripple {
+  0% { box-shadow: 0 0 0 0 var(--cinnabar); opacity: 1; }
+  100% { box-shadow: 0 0 0 20px transparent; opacity: 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--kiln); }
+  50% { box-shadow: 0 0 8px 4px var(--kiln-ghost); }
+}
+
+@keyframes ink-spread {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes drum-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--kiln); opacity: 1; }
+  50% { box-shadow: 0 0 0 6px transparent; opacity: 0.6; }
+}
+
+/* ==========================================================================
+   prefers-reduced-motion 降级
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   纸纹质感
+   ========================================================================== */
+
+.paper-texture::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
+  border-radius: inherit;
 }
