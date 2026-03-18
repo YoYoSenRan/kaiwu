@@ -126,19 +126,15 @@ openclaw cron add \
   --no-deliver
 ```
 
-### Step 6：关闭 Gateway 内置心跳
+### Step 6：Gateway 内置心跳（保留默认）
 
-在 `~/.openclaw/openclaw.json` 中设置：
-
-```json5
-{
-  agents: {
-    defaults: {
-      heartbeat: { every: null }
-    }
-  }
-}
-```
+> 原计划关闭内置心跳（`heartbeat.every: null`），但实际验证后决定保留：
+>
+> 1. OpenClaw config schema 不支持将 heartbeat.every 设为 null 或禁用
+> 2. 心跳触发时读取 HEARTBEAT.md，而所有 Agent 的 HEARTBEAT.md 仅含注释，不会触发业务操作
+> 3. 心跳（Gateway 健康检查）与更鼓（造物流调度 Cron）职责不同，互不干扰
+>
+> 默认心跳间隔 30m，保持即可。
 
 ### Step 7：配置 memory_search
 
@@ -176,7 +172,7 @@ mkdir -p ~/.openclaw/products
 - [ ] `listAgents()` 返回 8 个 Agent，ID 与数据库 agents 表一致
 - [ ] 每个 Agent 的 workspace 下有 SOUL.md / IDENTITY.md / TOOLS.md / HEARTBEAT.md / AGENTS.md / MEMORY.md
 - [ ] `openclaw cron list` 显示 3 个 Cron Job
-- [ ] Gateway 内置心跳已关闭
+- [ ] Gateway 内置心跳保留默认（30m），HEARTBEAT.md 仅含注释不触发业务
 - [ ] `~/.openclaw/products/` 目录存在
 
 ## 参考文档

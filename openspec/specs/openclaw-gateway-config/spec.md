@@ -1,12 +1,12 @@
 ## ADDED Requirements
 
-### Requirement: Gateway 内置心跳关闭
+### Requirement: Gateway 内置心跳保留默认
 
-openclaw.json 中 SHALL 设置 `agents.defaults.heartbeat.every: null`，禁用 Gateway 自带心跳。
+Gateway 内置心跳 SHALL 保留默认配置（30m 间隔），不禁用。所有 Agent 的 HEARTBEAT.md 仅含注释，心跳触发不产生业务操作。造物流调度由 Cron（更鼓）独立控制。
 
-#### Scenario: 心跳已关闭
-- **WHEN** 读取 openclaw.json 配置
-- **THEN** `agents.defaults.heartbeat.every` 为 null
+#### Scenario: 心跳不干扰业务
+- **WHEN** Gateway 心跳触发
+- **THEN** Agent 回复 HEARTBEAT_OK，不触发造物流操作
 
 ### Requirement: memory_search 混合搜索配置
 
