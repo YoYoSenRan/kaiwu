@@ -16,23 +16,12 @@ import { cn } from "@/lib/utils"
  * <InkWash variant="section" />
  * ```
  */
-export function InkWash({
-  variant = "hero",
-  children,
-  className,
-}: {
-  variant?: "hero" | "section"
-  children?: React.ReactNode
-  className?: string
-}): React.ReactElement {
+export function InkWash({ variant = "hero", children, className }: { variant?: "hero" | "section"; children?: React.ReactNode; className?: string }): React.ReactElement {
   if (variant === "section") {
     return (
       <div
         className={cn("h-30 w-full opacity-30", className)}
-        style={{
-          background:
-            "linear-gradient(to bottom, transparent, var(--muted) 50%, transparent)",
-        }}
+        style={{ background: "linear-gradient(to bottom, transparent, var(--muted) 50%, transparent)" }}
         aria-hidden="true"
       />
     )

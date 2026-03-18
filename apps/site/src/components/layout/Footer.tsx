@@ -7,9 +7,7 @@ const FOOTER_NAV = {
     { label: "造物坊", href: "/pipeline" },
     { label: "封存阁", href: "/stories?status=archived" },
   ],
-  局中人: [
-    { label: "认识他们", href: "/agents" },
-  ],
+  局中人: [{ label: "认识他们", href: "/agents" }],
   参与: [
     { label: "投一张物帖", href: "/trends" },
     { label: "关于", href: "/about" },
@@ -36,10 +34,7 @@ export function Footer(): React.ReactElement {
               <ul className="flex flex-col gap-2">
                 {links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-fg hover:text-foreground t-fast"
-                    >
+                    <Link href={link.href} className="text-sm text-muted-fg hover:text-foreground t-fast">
                       {link.label}
                     </Link>
                   </li>
@@ -50,13 +45,7 @@ export function Footer(): React.ReactElement {
         </div>
 
         {/* 下半区 */}
-        <div
-          className={cn(
-            "mt-12 pt-6 border-t border-border/30",
-            "flex flex-col md:flex-row items-center justify-between gap-2",
-            "text-xs text-muted-fg",
-          )}
-        >
+        <div className={cn("mt-12 pt-6 border-t border-border/30", "flex flex-col md:flex-row items-center justify-between gap-2", "text-xs text-muted-fg")}>
           <p>© 2026 开物局 · 以 OpenClaw 为底座</p>
           <div className="flex gap-4">
             <Link href="https://github.com" className="hover:text-foreground t-fast">

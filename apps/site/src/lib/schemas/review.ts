@@ -10,13 +10,9 @@ export const reviewSchema = z.object({
       description: z.string(),
       location: z.string(),
       suggestion: z.string(),
-    }),
+    })
   ),
-  summary: z.object({
-    critical: z.number().int().min(0),
-    warning: z.number().int().min(0),
-    info: z.number().int().min(0),
-  }),
+  summary: z.object({ critical: z.number().int().min(0), warning: z.number().int().min(0), info: z.number().int().min(0) }),
 })
 
 export type Review = z.infer<typeof reviewSchema>

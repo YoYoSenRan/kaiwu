@@ -4,7 +4,7 @@
 
 需求来源：`design/施工/07-游商采风/README.md`
 
-依赖的前置模块：`s02-openclaw-integration`（游商 workspace）、`s04-orchestrator`（tick + 阶段流转）
+依赖的前置模块：`s02-openclaw-integration`（游商 workspace）、`s04-orchestrator`（tick + 阶段流转）、`s05-site-skeleton`（首页路由 + 布局，仅首页组件部分依赖）
 
 ## What Changes
 

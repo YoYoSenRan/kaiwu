@@ -44,7 +44,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pha
   try {
     const [updated] = await db.update(phases).set({ output: parsed.data, status: "completed", completedAt: new Date() }).where(eq(phases.id, phaseId)).returning()
 
-    await emitEvent({ type: `${phase.type}_completed`, title: `${phase.type} 阶段产出已提交`, detail: parsed.data, projectId: phase.projectId, phaseId, agentId: agentId ?? undefined })
+    await emitEvent({
+      type: `${phase.type}_completed`,
+      title: `${phase.type} 阶段产出已提交`,
+      detail: parsed.data,
+      projectId: phase.projectId,
+      phaseId,
+      agentId: agentId ?? undefined,
+    })
 
     return NextResponse.json(updated, { status: 201 })
   } catch (err) {

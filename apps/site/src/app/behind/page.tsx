@@ -2,10 +2,7 @@ import type { Metadata } from "next"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { KeyRound } from "lucide-react"
 
-export const metadata: Metadata = {
-  title: "内坊 | 开物局",
-  description: "平时不让看的地方，现在让你看看。",
-}
+export const metadata: Metadata = { title: "内坊 | 开物局", description: "平时不让看的地方，现在让你看看。" }
 
 export default function BehindPage(): React.ReactElement {
   return (

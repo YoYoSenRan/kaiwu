@@ -23,7 +23,7 @@ export function LiveActivityBar(): React.ReactElement {
         "shadow-[var(--shadow-lg)]",
         "px-5 py-3",
         "flex items-center justify-between gap-3",
-        "text-sm text-foreground",
+        "text-sm text-foreground"
       )}
       style={{ animation: "slide-up 400ms ease" }}
     >
@@ -32,14 +32,8 @@ export function LiveActivityBar(): React.ReactElement {
         诤臣刚在「AI 写作助手」过堂中说了一句狠话
       </p>
       <div className="flex items-center gap-2 shrink-0">
-        <span className="text-muted-fg text-xs hover:text-foreground t-fast cursor-pointer">
-          查看 →
-        </span>
-        <button
-          onClick={() => setVisible(false)}
-          className="text-muted-fg hover:text-foreground t-fast p-0.5"
-          aria-label="关闭活动提示"
-        >
+        <span className="text-muted-fg text-xs hover:text-foreground t-fast cursor-pointer">查看 →</span>
+        <button onClick={() => setVisible(false)} className="text-muted-fg hover:text-foreground t-fast p-0.5" aria-label="关闭活动提示">
           <X className="w-3.5 h-3.5" />
         </button>
       </div>

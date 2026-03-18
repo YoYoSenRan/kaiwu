@@ -2,10 +2,7 @@ import type { Metadata } from "next"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Scroll } from "lucide-react"
 
-export const metadata: Metadata = {
-  title: "造物志 | 开物局",
-  description: "每个想法的一生。成器或封存，都值得一读。",
-}
+export const metadata: Metadata = { title: "造物志 | 开物局", description: "每个想法的一生。成器或封存，都值得一读。" }
 
 export default function StoriesPage(): React.ReactElement {
   return (

@@ -3,15 +3,18 @@
 ## 工具使用策略
 
 ### 通用工具
+
 - **get_my_stats** — 读取我的属性面板（稳妥、利落、周全、兜底）
 - **memory_search** — 回忆过往部署经验（OpenClaw 内置）
 - **get_project_context** — 读取当前项目上下文
 - **write_log** — 记录思考过程和关键决策
 
 ### 角色专属工具
+
 - **submit_deploy_report** — 提交鸣锣报告
 
 ### 外部工具
+
 - **deploy** — 部署到 Vercel
 - **dns_config** — 域名配置
 - **smoke_test** — 冒烟测试（自动访问关键页面）

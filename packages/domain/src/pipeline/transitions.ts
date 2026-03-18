@@ -21,21 +21,13 @@ export async function transitionPhase(project: ProjectContext, phase: PhaseConte
 
     if (decision.action === "advance" && decision.nextPhase) {
       // 2a. 创建下一阶段
-      await tx.insert(phases).values({
-        projectId: project.id,
-        type: decision.nextPhase,
-        status: PHASE_STATUS.PENDING,
-      })
+      await tx.insert(phases).values({ projectId: project.id, type: decision.nextPhase, status: PHASE_STATUS.PENDING })
 
       // 3a. 更新项目当前阶段
       await tx.update(projects).set({ currentPhase: decision.nextPhase, updatedAt: new Date() }).where(eq(projects.id, project.id))
     } else if (decision.action === "rollback" && decision.targetPhase) {
       // 2b. 回退到目标阶段（如试剑打回锻造）
-      await tx.insert(phases).values({
-        projectId: project.id,
-        type: decision.targetPhase,
-        status: PHASE_STATUS.PENDING,
-      })
+      await tx.insert(phases).values({ projectId: project.id, type: decision.targetPhase, status: PHASE_STATUS.PENDING })
 
       await tx.update(projects).set({ currentPhase: decision.targetPhase, updatedAt: new Date() }).where(eq(projects.id, project.id))
     } else if (decision.action === "seal") {

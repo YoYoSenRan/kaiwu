@@ -13,18 +13,8 @@ export default defineConfig({
       border: "var(--border)",
       ring: "var(--ring)",
       bone: "var(--bone)",
-      cinnabar: {
-        DEFAULT: "var(--cinnabar)",
-        light: "var(--cinnabar-light)",
-        dark: "var(--cinnabar-dark)",
-        ghost: "var(--cinnabar-ghost)",
-      },
-      gold: {
-        DEFAULT: "var(--gold)",
-        light: "var(--gold-light)",
-        dark: "var(--gold-dark)",
-        ghost: "var(--gold-ghost)",
-      },
+      cinnabar: { DEFAULT: "var(--cinnabar)", light: "var(--cinnabar-light)", dark: "var(--cinnabar-dark)", ghost: "var(--cinnabar-ghost)" },
+      gold: { DEFAULT: "var(--gold)", light: "var(--gold-light)", dark: "var(--gold-dark)", ghost: "var(--gold-ghost)" },
       celadon: { DEFAULT: "var(--celadon)", ghost: "var(--celadon-ghost)" },
       kiln: { DEFAULT: "var(--kiln)", ghost: "var(--kiln-ghost)" },
       ash: { DEFAULT: "var(--ash)", ghost: "var(--ash-ghost)" },
@@ -40,11 +30,7 @@ export default defineConfig({
         herald: "var(--agent-herald)",
       },
     },
-    fontFamily: {
-      display: "var(--font-display)",
-      body: "var(--font-body)",
-      mono: "var(--font-mono)",
-    },
+    fontFamily: { display: "var(--font-display)", body: "var(--font-body)", mono: "var(--font-mono)" },
   },
   shortcuts: {
     "t-fast": "transition-all duration-150 ease",

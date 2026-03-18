@@ -1,33 +1,15 @@
 /** 阶段状态 */
-export const PHASE_STATUS = {
-  PENDING: "pending",
-  IN_PROGRESS: "in_progress",
-  COMPLETED: "completed",
-  FAILED: "failed",
-  BLOCKED: "blocked",
-} as const
+export const PHASE_STATUS = { PENDING: "pending", IN_PROGRESS: "in_progress", COMPLETED: "completed", FAILED: "failed", BLOCKED: "blocked" } as const
 
 export type PhaseStatus = (typeof PHASE_STATUS)[keyof typeof PHASE_STATUS]
 
 /** 项目状态 */
-export const PROJECT_STATUS = {
-  RUNNING: "running",
-  LAUNCHED: "launched",
-  DEAD: "dead",
-  BLOCKED: "blocked",
-} as const
+export const PROJECT_STATUS = { RUNNING: "running", LAUNCHED: "launched", DEAD: "dead", BLOCKED: "blocked" } as const
 
 export type ProjectStatus = (typeof PROJECT_STATUS)[keyof typeof PROJECT_STATUS]
 
 /** 阶段类型 */
-export const PHASE_TYPE = {
-  SCOUT: "scout",
-  COUNCIL: "council",
-  ARCHITECT: "architect",
-  BUILDER: "builder",
-  INSPECTOR: "inspector",
-  DEPLOYER: "deployer",
-} as const
+export const PHASE_TYPE = { SCOUT: "scout", COUNCIL: "council", ARCHITECT: "architect", BUILDER: "builder", INSPECTOR: "inspector", DEPLOYER: "deployer" } as const
 
 export type PhaseType = (typeof PHASE_TYPE)[keyof typeof PHASE_TYPE]
 

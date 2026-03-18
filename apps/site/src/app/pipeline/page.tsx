@@ -2,10 +2,7 @@ import type { Metadata } from "next"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Hammer } from "lucide-react"
 
-export const metadata: Metadata = {
-  title: "造物坊 | 开物局",
-  description: "此刻，造物流上正在发生的事。",
-}
+export const metadata: Metadata = { title: "造物坊 | 开物局", description: "此刻，造物流上正在发生的事。" }
 
 export default function PipelinePage(): React.ReactElement {
   return (

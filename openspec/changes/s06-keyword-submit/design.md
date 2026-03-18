@@ -19,6 +19,8 @@
 - 不实现物帖的编辑/删除（提交后不可修改）
 - 不实现物帖墙的动画效果（属于打磨阶段）
 - 不实现内容审核机制（敏感词过滤 + AI 审核 + 举报），属于打磨阶段
+- 不实现个人主页 /u/:username（属于后续模块）
+- 不实现通知系统（属于后续模块）
 
 ## Decisions
 
@@ -26,21 +28,27 @@
 
 不引入 NextAuth 等重型库。直接用 JWT 存在 httpOnly cookie 中，轻量够用。JWT payload 含 userId + githubId + username。
 
-### D2: Server Actions 优先
+### D2: Server Actions 优先 + 乐观更新
 
 物帖提交和投票用 Next.js Server Actions，不走 Route Handler。表单提交更自然，progressive enhancement 友好。
+
+投票使用乐观更新（useOptimistic）：点击后立即更新票数和按钮状态，Server Action 失败时回滚。不用 revalidatePath 整页刷新——投票是高频交互，体验优先。
 
 ### D3: 权重公式
 
 严格按 `用户参与体系.md` 实现：
 ```
-权重 = (seal_votes × 3) + (blank_votes × 2) + time_decay_bonus + submitter_bonus
+权重 = (sealVotes × 3) + (blankVotes × 2) + max(0, 10 × (1 - daysSinceSubmit / 30)) + submitterBonus
 ```
 留白票也是正向加分——争议本身就是看点。
 
 ### D4: 重复检测 — 简单文本匹配
 
 MVP 阶段用简单的文本相似度检测（完全相同或包含关系）。不引入向量搜索。
+
+### D5: 物帖卡片使用东方组件
+
+KeywordCard 基于 s05 的 PaperCard 组件（宣纸卡片），投票按钮用 StampBadge 的朱砂印章风格。盖印点击时触发 stamp 动画（scale 1.3→1）。保持东方调性一致。
 
 ## Risks / Trade-offs
 

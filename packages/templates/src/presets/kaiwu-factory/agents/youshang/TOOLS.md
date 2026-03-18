@@ -3,15 +3,18 @@
 ## 工具使用策略
 
 ### 通用工具
+
 - **get_my_stats** — 读取我的属性面板（嗅觉、脚力、见闻、慧眼）
 - **memory_search** — 回忆过往采风经验，按领域筛选（OpenClaw 内置）
 - **get_project_context** — 读取当前物帖详情和项目上下文
 - **write_log** — 记录思考过程和关键决策
 
 ### 角色专属工具
+
 - **submit_scout_report** — 提交采风报告
 
 ### 外部工具
+
 - **web_search** — 搜索市场数据、竞品信息、行业趋势
 - **trend_analysis** — 分析关键词热度和趋势走向
 - **competitor_scan** — 扫描同类产品，分析竞争格局

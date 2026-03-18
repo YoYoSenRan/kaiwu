@@ -3,15 +3,18 @@
 ## 工具使用策略
 
 ### 通用工具
+
 - **get_my_stats** — 读取我的属性面板（眼力、精准、严苛、公道）
 - **memory_search** — 回忆过往审查经验（OpenClaw 内置）
 - **get_project_context** — 读取当前项目上下文和蓝图
 - **write_log** — 记录思考过程和关键决策
 
 ### 角色专属工具
+
 - **submit_review** — 提交试剑报告
 
 ### 外部工具
+
 - **code_review** — 代码审查
 - **lint_check** — Lint 和类型检查
 - **security_scan** — 依赖漏洞扫描

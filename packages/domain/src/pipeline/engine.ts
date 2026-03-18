@@ -96,7 +96,10 @@ export async function tick(): Promise<TickResult> {
   const stale = await detectStale(phaseCtx)
   if (stale) {
     // 标记 failed，进入自愈
-    await db.update(phases).set({ status: PHASE_STATUS.FAILED, failCount: phase.failCount + 1, updatedAt: new Date() }).where(eq(phases.id, phase.id))
+    await db
+      .update(phases)
+      .set({ status: PHASE_STATUS.FAILED, failCount: phase.failCount + 1, updatedAt: new Date() })
+      .where(eq(phases.id, phase.id))
 
     const recovery = handleFailure(phase.failCount + 1, phaseCtx)
     await trackTickExecuted(project.id, `stale_${recovery.level}`, project.currentPhase)
@@ -140,21 +143,12 @@ async function pickNextKeyword(): Promise<TickResult> {
   if (!project) throw new Error("Failed to create project")
 
   // 创建采风阶段
-  await db.insert(phases).values({
-    projectId: project.id,
-    type: PHASE_TYPE.SCOUT,
-    status: PHASE_STATUS.PENDING,
-  })
+  await db.insert(phases).values({ projectId: project.id, type: PHASE_TYPE.SCOUT, status: PHASE_STATUS.PENDING })
 
   // 更新物帖状态
   await db.update(keywords).set({ status: "in_pipeline" }).where(eq(keywords.id, keyword.id))
 
-  await emitEvent({
-    type: "project_created",
-    title: `新造物令：${keyword.text}`,
-    detail: { keywordId: keyword.id, keyword: keyword.text },
-    projectId: project.id,
-  })
+  await emitEvent({ type: "project_created", title: `新造物令：${keyword.text}`, detail: { keywordId: keyword.id, keyword: keyword.text }, projectId: project.id })
 
   return { projectId: project.id, action: "dispatched", detail: `新造物令「${keyword.text}」已创建，进入采风`, phaseType: PHASE_TYPE.SCOUT }
 }
@@ -163,12 +157,7 @@ async function pickNextKeyword(): Promise<TickResult> {
 async function sealProject(projectId: string, epitaph: string): Promise<void> {
   await db.update(projects).set({ status: PROJECT_STATUS.DEAD, updatedAt: new Date() }).where(eq(projects.id, projectId))
 
-  await emitEvent({
-    type: "project_sealed",
-    title: "造物令封存",
-    detail: { epitaph },
-    projectId,
-  })
+  await emitEvent({ type: "project_sealed", title: "造物令封存", detail: { epitaph }, projectId })
 }
 
 /** DB row → PhaseContext */

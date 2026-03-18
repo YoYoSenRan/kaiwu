@@ -19,9 +19,7 @@ interface CallAgentResult {
 
 /** 分发任务给 Agent（异步，不等结果） */
 export async function callAgent(opts: CallAgentOptions): Promise<CallAgentResult> {
-  const { jobId } = await dispatchAgentTask(opts.agentId, opts.message, {
-    timeoutSeconds: opts.timeoutSeconds,
-  })
+  const { jobId } = await dispatchAgentTask(opts.agentId, opts.message, { timeoutSeconds: opts.timeoutSeconds })
 
   await emitEvent({
     type: "agent_dispatched",

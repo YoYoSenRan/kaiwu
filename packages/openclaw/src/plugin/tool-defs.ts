@@ -113,7 +113,7 @@ export const debateTools: ToolDef[] = [
           data: Type.String({ description: "引用的具体数据" }),
           url: Type.Optional(Type.String({ description: "来源 URL" })),
         }),
-        { description: "引用列表" },
+        { description: "引用列表" }
       ),
       keyPoint: Type.String({ description: "本轮核心论点（一句话）" }),
     }),
@@ -128,7 +128,7 @@ export const debateTools: ToolDef[] = [
           citations: params.citations as { source: string; data: string; url?: string }[],
           keyPoint: params.keyPoint as string,
         },
-        agentId,
+        agentId
       )
       return textResult(result)
     },
@@ -159,12 +159,8 @@ export const buildTools: ToolDef[] = [
       const agentId = agentIdFrom(id)
       const result = await completeTask(
         params.taskId as string,
-        {
-          commits: params.commits as string[] | undefined,
-          decisions: params.decisions as string[] | undefined,
-          note: params.note as string | undefined,
-        },
-        agentId,
+        { commits: params.commits as string[] | undefined, decisions: params.decisions as string[] | undefined, note: params.note as string | undefined },
+        agentId
       )
       return textResult(result)
     },
@@ -189,10 +185,26 @@ export const submitTools: ToolDef[] = [
         differentiation: Type.String(),
       }),
       dimensions: Type.Object({
-        market: Type.Object({ score: Type.Number({ minimum: 0, maximum: 100 }), summary: Type.String(), data: Type.Object({ marketSize: Type.String(), trend: Type.String(), competitors: Type.Array(Type.String()) }) }),
-        userNeed: Type.Object({ score: Type.Number({ minimum: 0, maximum: 100 }), summary: Type.String(), data: Type.Object({ painPointValidation: Type.String(), frequency: Type.String(), willingness: Type.String() }) }),
-        differentiation: Type.Object({ score: Type.Number({ minimum: 0, maximum: 100 }), summary: Type.String(), data: Type.Object({ competitorWeaknesses: Type.Array(Type.String()), entryAngle: Type.String() }) }),
-        showcasePotential: Type.Object({ score: Type.Number({ minimum: 0, maximum: 100 }), summary: Type.String(), data: Type.Object({ visualStyle: Type.String(), interactionIdea: Type.String(), references: Type.Array(Type.String()) }) }),
+        market: Type.Object({
+          score: Type.Number({ minimum: 0, maximum: 100 }),
+          summary: Type.String(),
+          data: Type.Object({ marketSize: Type.String(), trend: Type.String(), competitors: Type.Array(Type.String()) }),
+        }),
+        userNeed: Type.Object({
+          score: Type.Number({ minimum: 0, maximum: 100 }),
+          summary: Type.String(),
+          data: Type.Object({ painPointValidation: Type.String(), frequency: Type.String(), willingness: Type.String() }),
+        }),
+        differentiation: Type.Object({
+          score: Type.Number({ minimum: 0, maximum: 100 }),
+          summary: Type.String(),
+          data: Type.Object({ competitorWeaknesses: Type.Array(Type.String()), entryAngle: Type.String() }),
+        }),
+        showcasePotential: Type.Object({
+          score: Type.Number({ minimum: 0, maximum: 100 }),
+          summary: Type.String(),
+          data: Type.Object({ visualStyle: Type.String(), interactionIdea: Type.String(), references: Type.Array(Type.String()) }),
+        }),
       }),
       overallScore: Type.Number({ minimum: 0, maximum: 100 }),
       verdict: Type.Union([Type.Literal("green"), Type.Literal("yellow"), Type.Literal("red")]),
@@ -230,7 +242,9 @@ export const submitTools: ToolDef[] = [
     parameters: Type.Object({
       phaseId: phaseIdParam,
       positioning: Type.Object({ oneLiner: Type.String(), sellingPoints: Type.Array(Type.String()), targetAudience: Type.String() }),
-      pageStructure: Type.Array(Type.Object({ section: Type.String(), title: Type.String(), content: Type.String(), layout: Type.String(), visual: Type.String(), interaction: Type.String() })),
+      pageStructure: Type.Array(
+        Type.Object({ section: Type.String(), title: Type.String(), content: Type.String(), layout: Type.String(), visual: Type.String(), interaction: Type.String() })
+      ),
       visualDirection: Type.Object({
         primaryColor: Type.String(),
         secondaryColor: Type.String(),
@@ -253,7 +267,7 @@ export const submitTools: ToolDef[] = [
           assignTo: Type.String(),
           dependsOn: Type.Array(Type.String()),
           priority: Type.Integer(),
-        }),
+        })
       ),
     }),
     async execute(id, params) {
@@ -276,7 +290,7 @@ export const submitTools: ToolDef[] = [
           description: Type.String(),
           location: Type.String(),
           suggestion: Type.String(),
-        }),
+        })
       ),
       summary: Type.Object({ critical: Type.Integer({ minimum: 0 }), warning: Type.Integer({ minimum: 0 }), info: Type.Integer({ minimum: 0 }) }),
     }),

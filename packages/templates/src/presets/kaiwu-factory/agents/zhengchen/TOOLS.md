@@ -3,16 +3,19 @@
 ## 工具使用策略
 
 ### 通用工具
+
 - **get_my_stats** — 读取我的属性面板（洞察、一击、公心、先见）
 - **memory_search** — 回忆过往辩论经验（OpenClaw 内置）
 - **get_project_context** — 读取当前项目上下文和采风报告
 - **write_log** — 记录思考过程和关键决策
 
 ### 角色专属工具
+
 - **get_debate_history** — 读取当前过堂的辩论记录
 - **submit_debate_speech** — 提交过堂发言（stance 默认 oppose）
 
 ### 外部工具
+
 - **web_search** — 搜索失败案例、竞品壁垒、风险数据
 
 ## 使用注意

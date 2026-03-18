@@ -3,16 +3,19 @@
 ## 工具使用策略
 
 ### 通用工具
+
 - **get_my_stats** — 读取我的属性面板（手艺、耐力、巧思、返工率）
 - **memory_search** — 回忆过往锻造经验（OpenClaw 内置）
 - **get_project_context** — 读取当前项目上下文和蓝图
 - **write_log** — 记录思考过程和关键决策
 
 ### 角色专属工具
+
 - **get_my_tasks** — 获取分配给我的待办任务列表
 - **complete_task** — 提交任务完成报告
 
 ### 外部工具
+
 - **code_gen** — 生成前端代码
 - **file_ops** — 文件读写操作
 - **web_search** — 查询技术文档和解决方案

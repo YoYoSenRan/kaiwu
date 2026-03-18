@@ -2,16 +2,9 @@ import type { Metadata } from "next"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { PageHeader } from "@/components/layout/PageHeader"
 
-export const metadata: Metadata = {
-  title: "造物志详情 | 开物局",
-  description: "一件器物从物帖到问世的完整记录。",
-}
+export const metadata: Metadata = { title: "造物志详情 | 开物局", description: "一件器物从物帖到问世的完整记录。" }
 
-export default async function StoryDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}): Promise<React.ReactElement> {
+export default async function StoryDetailPage({ params }: { params: Promise<{ id: string }> }): Promise<React.ReactElement> {
   const { id } = await params
   return (
     <>

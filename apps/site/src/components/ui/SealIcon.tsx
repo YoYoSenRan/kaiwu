@@ -13,23 +13,10 @@ import { cn } from "@/lib/utils"
  * <SealIcon rotate={3}>成</SealIcon>
  * ```
  */
-export function SealIcon({
-  children,
-  rotate = -2,
-  className,
-}: {
-  children: React.ReactNode
-  rotate?: number
-  className?: string
-}): React.ReactElement {
+export function SealIcon({ children, rotate = -2, className }: { children: React.ReactNode; rotate?: number; className?: string }): React.ReactElement {
   return (
     <span
-      className={cn(
-        "inline-flex items-center justify-center",
-        "w-6 h-6 text-xs font-display font-700",
-        "text-cinnabar border-2 border-cinnabar rounded-sm",
-        className,
-      )}
+      className={cn("inline-flex items-center justify-center", "w-6 h-6 text-xs font-display font-700", "text-cinnabar border-2 border-cinnabar rounded-sm", className)}
       style={{ transform: `rotate(${rotate}deg)` }}
       aria-hidden="true"
     >

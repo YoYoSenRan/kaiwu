@@ -2,10 +2,7 @@ import type { Metadata } from "next"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Users } from "lucide-react"
 
-export const metadata: Metadata = {
-  title: "局中人 | 开物局",
-  description: "各司其职，偶有争执，但造物之心，始终如一。",
-}
+export const metadata: Metadata = { title: "局中人 | 开物局", description: "各司其职，偶有争执，但造物之心，始终如一。" }
 
 export default function AgentsPage(): React.ReactElement {
   return (

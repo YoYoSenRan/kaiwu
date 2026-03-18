@@ -61,6 +61,9 @@ importers:
       drizzle-orm:
         specifier: ^0.39
         version: 0.39.3(postgres@3.4.8)
+      jose:
+        specifier: ^6.2.1
+        version: 6.2.1
       lucide-react:
         specifier: ^0.577.0
         version: 0.577.0(react@19.2.3)
@@ -2012,6 +2015,9 @@ packages:
     resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
     hasBin: true
 
+  jose@6.2.1:
+    resolution: {integrity: sha512-jUaKr1yrbfaImV7R2TN/b3IcZzsw38/chqMpo2XJ7i2F8AfM/lA4G1goC3JVEwg0H7UldTmSt3P68nt31W7/mw==}
+
   lightningcss-android-arm64@1.32.0:
     resolution: {integrity: sha512-YK7/ClTt4kAK0vo6w3X+Pnm0D2cf2vPHbhOXdoNti1Ga0al1P4TBZhwjATvjNwLEBCnKvjJc2jQgHXH0NEwlAg==}
     engines: {node: '>= 12.0.0'}
@@ -3835,6 +3841,8 @@ snapshots:
   isexe@3.1.5: {}
 
   jiti@2.6.1: {}
+
+  jose@6.2.1: {}
 
   lightningcss-android-arm64@1.32.0:
     optional: true

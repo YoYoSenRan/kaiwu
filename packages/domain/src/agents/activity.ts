@@ -16,13 +16,7 @@ interface UpdateActivityOptions {
 export async function updateActivity(opts: UpdateActivityOptions): Promise<void> {
   await db
     .update(agents)
-    .set({
-      status: opts.status,
-      activity: opts.activity,
-      activityDetail: opts.activityDetail ?? null,
-      currentProject: opts.currentProject ?? undefined,
-      updatedAt: new Date(),
-    })
+    .set({ status: opts.status, activity: opts.activity, activityDetail: opts.activityDetail ?? null, currentProject: opts.currentProject ?? undefined, updatedAt: new Date() })
     .where(eq(agents.id, opts.agentId))
 }
 

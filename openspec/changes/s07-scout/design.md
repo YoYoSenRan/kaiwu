@@ -21,15 +21,37 @@
 
 ## Decisions
 
-### D1: 采风一次完成
+### D1: 采风一次完成（异步状态机下的含义）
 
-设计文档说采风可以分步（每次更鼓一个维度），但 MVP 阶段简化为一次 tick 完成整个采风。游商一次调用产出完整报告。后续如果需要分步展示过程，再拆分。
+设计文档说采风可以分步（每次更鼓一个维度），MVP 简化为"一次 agent turn 完成"。
 
-### D2: 封存辞由游商生成
+在 s04 异步状态机模型下，"一次完成"意味着：
+- 游商在一次 isolated session 内完成所有调研，通过 `submit_scout_report` tool 将报告写入 `phases.output`
+- 编排层 `advance()` 不等 Agent——首次检查 output 为空时分发任务（`in_progress`），下次 tick 检查 output 有值时校验并流转（`completed`）
+- 所以采风需要 **2 次 tick**：分发 + 收结果
 
-评分 < 60 时，额外调用游商一次生成封存辞。不由编排层硬编码。
+```
+tick N:   phase.output 为空 → callAgent("youshang", 采风消息) → in_progress
+          （游商在 isolated session 中调研 → submit_scout_report 写入 output）
+tick N+1: phase.output 有值 → Zod 校验 → decideAfterScout → advance/seal
+```
+
+### D2: 封存辞用编排层模板（与 s04 D11 一致）
+
+~~原方案：额外调用游商生成封存辞。~~
+
+修正：异步模型下 tick 不等 Agent，无法"额外调一次"。封存辞用编排层模板：`"市场尚未准备好。也许换个时机。"`。
+
+如果采风报告中有 `privateNote` 字段，可以拼接到封存辞后面，增加个性化——但不额外发起 Agent 调用。
+
+### D3: 依赖 s05 展示网站骨架
+
+首页全景（tasks 4 组）和群聊记录（tasks 5 组）需要 `apps/site/src/app/(home)/page.tsx` 存在。此文件由 s05 创建。
+
+如果 s05 未完成，4-5 组任务延后。采风核心逻辑（1-3 组）不依赖 s05，可独立完成。
 
 ## Risks / Trade-offs
 
-- **采风一次完成 vs 分步**：一次完成简化了编排逻辑，但展示网站上看不到"采风过程"。→ MVP 先跑通，后续可拆分。
+- **采风需要 2 次 tick**：分发 + 收结果，间隔约 10-20 分钟。→ 可接受，对展示网站来说有"游商正在采风"的过程感。
 - **prompt 质量**：游商的采风质量高度依赖 SOUL.md prompt。→ 手动测试 5-10 次，迭代精调。
+- **首页组件依赖 s05**：如果 s05 延后，首页部分无法交付。→ 采风核心逻辑不受影响。

@@ -37,11 +37,7 @@ export async function dispatchAgentTask(agentId: string, message: string, opts?:
       schedule: { kind: "at", at: new Date().toISOString() },
       sessionTarget: "isolated",
       agentId,
-      payload: {
-        kind: "agentTurn",
-        message,
-        timeoutSeconds: opts?.timeoutSeconds ?? 300,
-      },
+      payload: { kind: "agentTurn", message, timeoutSeconds: opts?.timeoutSeconds ?? 300 },
       delivery: { mode: "none" },
       deleteAfterRun: true,
     },
@@ -96,10 +92,7 @@ function parseCronIntervalMs(cron: string): number {
 
 /** 更新 cron job 间隔（退避/恢复时用） */
 export async function updateCronInterval(jobId: string, intervalMs: number): Promise<void> {
-  await gatewayFetch(`/api/cron/jobs/${jobId}`, {
-    method: "PATCH",
-    body: { schedule: { kind: "every", every: intervalMs } },
-  })
+  await gatewayFetch(`/api/cron/jobs/${jobId}`, { method: "PATCH", body: { schedule: { kind: "every", every: intervalMs } } })
 }
 
 /** LLM provider 健康检查 */

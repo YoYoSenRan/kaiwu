@@ -8,17 +8,12 @@ import { allTools } from "./tool-defs"
 
 /** OpenClaw Plugin 注册函数 — 导出为默认函数供 Gateway 加载 */
 export default function register(api: {
-  registerTool: (def: { name: string; description: string; parameters: unknown; execute: (id: string, params: Record<string, unknown>) => Promise<unknown> }, options?: { optional?: boolean }) => void
+  registerTool: (
+    def: { name: string; description: string; parameters: unknown; execute: (id: string, params: Record<string, unknown>) => Promise<unknown> },
+    options?: { optional?: boolean }
+  ) => void
 }): void {
   for (const tool of allTools) {
-    api.registerTool(
-      {
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.parameters,
-        execute: tool.execute,
-      },
-      { optional: tool.optional ?? true },
-    )
+    api.registerTool({ name: tool.name, description: tool.description, parameters: tool.parameters, execute: tool.execute }, { optional: tool.optional ?? true })
   }
 }

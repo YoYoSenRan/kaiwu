@@ -18,13 +18,7 @@ import { cn } from "@/lib/utils"
  * </PaperCard>
  * ```
  */
-export function PaperCard({
-  children,
-  className,
-}: {
-  children: ReactNode
-  className?: string
-}): React.ReactElement {
+export function PaperCard({ children, className }: { children: ReactNode; className?: string }): React.ReactElement {
   return (
     <div
       className={cn(
@@ -35,7 +29,7 @@ export function PaperCard({
         "shadow-[var(--shadow)]",
         "hover:shadow-[var(--shadow-lg)] hover:translate-y--0.5",
         "t-base",
-        className,
+        className
       )}
     >
       {/* 左上折角 */}
