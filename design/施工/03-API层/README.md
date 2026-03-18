@@ -15,7 +15,6 @@ apps/site/src/app/api/pipeline/
 ├── agents/
 │   ├── [agentId]/
 │   │   ├── stats/route.ts           # GET — 获取 Agent 属性
-│   │   ├── memories/route.ts        # GET — 获取 Agent 记忆（预留，当前从文件读）
 │   │   └── logs/route.ts            # POST — 写入 Agent 日志
 │   └── route.ts                     # GET — 获取所有 Agent 列表和状态
 ├── projects/

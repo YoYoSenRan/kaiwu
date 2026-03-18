@@ -1,20 +1,26 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  项目：开物局（kaiwu）— AI Agent 协作造物展示平台
+  架构：Turborepo Monorepo
+  技术栈：Next.js 16 + React 19 + UnoCSS + shadcn/ui + Drizzle ORM + PostgreSQL + Upstash Redis + OpenClaw Gateway + SSE
+  语言：TypeScript strict mode
+  包管理：pnpm workspace
+  代码规范：oxlint + oxfmt，禁止 any，文件 kebab-case，组件 PascalCase
+  部署：VPS（Next.js + OpenClaw 同机）+ Supabase/Neon + Cloudflare R2
+  设计文档：design/ 目录下，施工文档在 design/施工/ 下按模块编号
+  施工原则：垂直切片、先跑通再打磨、每个模块有独立验收标准
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - 用简体中文撰写
+    - 引用对应的 design/施工/XX-模块名/README.md 作为需求来源
+    - 明确列出依赖的前置模块
+  design:
+    - 技术方案必须与 design/技术架构.md 保持一致
+    - 数据模型必须与 design/数据模型.md 保持一致
+    - 不引入设计文档未提及的第三方依赖
+  tasks:
+    - 每个 task 对应一个可独立验证的产出
+    - task 描述中标注要创建/修改的文件路径
+    - 包含验收条件

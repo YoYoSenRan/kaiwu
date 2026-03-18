@@ -1,0 +1,35 @@
+## Why
+
+Agent 需要通过 tool 调用读写数据库（获取属性、提交产出、写日志），展示网站需要通过 SSE 接收实时事件。API 层是 Agent 和展示网站与数据库之间的桥梁，没有它编排层和前端都无法工作。
+
+需求来源：`design/施工/03-API层/README.md`
+
+依赖的前置模块：`s01-database-schema`（表定义和 db 实例）
+
+## What Changes
+
+- 在 `apps/site/src/app/api/pipeline/` 下实现 Route Handlers（读取 + 写入接口）
+- 在 `apps/site/src/app/api/pipeline/events/stream/` 实现 SSE 端点（含 Last-Event-ID 断线恢复）
+- 在 `apps/site/src/lib/` 下创建 API 工具函数（apiHandler、event-bus、Zod schemas）
+- 在 `packages/openclaw/src/tools/` 下封装 9 个 OpenClaw Tool
+
+## Capabilities
+
+### New Capabilities
+
+- `api-read`: Agent 数据读取接口（agents 列表/stats、project context、debates、tasks）
+- `api-write`: Agent 数据写入接口（phase output、debate speech、task complete、agent log）
+- `api-sse`: SSE 实时推送端点（EventBus + Last-Event-ID 断线恢复）
+- `openclaw-tools`: 9 个 OpenClaw Tool 封装（getMyStats、getProjectContext、getDebateHistory、getMyTasks、getMyMemories、submitOutput、submitDebateSpeech、completeTask、writeLog）
+
+### Modified Capabilities
+
+（无）
+
+## Impact
+
+- 新增 `apps/site/src/app/api/pipeline/` 下约 10 个 route.ts 文件
+- 新增 `apps/site/src/lib/api-utils.ts`、`event-bus.ts`、`schemas/` 目录
+- 新增 `packages/openclaw/src/tools/` 下 9 个 tool 文件 + index.ts
+- 依赖 `@kaiwu/db` 的 schema 和 db 实例
+- 依赖 zod 做请求校验

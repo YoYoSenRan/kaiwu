@@ -25,7 +25,7 @@
                        ▼
 ┌─────────────────────────────────────────────────────┐
 │              Route Handler (API 层)                  │
-│         apps/console/src/app/api/pipeline/           │
+│         apps/site/src/app/api/pipeline/              │
 │                                                     │
 │   校验 token → 执行业务逻辑 → 读写数据库             │
 │                                                     │
@@ -101,11 +101,13 @@ GET /api/pipeline/agents/:agentId/stats
 
 #### 获取自己的记忆
 
+> **注意**：MVP 阶段记忆走 OpenClaw 原生 `memory_search`，不走自建 Route Handler。`getMyMemories` Tool 直接调用 OpenClaw Gateway API，不经过 `/api/pipeline/`。后续如需自建记忆索引再迁移。
+
 ```
-GET /api/pipeline/agents/:agentId/memories?type=lesson&limit=10
+OpenClaw memory_search API（非自建端点）
 ```
 
-响应：
+响应（由 OpenClaw Gateway 返回）：
 
 ```json
 {
