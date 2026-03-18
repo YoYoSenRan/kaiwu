@@ -40,5 +40,5 @@
 
 - [x] 6.1 执行 `pnpm install` 无报错
 - [x] 6.2 执行 `pnpm typecheck` 所有 package 通过
-- [x] 6.3 执行 `pnpm dev:site` 浏览器可访问 localhost:3000
+- [x] 6.3 执行 `pnpm dev:site` 浏览器可访问 localhost:3600
 - [x] 6.4 执行 `pnpm lint` 通过

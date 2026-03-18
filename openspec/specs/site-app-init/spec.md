@@ -6,7 +6,7 @@
 
 #### Scenario: 开发服务器启动
 - **WHEN** 执行 `pnpm dev:site`
-- **THEN** Next.js 开发服务器在 localhost:3000 启动，浏览器可访问
+- **THEN** Next.js 开发服务器在 localhost:3600 启动，浏览器可访问
 
 #### Scenario: 构建成功
 - **WHEN** 执行 `pnpm build --filter=@kaiwu/site`

@@ -260,7 +260,7 @@ GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 
 # Next.js
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_URL=http://localhost:3600
 ```
 
 ### Step 7：.gitignore
@@ -289,7 +289,7 @@ pnpm dev:site     # 展示网站可启动
 - [ ] `pnpm install` 无报错
 - [ ] `pnpm typecheck` 所有 package 通过
 - [ ] `pnpm lint` 通过
-- [ ] `pnpm dev:site` 可启动，浏览器访问 localhost:3000 有页面
+- [ ] `pnpm dev:site` 可启动，浏览器访问 localhost:3600 有页面
 - [ ] 各 package 可以互相 import（如 `import { db } from "@kaiwu/db"`）
 - [ ] CLAUDE.md 存在且内容完整
 - [ ] .claude/rules/ 下有 6 个规范文件

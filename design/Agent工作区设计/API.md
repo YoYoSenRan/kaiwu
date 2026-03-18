@@ -257,7 +257,7 @@ export const getMyStats = defineTool({
   description: "读取我的属性面板——嗅觉、脚力、见闻、慧眼等当前星级和原始数据",
 
   async execute(ctx) {
-    const res = await fetch(`http://127.0.0.1:3000/api/pipeline/agents/${ctx.agentId}/stats`)
+    const res = await fetch(`http://127.0.0.1:3600/api/pipeline/agents/${ctx.agentId}/stats`)
     return res.json()
   },
 })
@@ -284,7 +284,7 @@ export const submitScoutReport = defineTool({
   input: ScoutReportSchema,
 
   async execute(ctx, input) {
-    const res = await fetch(`http://127.0.0.1:3000/api/pipeline/phases/${ctx.phaseId}/output`, {
+    const res = await fetch(`http://127.0.0.1:3600/api/pipeline/phases/${ctx.phaseId}/output`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Agent-Id": ctx.agentId, "X-Session-Token": ctx.sessionToken },
       body: JSON.stringify(input),

@@ -134,7 +134,7 @@ export const getMyStats = defineTool({
   name: "getMyStats",
   description: "读取我的属性面板",
   async execute(ctx) {
-    const res = await fetch(`http://127.0.0.1:3000/api/pipeline/agents/${ctx.agentId}/stats`)
+    const res = await fetch(`http://127.0.0.1:3600/api/pipeline/agents/${ctx.agentId}/stats`)
     return res.json()
   },
 })
