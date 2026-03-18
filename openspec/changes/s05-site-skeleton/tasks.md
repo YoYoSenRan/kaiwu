@@ -30,7 +30,7 @@
 
 ## 5. 基础 UI 组件
 
-- [ ] 5.1 安装 shadcn/ui 常用组件（button/card/badge/separator/avatar/tooltip）— 验收：组件可导入使用
+- [ ] 5.1 安装 Radix UI primitives（@radix-ui/react-dialog、tooltip、dropdown-menu、separator、avatar）— 验收：primitives 可导入，自建组件基于其封装
 
 ## 6. 验证
 

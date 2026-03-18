@@ -31,11 +31,11 @@
 
 设计文档指定。任务缓存 + 依赖拓扑排序，`turbo dev` / `turbo build` / `turbo typecheck` 覆盖日常开发。
 
-### D3: CSS 方案 — UnoCSS + shadcn/ui
+### D3: CSS 方案 — UnoCSS + Radix UI + 自建组件
 
-设计文档指定 UnoCSS（preset-wind 兼容 Tailwind 类名）。shadcn/ui 提供基础组件，按需复制到项目中，不引入运行时依赖。
+UnoCSS（preset-wind）做样式引擎。视觉组件完全自建以匹配开物局的东方主题（朱砂印章、水墨晕染、宣纸纹理）。通用交互组件（Dialog、Tooltip、Dropdown）用 Radix UI primitives 做无障碍基础，样式自己写。不使用 shadcn/ui 预制组件。
 
-注意：shadcn/ui 默认使用 Tailwind CSS，需要配置适配 UnoCSS。具体做法：shadcn/ui 组件的类名本身是 Tailwind 兼容的，UnoCSS preset-wind 可以直接解析。
+保留 `cn()`（clsx + tailwind-merge）作为类名合并工具。
 
 ### D4: Lint — oxlint（不用 ESLint）
 

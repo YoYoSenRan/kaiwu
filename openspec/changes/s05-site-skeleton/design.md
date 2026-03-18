@@ -42,5 +42,5 @@ apps/site 已在 s00 中初始化（Next.js 16 + UnoCSS + shadcn/ui 基础配置
 
 ## Risks / Trade-offs
 
-- **UnoCSS + shadcn/ui 样式冲突**：shadcn/ui 的 CSS 变量命名（--background、--foreground 等）需要与开物局的语义色（--ink、--paper 等）对齐。→ 在 globals.css 中做映射。
+- **UnoCSS 样式体系**：开物局的东方主题（朱砂印章、水墨晕染、宣纸纹理）需要完全自建视觉组件，通用交互（Dialog、Tooltip、Dropdown）用 Radix UI primitives 做无障碍基础。→ 不使用 shadcn/ui 预制组件，避免风格冲突。
 - **中文字体加载性能**：Noto Serif SC / Noto Sans SC 字体文件较大。→ 使用 next/font 的 subset 功能，只加载常用字符集。
