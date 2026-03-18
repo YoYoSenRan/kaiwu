@@ -39,9 +39,9 @@ events 表新增了 `seq SERIAL UNIQUE` 自增列。SSE 事件的 `id` 字段用
 
 MVP 阶段记忆存在 OpenClaw workspace 文件中，`getMyMemories` Tool 直接调用 OpenClaw Gateway 的 memory_search API，不经过自建 Route Handler。
 
-### D5: EventBus — 内存发布/订阅
+### D5: EventBus 放在 packages/domain
 
-简单的内存 EventBus，编排层写入 events 表后同时 publish。SSE 端点 subscribe 后推送给客户端。不引入 Redis Pub/Sub（MVP 单机够用）。
+EventBus 定义在 `packages/domain/src/events/`（bus.ts + emitter.ts）。编排层是事件的生产者，EventBus 属于核心领域逻辑。SSE 端点从 `@kaiwu/domain` 导入 EventBus 并 subscribe。不引入 Redis Pub/Sub（MVP 单机够用）。
 
 ## Risks / Trade-offs
 

@@ -1,7 +1,7 @@
 ## 1. API 基础设施
 
 - [ ] 1.1 创建 `apps/site/src/lib/api-utils.ts`：apiHandler（Zod 校验 + 错误处理 + JSON 响应封装）、apiError — 验收：可在 route.ts 中使用
-- [ ] 1.2 创建 `apps/site/src/lib/event-bus.ts`：内存 EventBus（publish/subscribe/unsubscribe）— 验收：单元测试 publish 后 subscriber 收到事件
+- [ ] 1.2 创建 `packages/domain/src/events/bus.ts` + `emitter.ts`：内存 EventBus（publish/subscribe）+ emitEvent（写 events 表 + publish）— 验收：publish 后 subscriber 收到事件
 
 ## 2. Zod Schema 定义
 

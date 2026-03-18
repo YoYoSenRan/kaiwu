@@ -115,9 +115,10 @@ export function apiError(status, message) { ... }
 - 支持 `Last-Event-ID` 断线恢复
 - 从 EventBus 订阅事件并推送
 
-文件：`apps/site/src/lib/event-bus.ts`
-- 简单的内存 EventBus（发布/订阅）
-- 编排层写入 events 表后同时 publish 到 EventBus
+EventBus 定义在 `packages/domain/src/events/bus.ts`（编排层是事件生产者，EventBus 属于核心领域逻辑）。SSE 端点从 `@kaiwu/domain` 导入 EventBus 并 subscribe。
+
+- `packages/domain/src/events/bus.ts`：内存级发布/订阅
+- `packages/domain/src/events/emitter.ts`：`emitEvent()` = 写入 events 表 + publish 到 bus
 
 ### Step 5：OpenClaw Tool 封装
 
