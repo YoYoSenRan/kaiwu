@@ -6,5 +6,5 @@ export default function Home() {
         <p className="mt-2 text-bone/60">天工开物，每帖必应。</p>
       </div>
     </div>
-  );
+  )
 }

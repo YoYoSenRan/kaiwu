@@ -1,10 +1,14 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": [
-    "node_modules",
-    ".next",
-    "dist",
-    ".turbo",
-    "pnpm-lock.yaml"
-  ]
+  "printWidth": 180,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": false,
+  "singleQuote": false,
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "objectWrap": "collapse",
+  "ignorePatterns": ["node_modules", ".next", "dist", ".turbo", "pnpm-lock.yaml"],
 }

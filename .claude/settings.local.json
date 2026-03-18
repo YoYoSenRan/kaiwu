@@ -4,7 +4,12 @@
       "Bash(done)",
       "Bash(pnpm typecheck:*)",
       "Bash(pnpm lint:*)",
-      "Bash(pnpm format:check)"
+      "Bash(pnpm format:check)",
+      "Bash(openspec status:*)",
+      "Bash(for spec:*)",
+      "Bash(do)",
+      "Bash(mkdir -p /Users/macos/WebProject/kaiwu/openspec/specs/$spec)",
+      "Bash(cp /Users/macos/WebProject/kaiwu/openspec/changes/s00-project-init/specs/$spec/spec.md /Users/macos/WebProject/kaiwu/openspec/specs/$spec/spec.md)"
     ]
   }
 }

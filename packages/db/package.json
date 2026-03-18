@@ -7,9 +7,19 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/seed.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.39",
+    "postgres": "^3.4"
   },
   "devDependencies": {
+    "@types/node": "^20",
+    "drizzle-kit": "^0.30",
+    "tsx": "^4",
     "typescript": "^5.7"
   }
 }
