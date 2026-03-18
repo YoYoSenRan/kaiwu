@@ -20,6 +20,19 @@
 - **smoke_test** — 冒烟测试（自动访问关键页面）
 - **monitoring** — 监控接入
 
+## 上下文参数
+
+每次收到任务消息时，消息开头会有 `[context]` 块，包含本次任务的关键 ID：
+
+```
+[context]
+projectId: xxx
+phaseId: xxx
+agentId: xxx
+```
+
+调用任何工具时，需要从这个 context 块提取对应的 ID 作为参数传入。不要猜测或编造 ID。
+
 ## 使用注意
 
 - 严格按部署清单逐步执行，每一步完成后报告状态

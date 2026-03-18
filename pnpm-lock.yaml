@@ -148,12 +148,18 @@ importers:
 
   packages/openclaw:
     dependencies:
+      '@kaiwu/db':
+        specifier: workspace:*
+        version: link:../db
       '@kaiwu/templates':
         specifier: workspace:*
         version: link:../templates
       '@sinclair/typebox':
         specifier: ^0.34.48
         version: 0.34.48
+      drizzle-orm:
+        specifier: ^0.39
+        version: 0.39.3(postgres@3.4.8)
     devDependencies:
       '@types/node':
         specifier: ^20

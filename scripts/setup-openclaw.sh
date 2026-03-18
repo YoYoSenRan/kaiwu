@@ -10,9 +10,9 @@
 #   1. 创建 8 个局中人的 workspace 目录并部署文件
 #   2. 通过 openclaw agents add 注册到 Gateway
 #   3. 创建结构化记忆目录
-#   4. 注册 3 个 Cron Job
-#   5. 配置 memory_search 混合搜索
-#   6. 创建产出目录
+#   4. 部署 kaiwu-tools 插件到 plugins 目录
+#   5. 配置 Gateway（memory_search + 产出目录）
+#   6. 注册 3 个 Cron Job
 
 set -euo pipefail
 
@@ -208,9 +208,26 @@ register_cron "每日总结" "0 23 * * *" \
 
 echo ""
 
-# ── Step 4: Gateway 配置 ─────────────────────────────────
+# ── Step 4: 部署插件 ──────────────────────────────────────
 
-echo "⚙️  Step 4: Gateway 配置"
+echo "🔌 Step 4: 部署 kaiwu-tools 插件"
+
+PLUGIN_SRC="$PROJECT_ROOT/packages/openclaw/src/plugin"
+PLUGIN_DEST="$OPENCLAW_DIR/plugins/kaiwu-tools"
+
+mkdir -p "$PLUGIN_DEST"
+for file in index.ts tool-defs.ts openclaw.plugin.json package.json; do
+  if [ -f "$PLUGIN_SRC/$file" ]; then
+    cp "$PLUGIN_SRC/$file" "$PLUGIN_DEST/$file"
+    info "plugin/$file"
+  fi
+done
+
+echo ""
+
+# ── Step 5: Gateway 配置 ─────────────────────────────────
+
+echo "⚙️  Step 5: Gateway 配置"
 
 # memory_search 混合搜索
 openclaw config set agents.defaults.memorySearch.query.hybrid.enabled true 2>/dev/null && \

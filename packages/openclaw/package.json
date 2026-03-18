@@ -11,8 +11,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@kaiwu/db": "workspace:*",
     "@kaiwu/templates": "workspace:*",
-    "@sinclair/typebox": "^0.34.48"
+    "@sinclair/typebox": "^0.34.48",
+    "drizzle-orm": "^0.39"
   },
   "devDependencies": {
     "@types/node": "^20",

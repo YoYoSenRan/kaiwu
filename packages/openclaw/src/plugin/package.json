@@ -1,0 +1,7 @@
+{
+  "name": "@kaiwu/openclaw-plugin",
+  "private": true,
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}
