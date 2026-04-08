@@ -68,5 +68,49 @@
       "theme": "主题",
       "language": "语言"
     }
+  },
+  "nav": {
+    "dashboard": "仪表台",
+    "agent": "智能体",
+    "task": "任务",
+    "chat": "对话",
+    "knowledge": "知识库",
+    "connect": "连接",
+    "settings": "设置"
+  },
+  "dashboard": {
+    "label": "DASHBOARD",
+    "title": "仪表台",
+    "description": "运行状态与核心指标一览。"
+  },
+  "agent": {
+    "label": "AGENT",
+    "title": "智能体",
+    "description": "管理与编排你的智能体。"
+  },
+  "task": {
+    "label": "TASK",
+    "title": "任务",
+    "description": "任务队列与执行记录。"
+  },
+  "chat": {
+    "label": "CHAT",
+    "title": "对话",
+    "description": "与智能体的会话空间。"
+  },
+  "knowledge": {
+    "label": "KNOWLEDGE",
+    "title": "知识库",
+    "description": "向量索引与文档管理。"
+  },
+  "connect": {
+    "label": "CONNECT",
+    "title": "连接",
+    "description": "外部数据源与 MCP 服务。"
+  },
+  "settings": {
+    "label": "SETTINGS",
+    "title": "设置",
+    "description": "偏好、外观、语言。"
   }
 }

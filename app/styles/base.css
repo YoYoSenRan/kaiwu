@@ -1,6 +1,6 @@
 /* ===== 元素级 reset 与全局基础样式 ===== */
 
-/* 锁死窗口滚动，把滚动宿主交给 .app-scroll，避免滚动条穿过 titlebar */
+/* 锁死窗口滚动，把滚动宿主交给 .app-main，避免滚动条穿过 titlebar */
 html,
 body,
 #root {

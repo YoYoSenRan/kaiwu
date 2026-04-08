@@ -68,5 +68,49 @@
       "theme": "Theme",
       "language": "Language"
     }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "agent": "Agent",
+    "task": "Task",
+    "chat": "Chat",
+    "knowledge": "Knowledge",
+    "connect": "Connect",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "label": "DASHBOARD",
+    "title": "Dashboard",
+    "description": "Runtime status and core metrics at a glance."
+  },
+  "agent": {
+    "label": "AGENT",
+    "title": "Agent",
+    "description": "Manage and orchestrate your agents."
+  },
+  "task": {
+    "label": "TASK",
+    "title": "Task",
+    "description": "Task queue and execution history."
+  },
+  "chat": {
+    "label": "CHAT",
+    "title": "Chat",
+    "description": "Conversation workspace for your agents."
+  },
+  "knowledge": {
+    "label": "KNOWLEDGE",
+    "title": "Knowledge",
+    "description": "Vector indexes and document management."
+  },
+  "connect": {
+    "label": "CONNECT",
+    "title": "Connect",
+    "description": "External data sources and MCP services."
+  },
+  "settings": {
+    "label": "SETTINGS",
+    "title": "Settings",
+    "description": "Preferences, appearance, and language."
   }
 }

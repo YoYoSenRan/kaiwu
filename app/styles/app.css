@@ -1,13 +1,19 @@
 /* ===== 自定义 class：布局壳 + titlebar + deck 动画/utility ===== */
 /* CSS 变量定义在 tokens.css，元素级 reset 在 base.css */
 
-/* titlebar 下方的滚动容器：占据 titlebar 之下的全部空间，自己负责 y 轴滚动 */
-.app-scroll {
+/* titlebar 下方的应用壳：横向排 Sidebar + 主内容区，自身不滚动 */
+.app-shell {
   position: absolute;
   top: var(--titlebar-h);
   left: 0;
   right: 0;
   bottom: 0;
+  display: flex;
+}
+
+/* 主内容区：吃掉剩余宽度并独立滚动，Sidebar 保持静止 */
+.app-main {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
 }
