@@ -1,0 +1,72 @@
+{
+  "common": {
+    "confirm": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading..."
+  },
+  "update": {
+    "checkUpdate": "Check update",
+    "checking": "Checking...",
+    "newVersion": "The latest version is: v{{version}}",
+    "downloadError": "Error downloading the latest version",
+    "updateProgress": "Update progress:",
+    "installNow": "Install now",
+    "later": "Later"
+  },
+  "deck": {
+    "subtitle": "OPERATIONS · WORKSPACE",
+    "hero": {
+      "label": "Active Threads",
+      "description": "Three threads opened this morning. Two pending review.",
+      "inspect": "Inspect queue →",
+      "new": "New",
+      "pending": "Pending",
+      "archived": "Archived",
+      "today": "Total Today"
+    },
+    "meta": {
+      "region": "Region",
+      "build": "Build",
+      "branch": "Branch",
+      "operator": "Operator",
+      "openConsole": "Open Console"
+    },
+    "metrics": {
+      "title": "System Metrics · last 24h",
+      "live": "live",
+      "uptime": "Uptime",
+      "requests": "Requests",
+      "latency": "Latency",
+      "errors": "Errors",
+      "vs7d": "vs 7d"
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "viewAll": "View all",
+      "messages": {
+        "deploy": "Build #1247 promoted to production · us-west-2a",
+        "migrate": "Schema migration completed in 4.2s · 12 tables affected",
+        "alert": "CPU normalized after burst at 14:18 · peak 87%",
+        "index": "Search index rebuilt · 14,892 documents · 2.1 GB",
+        "auth": "Token rotation completed for region us-west · 432 keys",
+        "backup": "Daily snapshot · 184 GB · cold storage"
+      }
+    },
+    "services": {
+      "title": "Services",
+      "summary": "5/6 OK"
+    },
+    "footer": {
+      "name": "Meridian Operations Deck",
+      "hint": "Press D to toggle theme",
+      "build": "Build"
+    },
+    "controls": {
+      "theme": "Theme",
+      "language": "Language"
+    }
+  }
+}
