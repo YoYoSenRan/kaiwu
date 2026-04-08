@@ -11,8 +11,17 @@
   display: flex;
 }
 
-/* 主内容区：吃掉剩余宽度并独立滚动，Sidebar 保持静止 */
+/* 主内容区：纵向排 Header + 滚动区 + Footer，Sidebar 保持静止 */
 .app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* min-width: 0 防止 flex item 被内部内容撑出 Sidebar */
+  min-width: 0;
+}
+
+/* 可滚动内容区：只让中间这段滚，Header/Footer 吸附不动 */
+.app-content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;

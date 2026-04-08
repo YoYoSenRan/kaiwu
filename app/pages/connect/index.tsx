@@ -4,9 +4,8 @@ import { useTranslation } from "react-i18next"
 export default function Connect() {
   const { t } = useTranslation()
   return (
-    <div className="px-10 pt-10">
-      <p className="text-[10px] tracking-[0.35em] text-muted-foreground uppercase">{t("connect.label")}</p>
-      <h1 className="mt-4 text-[120px] leading-[0.85] font-extralight tracking-[-0.05em]">{t("connect.title")}</h1>
+    <div>
+      <h1 className="text-[120px] leading-[0.85] font-extralight tracking-[-0.05em]">{t("connect.title")}</h1>
       <p className="mt-8 max-w-md text-sm text-muted-foreground">{t("connect.description")}</p>
     </div>
   )

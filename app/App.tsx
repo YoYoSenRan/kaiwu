@@ -6,14 +6,18 @@ import Connect from "@/pages/connect"
 import Settings from "@/pages/settings"
 import Dashboard from "@/pages/dashboard"
 import Knowledge from "@/pages/knowledge"
-import { AnimatePresence, motion } from "motion/react"
+import { Header } from "@/components/layout/header"
+import { Footer } from "@/components/layout/footer"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TitleBar } from "@/components/layout/titlebar"
+import { AnimatePresence, motion } from "motion/react"
 import { Route, Routes, useLocation } from "react-router"
 import { useThemeEffect } from "@/hooks/use-theme-effect"
+import { useSidebarShortcut } from "@/hooks/use-sidebar-shortcut"
 
 function App() {
   useThemeEffect()
+  useSidebarShortcut()
   // 路由切换时用 location.pathname 当 key，让 AnimatePresence 触发新旧节点的进退场
   const location = useLocation()
 
@@ -23,26 +27,32 @@ function App() {
       <div className="app-shell">
         <Sidebar />
         <main className="app-main">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <Routes location={location}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/agent" element={<Agent />} />
-                <Route path="/task" element={<Task />} />
-                <Route path="/chat" element={<Chat />} />
-                <Route path="/knowledge" element={<Knowledge />} />
-                <Route path="/connect" element={<Connect />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/demo" element={<Demo />} />
-              </Routes>
-            </motion.div>
-          </AnimatePresence>
+          <Header />
+          <div className="app-content">
+            <div className="mx-auto max-w-[1600px] px-10 py-10">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={location.pathname}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  <Routes location={location}>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/agent" element={<Agent />} />
+                    <Route path="/task" element={<Task />} />
+                    <Route path="/chat" element={<Chat />} />
+                    <Route path="/knowledge" element={<Knowledge />} />
+                    <Route path="/connect" element={<Connect />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/demo" element={<Demo />} />
+                  </Routes>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+          <Footer />
         </main>
       </div>
     </>
