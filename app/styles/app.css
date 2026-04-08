@@ -1,0 +1,147 @@
+/* ===== 自定义 class：布局壳 + titlebar + deck 动画/utility ===== */
+/* CSS 变量定义在 tokens.css，元素级 reset 在 base.css */
+
+/* titlebar 下方的应用壳：横向排 Sidebar + 主内容区，自身不滚动 */
+.app-shell {
+  position: absolute;
+  top: var(--titlebar-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+}
+
+/* 主内容区：吃掉剩余宽度并独立滚动，Sidebar 保持静止 */
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ===== 自定义标题栏 ===== */
+
+.titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--titlebar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 9999;
+  user-select: none;
+  /* 背景色跟随主题，使用 tokens.css 中定义的 CSS 变量 */
+  background-color: var(--background);
+}
+
+/* macOS 红绿灯按钮占位区域 */
+/* trafficLightPosition 设置为 x:12，三个按钮总宽约 68px，留 70px 安全边距 */
+.titlebar-macos-spacer {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+/* Win/Linux 窗口控制按钮容器，靠右排列 */
+.titlebar-controls {
+  display: flex;
+  margin-left: auto;
+  height: 100%;
+}
+
+/* 窗口控制按钮基础样式 */
+.titlebar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.titlebar-btn:hover {
+  background-color: var(--accent);
+}
+
+/* 关闭按钮 hover 变红，遵循 Windows 标题栏惯例 */
+.titlebar-btn-close:hover {
+  background-color: var(--titlebar-close-hover);
+  color: white;
+}
+
+/* ===== Operations Deck 入场动画 ===== */
+
+@keyframes deck-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes deck-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+}
+
+.deck-rise {
+  opacity: 0;
+  animation: deck-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.deck-fade {
+  opacity: 0;
+  animation: deck-fade 0.9s ease-out forwards;
+}
+
+.deck-pulse {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ===== Operations Deck 颜色 utility（变量定义在 tokens.css） ===== */
+
+.deck-accent {
+  color: var(--deck-accent);
+}
+
+.deck-accent-bg {
+  background-color: var(--deck-accent);
+}
+
+.deck-accent-border {
+  border-color: var(--deck-accent);
+}
+
+/* 表格分隔线 */
+.deck-grid-bg {
+  background-color: var(--deck-grid);
+}
+
+/* 数字字符等宽对齐 */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}

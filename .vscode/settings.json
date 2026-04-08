@@ -1,0 +1,20 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.tsc.autoDetect": "off",
+  "json.schemas": [
+    {
+      "fileMatch": ["/*electron-builder.json5", "/*electron-builder.json"],
+      "url": "https://json.schemastore.org/electron-builder"
+    }
+  ],
+  "css.customData": [],
+  "css.lint.unknownAtRules": "ignore",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}

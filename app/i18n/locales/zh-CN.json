@@ -1,0 +1,116 @@
+{
+  "common": {
+    "confirm": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "loading": "加载中..."
+  },
+  "update": {
+    "checkUpdate": "检查更新",
+    "checking": "检查中...",
+    "newVersion": "最新版本: v{{version}}",
+    "downloadError": "下载最新版本出错",
+    "updateProgress": "更新进度:",
+    "installNow": "立即安装",
+    "later": "稍后"
+  },
+  "deck": {
+    "subtitle": "运营 · 工作区",
+    "hero": {
+      "label": "活跃线程",
+      "description": "今晨新增 3 条线程，2 条待审核。",
+      "inspect": "查看队列 →",
+      "new": "新增",
+      "pending": "待处理",
+      "archived": "已归档",
+      "today": "今日总计"
+    },
+    "meta": {
+      "region": "区域",
+      "build": "构建",
+      "branch": "分支",
+      "operator": "操作者",
+      "openConsole": "打开控制台"
+    },
+    "metrics": {
+      "title": "系统指标 · 近 24 小时",
+      "live": "实时",
+      "uptime": "运行时间",
+      "requests": "请求量",
+      "latency": "延迟",
+      "errors": "错误率",
+      "vs7d": "对比 7 日"
+    },
+    "activity": {
+      "title": "最近活动",
+      "viewAll": "查看全部",
+      "messages": {
+        "deploy": "构建 #1247 已发布至生产 · us-west-2a",
+        "migrate": "Schema 迁移完成，耗时 4.2 秒 · 影响 12 张表",
+        "alert": "CPU 在 14:18 峰值后已恢复正常 · 峰值 87%",
+        "index": "搜索索引已重建 · 14,892 篇文档 · 2.1 GB",
+        "auth": "us-west 区域 Token 轮换完成 · 432 个密钥",
+        "backup": "每日快照 · 184 GB · 冷存储"
+      }
+    },
+    "services": {
+      "title": "服务",
+      "summary": "5/6 正常"
+    },
+    "footer": {
+      "name": "Meridian 运营控制台",
+      "hint": "按 D 切换主题",
+      "build": "构建"
+    },
+    "controls": {
+      "theme": "主题",
+      "language": "语言"
+    }
+  },
+  "nav": {
+    "dashboard": "仪表台",
+    "agent": "智能体",
+    "task": "任务",
+    "chat": "对话",
+    "knowledge": "知识库",
+    "connect": "连接",
+    "settings": "设置"
+  },
+  "dashboard": {
+    "label": "DASHBOARD",
+    "title": "仪表台",
+    "description": "运行状态与核心指标一览。"
+  },
+  "agent": {
+    "label": "AGENT",
+    "title": "智能体",
+    "description": "管理与编排你的智能体。"
+  },
+  "task": {
+    "label": "TASK",
+    "title": "任务",
+    "description": "任务队列与执行记录。"
+  },
+  "chat": {
+    "label": "CHAT",
+    "title": "对话",
+    "description": "与智能体的会话空间。"
+  },
+  "knowledge": {
+    "label": "KNOWLEDGE",
+    "title": "知识库",
+    "description": "向量索引与文档管理。"
+  },
+  "connect": {
+    "label": "CONNECT",
+    "title": "连接",
+    "description": "外部数据源与 MCP 服务。"
+  },
+  "settings": {
+    "label": "SETTINGS",
+    "title": "设置",
+    "description": "偏好、外观、语言。"
+  }
+}
