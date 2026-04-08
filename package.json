@@ -1,5 +1,5 @@
 {
-  "name": "wanxiang",
+  "name": "kaiwu",
   "version": "1.0.0",
   "main": "dist-electron/main/main.js",
   "description": "Electron + Vite + React 桌面应用模板",
