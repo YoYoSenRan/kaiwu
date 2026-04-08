@@ -252,7 +252,7 @@ export default function Demo() {
             </div>
             <span className="text-xs tracking-[0.2em] text-muted-foreground font-mono uppercase">{t("deck.metrics.live")}</span>
           </div>
-          <div className="grid grid-cols-4 gap-px deck-grid-bg border deck-grid-bg">
+          <div className="grid grid-cols-4 gap-px border border-border">
             {STATS.map((stat, i) => (
               <StatCard key={stat.key} stat={stat} index={i} />
             ))}

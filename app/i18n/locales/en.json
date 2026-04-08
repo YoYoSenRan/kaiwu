@@ -81,17 +81,84 @@
   "dashboard": {
     "label": "DASHBOARD",
     "title": "Dashboard",
-    "description": "Runtime status and core metrics at a glance."
+    "description": "Runtime status and core metrics at a glance.",
+    "overview": "System Overview",
+    "inspect": "Inspect details",
+    "metricsTitle": "Core Metrics",
+    "activityTitle": "Recent Activity",
+    "modulesTitle": "Module Status",
+    "viewAll": "View all",
+    "stats": {
+      "agents": "Agents",
+      "tasks": "Tasks",
+      "chats": "Chats",
+      "uptime": "Uptime"
+    },
+    "modules": {
+      "agent": "Agent",
+      "task": "Task",
+      "chat": "Chat",
+      "knowledge": "Knowledge",
+      "connect": "Connect"
+    }
   },
   "agent": {
     "label": "AGENT",
     "title": "Agent",
-    "description": "Manage and orchestrate your agents."
+    "description": "Manage and orchestrate your agents.",
+    "overview": "Agent Overview",
+    "inspect": "Inspect details",
+    "metricsTitle": "Runtime Metrics",
+    "listTitle": "Agent List",
+    "detailTitle": "Agent Detail",
+    "createAgent": "Create",
+    "start": "Start",
+    "stop": "Stop",
+    "latestError": "Latest Error",
+    "errorCode": "Error Code",
+    "detailName": "Name",
+    "detailType": "Type",
+    "detailStatus": "Status",
+    "detailLoad": "Load",
+    "detailTasks": "Tasks Completed",
+    "stats": {
+      "total": "Total",
+      "running": "Running",
+      "idle": "Idle",
+      "errors": "Errors"
+    },
+    "types": {
+      "explorer": "Explorer",
+      "executor": "Executor",
+      "planner": "Planner",
+      "reviewer": "Reviewer"
+    }
   },
   "task": {
     "label": "TASK",
     "title": "Task",
-    "description": "Task queue and execution history."
+    "description": "Task queue and execution history.",
+    "overview": "Task Overview",
+    "inspect": "Inspect details",
+    "metricsTitle": "Execution Metrics",
+    "queueTitle": "Task Queue",
+    "detailTitle": "Task Detail",
+    "clearCompleted": "Clear completed",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "queueStatus": "Queue Status",
+    "avgDuration": "Avg Duration",
+    "detailName": "Name",
+    "detailStatus": "Status",
+    "detailProgress": "Progress",
+    "detailEta": "ETA",
+    "stats": {
+      "total": "Total",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "pending": "Pending"
+    }
   },
   "chat": {
     "label": "CHAT",
@@ -111,6 +178,22 @@
   "settings": {
     "label": "SETTINGS",
     "title": "Settings",
-    "description": "Preferences, appearance, and language."
+    "description": "Preferences, appearance, and language.",
+    "overview": "System Settings",
+    "inspect": "Inspect details",
+    "appearanceTitle": "Appearance",
+    "languageTitle": "Language",
+    "layoutTitle": "Layout",
+    "aboutTitle": "About",
+    "themeLabel": "Theme",
+    "langLabel": "Language",
+    "sidebarLabel": "Sidebar",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "versionLabel": "Version",
+    "buildLabel": "Build",
+    "deviceId": "Device ID",
+    "viewLogs": "View logs"
   }
 }
