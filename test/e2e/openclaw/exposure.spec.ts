@@ -18,14 +18,16 @@ if (SHOULD_SKIP) {
   })
 
   describe("openclaw exposure", () => {
-    test("openclaw: bridge 暴露全部 8 个方法", async () => {
+    test("openclaw: bridge 暴露全部 13 个方法", async () => {
       const methods = await ctx.page.evaluate(() => Object.keys((window as unknown as { electron: { openclaw: Record<string, unknown> } }).electron.openclaw))
-      expect(methods.sort()).toEqual(["checkCompat", "detect", "installBridge", "invoke", "onBridgeEvent", "onStatusChanged", "restart", "uninstallBridge"].sort())
+      expect(methods.sort()).toEqual(
+        ["check", "connect", "detect", "disconnect", "install", "invoke", "onEvent", "onGatewayStatus", "onMonitor", "onStatus", "restart", "state", "uninstall"].sort(),
+      )
     })
 
-    test("openclaw: onBridgeEvent 订阅返回取消函数", async () => {
+    test("openclaw: onEvent 订阅返回取消函数", async () => {
       const returnType = await ctx.page.evaluate(() => {
-        const off = window.electron.openclaw.onBridgeEvent(() => {})
+        const off = window.electron.openclaw.onEvent(() => {})
         const t = typeof off
         off()
         return t

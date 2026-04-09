@@ -26,7 +26,7 @@ export function bindAutoUpdaterEvents(): void {
   autoUpdater.allowDowngrade = false
 
   autoUpdater.on("update-available", (info: UpdateInfo) => {
-    pushToRenderer(updaterChannels.canAvailable, {
+    pushToRenderer(updaterChannels.event.available, {
       update: true,
       version: app.getVersion(),
       newVersion: info?.version,
@@ -34,7 +34,7 @@ export function bindAutoUpdaterEvents(): void {
   })
 
   autoUpdater.on("update-not-available", (info: UpdateInfo) => {
-    pushToRenderer(updaterChannels.canAvailable, {
+    pushToRenderer(updaterChannels.event.available, {
       update: false,
       version: app.getVersion(),
       newVersion: info?.version,
@@ -42,16 +42,16 @@ export function bindAutoUpdaterEvents(): void {
   })
 
   autoUpdater.on("download-progress", (info: ProgressInfo) => {
-    pushToRenderer(updaterChannels.downloadProgress, info)
+    pushToRenderer(updaterChannels.event.progress, info)
   })
 
   autoUpdater.on("update-downloaded", () => {
-    pushToRenderer(updaterChannels.downloaded, undefined)
+    pushToRenderer(updaterChannels.event.done, undefined)
   })
 
   autoUpdater.on("error", (error: Error) => {
     const payload: UpdaterError = { message: error.message, error }
-    pushToRenderer(updaterChannels.error, payload)
+    pushToRenderer(updaterChannels.event.error, payload)
   })
 }
 

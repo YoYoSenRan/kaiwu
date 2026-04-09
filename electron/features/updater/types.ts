@@ -18,15 +18,15 @@ export type CheckResult = UpdaterError | null
 
 export interface UpdaterBridge {
   check: () => Promise<CheckResult>
-  startDownload: () => Promise<void>
-  quitAndInstall: () => Promise<void>
+  download: () => Promise<void>
+  install: () => Promise<void>
 
   /** 订阅"有可用更新/无可用更新"事件，返回取消订阅函数 */
-  onCanAvailable: (listener: (info: UpdateAvailability) => void) => () => void
+  onAvailable: (listener: (info: UpdateAvailability) => void) => () => void
   /** 订阅下载进度事件，返回取消订阅函数 */
-  onDownloadProgress: (listener: (info: ProgressInfo) => void) => () => void
+  onProgress: (listener: (info: ProgressInfo) => void) => () => void
   /** 订阅下载完成事件，返回取消订阅函数 */
-  onDownloaded: (listener: () => void) => () => void
+  onDone: (listener: () => void) => () => void
   /** 订阅错误事件，返回取消订阅函数 */
   onError: (listener: (info: UpdaterError) => void) => () => void
 }

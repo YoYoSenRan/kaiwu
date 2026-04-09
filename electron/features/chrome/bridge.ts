@@ -3,15 +3,15 @@ import { chromeChannels } from "./channels"
 import type { ChromeBridge } from "./types"
 
 export const chromeBridge: ChromeBridge = {
-  minimize: () => ipcRenderer.invoke(chromeChannels.minimize),
-  maximize: () => ipcRenderer.invoke(chromeChannels.maximize),
-  close: () => ipcRenderer.invoke(chromeChannels.close),
-  isMaximized: () => ipcRenderer.invoke(chromeChannels.isMaximized),
-  openWin: (targetPath) => ipcRenderer.invoke(chromeChannels.openWin, targetPath),
+  minimize: () => ipcRenderer.invoke(chromeChannels.window.minimize),
+  maximize: () => ipcRenderer.invoke(chromeChannels.window.maximize),
+  close: () => ipcRenderer.invoke(chromeChannels.window.close),
+  state: () => ipcRenderer.invoke(chromeChannels.window.state),
+  open: (targetPath) => ipcRenderer.invoke(chromeChannels.open, targetPath),
 
-  onMaximizedChange(listener) {
+  onChange(listener) {
     const handler = (_event: unknown, isMaximized: boolean) => listener(isMaximized)
-    ipcRenderer.on(chromeChannels.maximizedChanged, handler)
-    return () => ipcRenderer.off(chromeChannels.maximizedChanged, handler)
+    ipcRenderer.on(chromeChannels.window.change, handler)
+    return () => ipcRenderer.off(chromeChannels.window.change, handler)
   },
 }

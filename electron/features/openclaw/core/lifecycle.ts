@@ -7,6 +7,7 @@ import { pushBridgeEvent, pushStatusChanged } from "./push"
 import { dispatchMonitorEvent, isMonitorEvent } from "../hook/dispatcher"
 import { removeHandshake, writeHandshake } from "./handshake"
 import { startBridgeServer, type BridgeServer } from "./transport"
+import { startGatewayConnection, stopGatewayConnection } from "../service"
 import { detectPluginInstall, syncBridgePlugin, uninstallBridgePlugin } from "./plugin"
 import type { CompatResult, InvokeArgs, InvokeResult, OpenClawStatus } from "../types"
 
@@ -33,6 +34,10 @@ export async function startBridge(): Promise<BridgeServer | null> {
     })
     log.info(`[openclaw] bridge server up on 127.0.0.1:${bridgeServer.info.port}`)
     await refreshHandshakeIfInstalled()
+
+    // 同时启动 gateway WS RPC 连接（控制面），不阻塞 bridge 启动
+    void startGatewayConnection()
+
     return bridgeServer
   } catch (err) {
     log.error(`[openclaw] bridge server failed to start: ${(err as Error).message}`)
@@ -63,8 +68,9 @@ async function refreshHandshakeIfInstalled(): Promise<void> {
   }
 }
 
-/** 关闭 bridge server（kaiwu 退出时调用）。 */
+/** 关闭 bridge server 和 gateway 连接（kaiwu 退出时调用）。 */
 export async function stopBridge(): Promise<void> {
+  stopGatewayConnection()
   if (!bridgeServer) return
   await bridgeServer.close()
   bridgeServer = null

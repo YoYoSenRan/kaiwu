@@ -33,6 +33,16 @@ export interface CompatResult {
   knownBreaking: { version: string; change: string }[]
 }
 
+/** gateway 连接状态枚举。 */
+export type GatewayStatus = "idle" | "detecting" | "connecting" | "connected" | "disconnected" | "error"
+
+/** gateway 连接状态快照。 */
+export interface GatewayState {
+  status: GatewayStatus
+  url: string | null
+  error: string | null
+}
+
 /** 调用 /kaiwu/invoke 的参数。 */
 export interface InvokeArgs {
   action: string
@@ -65,16 +75,25 @@ export interface MonitorEvent {
 /** renderer ↔ main 的 openclaw feature 桥接接口。 */
 export interface OpenClawBridge {
   detect: () => Promise<OpenClawStatus>
-  checkCompat: () => Promise<CompatResult>
-  installBridge: () => Promise<OpenClawStatus>
-  uninstallBridge: () => Promise<OpenClawStatus>
+  check: () => Promise<CompatResult>
+  install: () => Promise<OpenClawStatus>
+  uninstall: () => Promise<OpenClawStatus>
   restart: () => Promise<{ ok: boolean; error?: string }>
   invoke: (args: InvokeArgs) => Promise<InvokeResult>
 
   /** 订阅来自插件的桥接事件，返回取消订阅函数。 */
-  onBridgeEvent: (listener: (event: BridgeEvent) => void) => () => void
+  onEvent: (listener: (event: BridgeEvent) => void) => () => void
   /** 订阅 OpenClaw 状态变化，返回取消订阅函数。 */
-  onStatusChanged: (listener: (status: OpenClawStatus) => void) => () => void
+  onStatus: (listener: (status: OpenClawStatus) => void) => () => void
   /** 订阅运行时监控事件（llm_input/output、tool_call 等），返回取消订阅函数。 */
-  onMonitorEvent: (listener: (event: MonitorEvent) => void) => () => void
+  onMonitor: (listener: (event: MonitorEvent) => void) => () => void
+
+  /** 获取当前 gateway 连接状态。 */
+  state: () => Promise<GatewayState>
+  /** 手动触发 gateway 连接。 */
+  connect: () => Promise<void>
+  /** 手动断开 gateway 连接。 */
+  disconnect: () => Promise<void>
+  /** 订阅 gateway 连接状态变化，返回取消订阅函数。 */
+  onGatewayStatus: (listener: (state: GatewayState) => void) => () => void
 }

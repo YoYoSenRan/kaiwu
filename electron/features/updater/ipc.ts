@@ -9,7 +9,7 @@ import { bindAutoUpdaterEvents, checkForUpdate, quitAndInstall, startDownload } 
 export function setupUpdater(): void {
   bindAutoUpdaterEvents()
 
-  ipcMain.handle(updaterChannels.check, () => checkForUpdate())
-  ipcMain.handle(updaterChannels.startDownload, () => startDownload())
-  ipcMain.handle(updaterChannels.quitAndInstall, () => quitAndInstall())
+  ipcMain.handle(updaterChannels.action.check, () => checkForUpdate())
+  ipcMain.handle(updaterChannels.action.download, () => startDownload())
+  ipcMain.handle(updaterChannels.action.install, () => quitAndInstall())
 }

@@ -14,12 +14,12 @@ function subscribe<T>(channel: string, listener: (payload: T) => void): () => vo
 }
 
 export const updaterBridge: UpdaterBridge = {
-  check: () => ipcRenderer.invoke(updaterChannels.check),
-  startDownload: () => ipcRenderer.invoke(updaterChannels.startDownload),
-  quitAndInstall: () => ipcRenderer.invoke(updaterChannels.quitAndInstall),
+  check: () => ipcRenderer.invoke(updaterChannels.action.check),
+  download: () => ipcRenderer.invoke(updaterChannels.action.download),
+  install: () => ipcRenderer.invoke(updaterChannels.action.install),
 
-  onCanAvailable: (listener) => subscribe<UpdateAvailability>(updaterChannels.canAvailable, listener),
-  onDownloadProgress: (listener) => subscribe<ProgressInfo>(updaterChannels.downloadProgress, listener),
-  onDownloaded: (listener) => subscribe<void>(updaterChannels.downloaded, () => listener()),
-  onError: (listener) => subscribe<UpdaterError>(updaterChannels.error, listener),
+  onAvailable: (listener) => subscribe<UpdateAvailability>(updaterChannels.event.available, listener),
+  onProgress: (listener) => subscribe<ProgressInfo>(updaterChannels.event.progress, listener),
+  onDone: (listener) => subscribe<void>(updaterChannels.event.done, () => listener()),
+  onError: (listener) => subscribe<UpdaterError>(updaterChannels.event.error, listener),
 }

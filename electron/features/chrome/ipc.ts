@@ -14,11 +14,11 @@ export function setupChrome(): void {
 
 /** 注册所有 ipcMain.handle，与窗口实例无关。 */
 function registerHandlers(): void {
-  ipcMain.handle(chromeChannels.minimize, () => {
+  ipcMain.handle(chromeChannels.window.minimize, () => {
     getMainWindow()?.minimize()
   })
 
-  ipcMain.handle(chromeChannels.maximize, () => {
+  ipcMain.handle(chromeChannels.window.maximize, () => {
     const win = getMainWindow()
     if (!win) return
     // 切换最大化/还原
@@ -29,15 +29,15 @@ function registerHandlers(): void {
     }
   })
 
-  ipcMain.handle(chromeChannels.close, () => {
+  ipcMain.handle(chromeChannels.window.close, () => {
     getMainWindow()?.close()
   })
 
-  ipcMain.handle(chromeChannels.isMaximized, () => {
+  ipcMain.handle(chromeChannels.window.state, () => {
     return getMainWindow()?.isMaximized() ?? false
   })
 
-  ipcMain.handle(chromeChannels.openWin, (_event, targetPath: string) => {
+  ipcMain.handle(chromeChannels.open, (_event, targetPath: string) => {
     openChildWindow(targetPath)
   })
 }
@@ -53,10 +53,10 @@ function bindMaximizeEvents(): void {
   }
 
   win.on("maximize", () => {
-    win.webContents.send(chromeChannels.maximizedChanged, true)
+    win.webContents.send(chromeChannels.window.change, true)
   })
   win.on("unmaximize", () => {
-    win.webContents.send(chromeChannels.maximizedChanged, false)
+    win.webContents.send(chromeChannels.window.change, false)
   })
 }
 

@@ -71,7 +71,7 @@ function sendPayload(win: BrowserWindow, url: string): void {
       path: parsed.host + parsed.pathname,
       query: Object.fromEntries(parsed.searchParams),
     }
-    win.webContents.send(deeplinkChannels.received, payload)
+    win.webContents.send(deeplinkChannels.event.received, payload)
   } catch (err) {
     log.error("[deeplink] URL 解析失败", err)
   }

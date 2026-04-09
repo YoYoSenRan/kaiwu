@@ -10,19 +10,25 @@
  */
 
 import { app } from "electron"
-import { join } from "node:path"
-import { mkdirSync } from "node:fs"
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { createHash, createPublicKey, generateKeyPairSync, sign } from "node:crypto"
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { join } from "node:path"
 
 let cachedKeyPair: { privateKeyPem: string; publicKeyPem: string } | null = null
 
+/**
+ * 获取 device-keys 目录路径。
+ * 指向 userData 下的 device-keys 子目录，用于存放 Ed25519 密钥对和 deviceToken 缓存。
+ * @returns 绝对路径字符串
+ */
 function getKeysDir(): string {
   return join(app.getPath("userData"), "device-keys")
 }
 
 /**
- * 确保 Ed25519 密钥对存在。首次调用自动生成并持久化。
+ * 确保 Ed25519 密钥对存在。
+ * 首次调用自动生成并持久化到 userData/device-keys/，后续直接读取缓存。
+ * @returns 包含 PEM 格式私钥和公钥的对象
  */
 export function ensureDeviceKeyPair(): { privateKeyPem: string; publicKeyPem: string } {
   if (cachedKeyPair) return cachedKeyPair
@@ -32,10 +38,7 @@ export function ensureDeviceKeyPair(): { privateKeyPem: string; publicKeyPem: st
   const pubPath = join(keysDir, "ed25519-pub.pem")
 
   if (existsSync(privPath) && existsSync(pubPath)) {
-    cachedKeyPair = {
-      privateKeyPem: readFileSync(privPath, "utf-8"),
-      publicKeyPem: readFileSync(pubPath, "utf-8"),
-    }
+    cachedKeyPair = { privateKeyPem: readFileSync(privPath, "utf-8"), publicKeyPem: readFileSync(pubPath, "utf-8") }
     return cachedKeyPair
   }
 
@@ -51,33 +54,58 @@ export function ensureDeviceKeyPair(): { privateKeyPem: string; publicKeyPem: st
   return cachedKeyPair
 }
 
-/** 获取 raw Ed25519 公钥（32 字节）。 */
+/**
+ * 从 PEM 公钥中提取 raw Ed25519 公钥（32 字节）。
+ * SPKI 封装格式中 raw 公钥位于 DER 数据的末尾。
+ * @returns 32 字节的 raw 公钥 Buffer
+ */
 function getRawPublicKey(): Buffer {
   const { publicKeyPem } = ensureDeviceKeyPair()
   const keyObj = createPublicKey(publicKeyPem)
   const spkiDer = keyObj.export({ type: "spki", format: "der" })
-  // SPKI 封装的 Ed25519 公钥，raw 32 字节在末尾
   return (spkiDer as Buffer).subarray(-32)
 }
 
-/** 标准 base64 转 base64url。 */
+/**
+ * 将标准 base64 字符串转换为 base64url 编码。
+ * 替换 + → -、/ → _，并移除末尾的 = 填充。
+ * @param buf 原始二进制数据
+ * @returns base64url 编码字符串
+ */
 function toBase64Url(buf: Buffer): string {
   return buf.toString("base64").replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/g, "")
 }
 
-/** 从公钥派生设备 ID：SHA-256(raw public key) → hex。 */
+/**
+ * 从公钥派生设备 ID。
+ * 对 raw 公钥做 SHA-256 后取 hex，作为该设备在 gateway 中的唯一标识。
+ * @returns 64 位十六进制字符串
+ */
 export function getDeviceId(): string {
   return createHash("sha256").update(getRawPublicKey()).digest("hex")
 }
 
-/** 获取公钥的 base64url 编码。 */
+/**
+ * 获取公钥的 base64url 编码。
+ * gateway 验签时需要用与签名一致的 base64url 格式公钥。
+ * @returns base64url 编码的公钥字符串
+ */
 export function getPublicKeyBase64(): string {
   return toBase64Url(getRawPublicKey())
 }
 
 /**
- * 构建 v2 签名 payload 并签名。
+ * 构建 v2 签名 payload 并用 Ed25519 私钥签名。
  * @param params 签名所需的各字段
+ * @param params.deviceId 设备唯一标识
+ * @param params.clientId 客户端 ID
+ * @param params.clientMode 客户端模式
+ * @param params.role 申请的角色
+ * @param params.scopes 申请的权限范围列表
+ * @param params.signedAtMs 签名时间戳（毫秒）
+ * @param params.token 用于签名的认证 token，可为 null
+ * @param params.nonce 服务器 challenge 下发的 nonce
+ * @returns base64url 编码的签名结果
  */
 export function signChallenge(params: {
   deviceId: string
@@ -104,13 +132,14 @@ export function signChallenge(params: {
   return toBase64Url(sign(null, Buffer.from(payload, "utf-8"), privateKeyPem))
 }
 
-// ---------- Device Token 缓存 ----------
-
-const DEVICE_TOKEN_FILE = "device-token.json"
-
-/** 缓存 gateway 返回的 deviceToken，后续连接可跳过签名。 */
+/**
+ * 缓存 gateway 返回的 deviceToken。
+ * 后续连接若 token 仍有效，可直接用 token 认证而跳过 Ed25519 签名。
+ * @param token gateway 颁发的 deviceToken
+ * @param deviceId 当前设备 ID，用于与缓存文件中的设备做校验
+ */
 export function cacheDeviceToken(token: string, deviceId: string): void {
-  const filePath = join(getKeysDir(), DEVICE_TOKEN_FILE)
+  const filePath = join(getKeysDir(), "device-token.json")
   try {
     writeFileSync(filePath, JSON.stringify({ token, deviceId, cachedAt: Date.now() }), { mode: 0o600 })
   } catch {
@@ -118,9 +147,13 @@ export function cacheDeviceToken(token: string, deviceId: string): void {
   }
 }
 
-/** 读取缓存的 deviceToken，不存在或损坏返回 null。 */
+/**
+ * 读取缓存的 deviceToken。
+ * 文件不存在或解析失败时静默返回 null，不会阻断连接流程。
+ * @returns 缓存的 deviceToken，或 null
+ */
 export function getCachedDeviceToken(): string | null {
-  const filePath = join(getKeysDir(), DEVICE_TOKEN_FILE)
+  const filePath = join(getKeysDir(), "device-token.json")
   try {
     if (!existsSync(filePath)) return null
     const raw = readFileSync(filePath, "utf-8")
@@ -128,51 +161,5 @@ export function getCachedDeviceToken(): string | null {
     return (JSON.parse(raw) as { token?: string }).token ?? null
   } catch {
     return null
-  }
-}
-
-// ---------- Connect Params 构建 ----------
-
-import type { ConnectChallenge, ConnectParams } from "./contract"
-import { PROTOCOL_VERSION } from "./contract"
-
-/**
- * 根据 challenge 和 token 构建完整的 connect 请求参数。
- * @param challenge 服务器下发的 nonce
- * @param token gateway 认证 token
- */
-export function buildConnectParams(challenge: ConnectChallenge, token: string): ConnectParams {
-  const deviceId = getDeviceId()
-  const signedAt = Date.now()
-  const cachedDeviceToken = getCachedDeviceToken()
-  const signature = signChallenge({
-    deviceId,
-    clientId: "kaiwu",
-    clientMode: "ui",
-    role: "operator",
-    scopes: ["operator.read", "operator.write"],
-    signedAtMs: signedAt,
-    token: token || cachedDeviceToken || "",
-    nonce: challenge.nonce,
-  })
-
-  return {
-    minProtocol: PROTOCOL_VERSION,
-    maxProtocol: PROTOCOL_VERSION,
-    client: {
-      id: "kaiwu",
-      displayName: "Kaiwu",
-      version: app.getVersion(),
-      platform: process.platform,
-      mode: "ui",
-    },
-    auth: { token, deviceToken: cachedDeviceToken ?? undefined },
-    device: {
-      id: deviceId,
-      publicKey: getPublicKeyBase64(),
-      signature,
-      signedAt,
-      nonce: challenge.nonce,
-    },
   }
 }

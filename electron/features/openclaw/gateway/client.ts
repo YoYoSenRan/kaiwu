@@ -8,9 +8,10 @@
  * 4. 后续通过 req/res 帧收发 RPC，通过 event 帧接收流式事件
  */
 
-import log from "../../../core/logger"
 import WebSocket from "ws"
-import { buildConnectParams, cacheDeviceToken, getDeviceId } from "./auth"
+import log from "../../../core/logger"
+import { cacheDeviceToken } from "./auth"
+import { buildConnectParams } from "./handshake"
 import type { ConnectChallenge, EventFrame, HelloOk, InboundFrame, RequestFrame, ResponseFrame } from "./contract"
 
 /** 等待 challenge 的超时（ms）。 */
@@ -20,15 +21,18 @@ const REQUEST_TIMEOUT_MS = 15_000
 /** 重连参数。 */
 const RECONNECT_BASE_MS = 1_000
 const RECONNECT_MAX_MS = 15_000
-const RECONNECT_MAX_ATTEMPTS = 10
 
+type ConnectionListener = (connected: boolean) => void
+type ConnectErrorListener = (err: Error) => void
 type PendingReq = { resolve: (v: unknown) => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> }
 type EventListener = (frame: EventFrame) => void
 
 export interface GatewayClient {
-  connect: (url: string, token: string) => void
+  connect: (url: string, auth: { token?: string; password?: string }) => Promise<void>
   disconnect: () => void
   call: (method: string, params?: unknown, timeoutMs?: number) => Promise<unknown>
+  onConnectionChange: (listener: ConnectionListener) => () => void
+  onConnectError: (listener: ConnectErrorListener) => () => void
   onEvent: (listener: EventListener) => () => void
   isConnected: () => boolean
 }
@@ -43,15 +47,21 @@ export function createGatewayClient(): GatewayClient {
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let reconnectAttempt = 0
   let currentUrl = ""
-  let currentToken = ""
+  let currentAuth: { token?: string; password?: string } = {}
   let idCounter = 0
 
-  const pending = new Map<string, PendingReq>()
+  const connectionListeners = new Set<ConnectionListener>()
+  const connectErrorListeners = new Set<ConnectErrorListener>()
   const eventListeners = new Set<EventListener>()
+  const pending = new Map<string, PendingReq>()
   let challengeResolver: ((c: ConnectChallenge) => void) | null = null
 
   function send(frame: RequestFrame): void {
-    if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(frame))
+    if (ws?.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(frame))
+    } else {
+      throw new Error("gateway socket not open")
+    }
   }
 
   function handleFrame(raw: string): void {
@@ -90,11 +100,17 @@ export function createGatewayClient(): GatewayClient {
         reject(new Error(`RPC timeout: ${method}`))
       }, timeoutMs)
       pending.set(id, { resolve, reject, timer })
-      send({ type: "req", id, method, params })
+      try {
+        send({ type: "req", id, method, params })
+      } catch (err) {
+        pending.delete(id)
+        clearTimeout(timer)
+        reject(err)
+      }
     })
   }
 
-  async function doConnect(url: string, token: string): Promise<void> {
+  async function doConnect(url: string, auth: { token?: string; password?: string }): Promise<void> {
     return new Promise((resolve, reject) => {
       const socket = new WebSocket(url)
       ws = socket
@@ -105,7 +121,12 @@ export function createGatewayClient(): GatewayClient {
 
       socket.on("open", () => {
         clearTimeout(timer)
-        doHandshake(token).then(resolve).catch(reject)
+        doHandshake(auth)
+          .then(resolve)
+          .catch((err) => {
+            socket.close()
+            reject(err)
+          })
       })
       socket.on("message", (data) => handleFrame(data.toString("utf-8")))
       socket.on("close", (code) => onClose(code))
@@ -113,15 +134,19 @@ export function createGatewayClient(): GatewayClient {
     })
   }
 
-  async function doHandshake(token: string): Promise<void> {
+  async function doHandshake(auth: { token?: string; password?: string }): Promise<void> {
     const challenge = await waitForChallenge()
-    const params = buildConnectParams(challenge, token)
+    const params = buildConnectParams(challenge, auth)
     const helloOk = (await call("connect", params)) as HelloOk
 
-    if (helloOk.auth?.deviceToken) cacheDeviceToken(helloOk.auth.deviceToken, getDeviceId())
     connected = true
     reconnectAttempt = 0
+    for (const fn of connectionListeners) fn(true)
     log.info(`[gateway] connected, protocol=${helloOk.protocol}`)
+
+    if (helloOk.auth?.deviceToken && params.device?.id) {
+      cacheDeviceToken(helloOk.auth.deviceToken, params.device.id)
+    }
   }
 
   function waitForChallenge(): Promise<ConnectChallenge> {
@@ -140,35 +165,46 @@ export function createGatewayClient(): GatewayClient {
 
   function onClose(code: number): void {
     ws = null
+    const wasConnected = connected
     connected = false
     for (const [, req] of pending) {
       clearTimeout(req.timer)
       req.reject(new Error("connection closed"))
     }
     pending.clear()
+    if (wasConnected) {
+      for (const fn of connectionListeners) fn(false)
+    }
     if (stopped) return
     log.info(`[gateway] disconnected code=${code}`)
     scheduleReconnect()
   }
 
   function scheduleReconnect(): void {
-    if (stopped || reconnectTimer || reconnectAttempt >= RECONNECT_MAX_ATTEMPTS) return
+    if (stopped || reconnectTimer) return
     const delay = Math.min(RECONNECT_BASE_MS * Math.pow(1.7, reconnectAttempt), RECONNECT_MAX_MS)
     const jitter = Math.random() * delay * 0.3
     reconnectAttempt++
-    log.info(`[gateway] reconnect in ${Math.round(delay + jitter)}ms (${reconnectAttempt}/${RECONNECT_MAX_ATTEMPTS})`)
+    log.info(`[gateway] reconnect in ${Math.round(delay + jitter)}ms (attempt ${reconnectAttempt})`)
     reconnectTimer = setTimeout(() => {
       reconnectTimer = null
-      void doConnect(currentUrl, currentToken).catch(() => {})
+      void doConnect(currentUrl, currentAuth).catch((err) => {
+        const error = err instanceof Error ? err : new Error(String(err))
+        for (const fn of connectErrorListeners) fn(error)
+      })
     }, delay + jitter)
   }
 
   return {
-    connect(url, token) {
+    connect(url, auth) {
       stopped = false
       currentUrl = url
-      currentToken = token
-      void doConnect(url, token).catch(() => {})
+      currentAuth = auth
+      return doConnect(url, auth).catch((err) => {
+        const error = err instanceof Error ? err : new Error(String(err))
+        for (const fn of connectErrorListeners) fn(error)
+        throw error
+      })
     },
     disconnect() {
       stopped = true
@@ -190,6 +226,14 @@ export function createGatewayClient(): GatewayClient {
       connected = false
     },
     call,
+    onConnectionChange(listener) {
+      connectionListeners.add(listener)
+      return () => connectionListeners.delete(listener)
+    },
+    onConnectError(listener) {
+      connectErrorListeners.add(listener)
+      return () => connectErrorListeners.delete(listener)
+    },
     onEvent(listener) {
       eventListeners.add(listener)
       return () => eventListeners.delete(listener)

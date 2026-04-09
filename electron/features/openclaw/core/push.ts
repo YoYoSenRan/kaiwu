@@ -9,7 +9,7 @@ import type { BridgeEvent, OpenClawStatus } from "../types"
 export function pushBridgeEvent(event: BridgeEvent): void {
   const win = getMainWindow()
   if (!win) return
-  win.webContents.send(openclawChannels.bridgeEvent, event)
+  win.webContents.send(openclawChannels.bridge.event, event)
 }
 
 /**
@@ -19,5 +19,5 @@ export function pushBridgeEvent(event: BridgeEvent): void {
 export function pushStatusChanged(status: OpenClawStatus): void {
   const win = getMainWindow()
   if (!win) return
-  win.webContents.send(openclawChannels.statusChanged, status)
+  win.webContents.send(openclawChannels.bridge.status, status)
 }

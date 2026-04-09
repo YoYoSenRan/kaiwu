@@ -18,7 +18,7 @@ import { touchSession, updateSessionStatus } from "../session/manager"
 import type { ChatSendRequest, ChatStreamChunk } from "./contract"
 
 /** 推 ChatStreamChunk 到 renderer 的 IPC 通道名。 */
-const CHAT_STREAM_CHANNEL = "openclaw:chat-stream"
+const CHAT_STREAM_CHANNEL = "openclaw:chat:stream"
 
 /**
  * 发送消息并自动订阅流式响应。
