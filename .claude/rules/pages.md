@@ -70,10 +70,9 @@ pages/
 
 ```tsx
 // ✅ 正确
-import Demo from "@/pages/demo"        // 走目录解析到 index.tsx
+import Demo from "@/pages/demo" // 走目录解析到 index.tsx
 import Settings from "@/pages/settings"
-
-<Routes>
+;<Routes>
   <Route path="/" element={<Demo />} />
   <Route path="/settings" element={<Settings />} />
 </Routes>
@@ -86,14 +85,14 @@ import Hero from "@/pages/demo/components/hero"
 
 页面私有的东西**只有真正被复用时才上浮**，避免一上来就过度抽象。
 
-| 场景 | 处理 |
-|---|---|
-| 组件只在当前页面用 | `pages/<name>/components/` |
-| 组件被 ≥2 个页面用 | 上浮到 `app/components/<分类>/` |
-| Hook 只在当前页面用 | `pages/<name>/hooks/` |
-| Hook 被 ≥2 个页面用 | 上浮到 `app/hooks/` |
-| 工具函数（无 React） | 直接放 `app/lib/`，不进 page 私有目录 |
-| 静态数据/常量 | 当前页用就 `pages/<name>/data.ts`；多页用进 `app/lib/constants.ts` |
+| 场景                 | 处理                                                               |
+| -------------------- | ------------------------------------------------------------------ |
+| 组件只在当前页面用   | `pages/<name>/components/`                                         |
+| 组件被 ≥2 个页面用   | 上浮到 `app/components/<分类>/`                                    |
+| Hook 只在当前页面用  | `pages/<name>/hooks/`                                              |
+| Hook 被 ≥2 个页面用  | 上浮到 `app/hooks/`                                                |
+| 工具函数（无 React） | 直接放 `app/lib/`，不进 page 私有目录                              |
+| 静态数据/常量        | 当前页用就 `pages/<name>/data.ts`；多页用进 `app/lib/constants.ts` |
 
 ## Import 规则（页面内部）
 
@@ -124,12 +123,12 @@ import { Hero, Stats } from "./components"
 
 ## 反模式
 
-| 反模式 | 原因 |
-|---|---|
-| 在 `App.tsx` 里写业务逻辑 | 它只是路由壳 |
-| `pages/foo/` import `pages/bar/*` | 页面之间应通过全局组件/store 解耦 |
-| 一上来就把所有子组件塞进 `app/components/` | 私有组件应留在 page 内，被复用了再上浮 |
-| 在 page 子目录建 `index.ts` barrel | 同 `ipc.md`：徒增 import 链且没收益 |
-| 页面 < 100 行还硬开 `components/` 子目录 | 过度组织，单文件就行 |
-| `lib/` 里 import React 或组件 | `lib/` 必须保持纯函数无 React 依赖 |
-| `pages/<name>/` 下放 `xxx.css` 全局样式 | 全局样式只放 `app/styles/`；页面私有样式可以同名 `hero.css` 紧贴组件 |
+| 反模式                                     | 原因                                                                 |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| 在 `App.tsx` 里写业务逻辑                  | 它只是路由壳                                                         |
+| `pages/foo/` import `pages/bar/*`          | 页面之间应通过全局组件/store 解耦                                    |
+| 一上来就把所有子组件塞进 `app/components/` | 私有组件应留在 page 内，被复用了再上浮                               |
+| 在 page 子目录建 `index.ts` barrel         | 同 `ipc.md`：徒增 import 链且没收益                                  |
+| 页面 < 100 行还硬开 `components/` 子目录   | 过度组织，单文件就行                                                 |
+| `lib/` 里 import React 或组件              | `lib/` 必须保持纯函数无 React 依赖                                   |
+| `pages/<name>/` 下放 `xxx.css` 全局样式    | 全局样式只放 `app/styles/`；页面私有样式可以同名 `hero.css` 紧贴组件 |

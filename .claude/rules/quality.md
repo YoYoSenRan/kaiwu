@@ -2,24 +2,24 @@
 
 ## 规模限制
 
-| 项目 | 上限 | 说明 |
-|---|---|---|
-| 函数行数 | ≤ 40 | 超了就抽子函数 |
-| 文件行数 | ≤ 200 | 超了考虑拆分 |
-| 嵌套深度 | ≤ 3 | 深了用 early return |
+| 项目     | 上限  | 说明                |
+| -------- | ----- | ------------------- |
+| 函数行数 | ≤ 40  | 超了就抽子函数      |
+| 文件行数 | ≤ 200 | 超了考虑拆分        |
+| 嵌套深度 | ≤ 3   | 深了用 early return |
 
 ### 豁免清单
 
 以下文件**不受规模限制**，原因写在表里：
 
-| 路径 | 原因 |
-|---|---|
-| `app/types/auto-imports.d.ts` | `unplugin-auto-import` 自动生成 |
-| `app/components/ui/**` | shadcn CLI 生成，受工具控制 |
-| `app/i18n/locales/*.json` | 翻译文件，按数据量增长 |
-| `pnpm-lock.yaml` / `package-lock.json` | 锁文件 |
-| `dist/` `dist-electron/` `out/` | 构建产物 |
-| `*.test.ts` `*.spec.ts` | 测试文件可有大量 fixture |
+| 路径                                   | 原因                            |
+| -------------------------------------- | ------------------------------- |
+| `app/types/auto-imports.d.ts`          | `unplugin-auto-import` 自动生成 |
+| `app/components/ui/**`                 | shadcn CLI 生成，受工具控制     |
+| `app/i18n/locales/*.json`              | 翻译文件，按数据量增长          |
+| `pnpm-lock.yaml` / `package-lock.json` | 锁文件                          |
+| `dist/` `dist-electron/` `out/`        | 构建产物                        |
+| `*.test.ts` `*.spec.ts`                | 测试文件可有大量 fixture        |
 
 新增豁免必须更新本表，禁止"心照不宣"的隐式豁免。
 

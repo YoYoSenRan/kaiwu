@@ -8,7 +8,7 @@
 
 ```ts
 // ✅ 正确
-import "./core/logger"              // side-effect，必须最先
+import "./core/logger" // side-effect，必须最先
 import { app } from "electron"
 import { setupLog } from "./features/log/ipc"
 import { setupCSP } from "./core/security"
@@ -25,7 +25,6 @@ import { setupCSP } from "./core/security"
 ```
 
 > feature 必须**直接 import 具体文件**（`./features/window/ipc` 或 `./features/window/bridge`），**不要**走 barrel `./features/window`。详见 `ipc.md` 的"禁止 barrel"小节。
-
 
 ## 类型描述同文件实现时前置
 

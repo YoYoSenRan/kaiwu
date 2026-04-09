@@ -25,20 +25,20 @@ pnpm pretest && pnpm exec vitest run test/e2e.spec.ts -t "startup"
 
 `.claude/rules/` 是项目所有约束的源头。**修改代码前先看对应的 rule 文件**：
 
-| 文件 | 覆盖范围 |
-|---|---|
-| `architecture.md` | 主进程目录划分（core/ vs features/）、装配方式、启动顺序 |
-| `ipc.md` | feature 4-5 文件模板（channels/types/service/ipc/bridge）、**禁止 barrel** 的原因 |
-| `pages.md` | 渲染进程目录结构、`pages/` 组织、上浮规则、私有组件放哪 |
-| `persistence.md` | 双轨持久化：zustand persist（renderer）vs electron-store（main）的选择规则 |
-| `i18n.md` | 翻译键命名、什么要/不要翻译、locale 同步铁律 |
-| `testing.md` | E2E 优先策略、什么改动必须补测试、命名与清理规范 |
-| `commit.md` | Conventional Commits + 中文描述、type/scope 枚举、一次一件事 |
-| `imports.md` | 单块 import、按行长升序、对象字面量键序 |
-| `naming.md` | 文件名小写单词、组件 PascalCase、动词函数名 |
-| `comments.md` | 导出函数 JSDoc 必写、行内注释解释"为什么" |
-| `quality.md` | 函数 ≤ 40 行、文件 ≤ 200 行、嵌套 ≤ 3 层、魔法值入 constants |
-| `design.md` | UI 设计语言 "Operations Deck"（仅 `app/**/*.tsx` `app/**/*.css` 受约束） |
+| 文件              | 覆盖范围                                                                          |
+| ----------------- | --------------------------------------------------------------------------------- |
+| `architecture.md` | 主进程目录划分（core/ vs features/）、装配方式、启动顺序                          |
+| `ipc.md`          | feature 4-5 文件模板（channels/types/service/ipc/bridge）、**禁止 barrel** 的原因 |
+| `pages.md`        | 渲染进程目录结构、`pages/` 组织、上浮规则、私有组件放哪                           |
+| `persistence.md`  | 双轨持久化：zustand persist（renderer）vs electron-store（main）的选择规则        |
+| `i18n.md`         | 翻译键命名、什么要/不要翻译、locale 同步铁律                                      |
+| `testing.md`      | E2E 优先策略、什么改动必须补测试、命名与清理规范                                  |
+| `commit.md`       | Conventional Commits + 中文描述、type/scope 枚举、一次一件事                      |
+| `imports.md`      | 单块 import、按行长升序、对象字面量键序                                           |
+| `naming.md`       | 文件名小写单词、组件 PascalCase、动词函数名                                       |
+| `comments.md`     | 导出函数 JSDoc 必写、行内注释解释"为什么"                                         |
+| `quality.md`      | 函数 ≤ 40 行、文件 ≤ 200 行、嵌套 ≤ 3 层、魔法值入 constants                      |
+| `design.md`       | UI 设计语言 "Operations Deck"（仅 `app/**/*.tsx` `app/**/*.css` 受约束）          |
 
 ## 架构鸟瞰
 

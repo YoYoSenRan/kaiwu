@@ -194,6 +194,37 @@
     "versionLabel": "版本",
     "buildLabel": "构建",
     "deviceId": "设备ID",
-    "viewLogs": "查看日志"
+    "viewLogs": "查看日志",
+    "openclaw": {
+      "title": "OpenClaw 桥接",
+      "statusInstalled": "已安装",
+      "statusMissing": "未检测到",
+      "statusRunning": "运行中",
+      "statusStopped": "已停止",
+      "hostVersion": "主机版本",
+      "gatewayPort": "网关端口",
+      "bridgeStatus": "插件状态",
+      "bridgeInstalled": "已同步",
+      "bridgeMissing": "未同步",
+      "bridgeVersion": "插件版本",
+      "compat": "兼容性",
+      "compatOk": "兼容",
+      "compatFail": "不兼容",
+      "unknown": "—",
+      "detectedBy": "侦测来源",
+      "configDir": "配置目录",
+      "actions": "操作",
+      "detect": "重新探测",
+      "sync": "同步插件",
+      "uninstall": "卸载插件",
+      "restart": "重启网关",
+      "events": "桥接事件",
+      "noEvents": "暂无事件",
+      "syncOk": "插件已同步",
+      "syncFail": "同步失败：{{message}}",
+      "uninstallOk": "插件已卸载",
+      "restartOk": "网关已重启",
+      "restartFail": "重启失败：{{message}}"
+    }
   }
 }

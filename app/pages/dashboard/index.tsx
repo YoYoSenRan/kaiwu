@@ -27,10 +27,7 @@ function StatCard({ stat, index }: { stat: (typeof STATS)[number]; index: number
   const { t } = useTranslation()
   const Icon = stat.icon
   return (
-    <div
-      className="group bg-background p-6 deck-rise transition-colors"
-      style={{ animationDelay: `${280 + index * 70}ms` }}
-    >
+    <div className="group bg-background p-6 deck-rise transition-colors" style={{ animationDelay: `${280 + index * 70}ms` }}>
       <div className="flex items-center justify-between">
         <span className="text-[10px] tracking-[0.3em] text-muted-foreground uppercase">{t(`dashboard.stats.${stat.key}`)}</span>
         <Icon className="size-3.5 text-muted-foreground transition-colors group-hover:deck-accent" strokeWidth={1.5} />
@@ -45,10 +42,7 @@ function StatCard({ stat, index }: { stat: (typeof STATS)[number]; index: number
 
 function ActivityRow({ activity, index }: { activity: (typeof ACTIVITIES)[number]; index: number }) {
   return (
-    <div
-      className="group flex items-start gap-4 py-3 border-b border-border/50 last:border-b-0 deck-rise"
-      style={{ animationDelay: `${600 + index * 50}ms` }}
-    >
+    <div className="group flex items-start gap-4 py-3 border-b border-border/50 last:border-b-0 deck-rise" style={{ animationDelay: `${600 + index * 50}ms` }}>
       <span className="text-xs font-mono text-muted-foreground tabular pt-0.5 w-12 shrink-0">{activity.time}</span>
       <p className="flex-1 text-sm text-foreground/80 leading-relaxed">{activity.event}</p>
       <span className="text-xs font-mono text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity pt-1">{activity.id}</span>
@@ -60,10 +54,7 @@ function ModuleRow({ module, index }: { module: (typeof MODULES)[number]; index:
   const { t } = useTranslation()
   const isHealthy = module.status === "OK"
   return (
-    <div
-      className="flex items-center gap-3 py-3 border-b border-border/50 last:border-b-0 deck-rise"
-      style={{ animationDelay: `${700 + index * 60}ms` }}
-    >
+    <div className="flex items-center gap-3 py-3 border-b border-border/50 last:border-b-0 deck-rise" style={{ animationDelay: `${700 + index * 60}ms` }}>
       <span className={`size-1.5 rounded-full ${isHealthy ? "bg-foreground/70 deck-pulse" : "deck-accent-bg"}`} />
       <span className="text-sm font-mono w-20">{t(`dashboard.modules.${module.name}`)}</span>
       <div className="flex-1 h-px bg-border relative overflow-hidden">

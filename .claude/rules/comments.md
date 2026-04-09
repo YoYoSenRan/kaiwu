@@ -55,7 +55,7 @@ export interface Progress {
 // ✅ 含义不明显时行内注释
 export interface UpdateInfo {
   version: string
-  notes: string  // markdown 格式，可能为空
+  notes: string // markdown 格式，可能为空
 }
 ```
 
@@ -68,6 +68,7 @@ export interface UpdateInfo {
 **逻辑处必写**，解释"为什么"不是"做什么"。
 
 ✅ 好注释：
+
 ```ts
 // macOS 上 dock 图标点击会触发 activate，需要重新创建窗口
 app.on("activate", () => { ... })
@@ -77,6 +78,7 @@ if (!result || result.updateInfo.version === autoUpdater.currentVersion.version)
 ```
 
 ❌ 烂注释：
+
 ```ts
 // 创建窗口
 createWindow()
@@ -86,6 +88,7 @@ i++
 ```
 
 **必须加注释的位置**：
+
 - magic number（`setTimeout(fn, 3000)` → 解释 3000 怎么来的）
 - 看起来"多此一举"的代码（解释为什么不能删）
 - hack / workaround（解释绕的是什么坑，最好附 issue 链接）

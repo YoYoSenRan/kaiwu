@@ -1,14 +1,6 @@
 import { useTranslation } from "react-i18next"
-import {
-  Check,
-  ChevronRight,
-  Globe,
-  LayoutTemplate,
-  Monitor,
-  Moon,
-  Palette,
-  Sun,
-} from "lucide-react"
+import { Check, ChevronRight, Globe, LayoutTemplate, Monitor, Moon, Palette, Sun } from "lucide-react"
+import { OpenClawCard } from "./components/openclaw-card"
 import { useSettingsStore } from "@/stores/settings"
 
 const THEMES = [
@@ -68,8 +60,7 @@ function LanguageCard() {
           onClick={() => choose("zh-CN")}
           className={`flex flex-1 items-center justify-center gap-1.5 h-8 border text-xs font-mono uppercase tracking-wider transition-colors ${isZh ? "border-foreground text-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"}`}
         >
-          {isZh && <Check className="size-3" strokeWidth={2} />}
-          中
+          {isZh && <Check className="size-3" strokeWidth={2} />}中
         </button>
         <button
           onClick={() => choose("en")}
@@ -101,9 +92,7 @@ function LayoutCard() {
           className={`relative h-5 w-9 border transition-colors ${collapsed ? "border-foreground bg-foreground" : "border-border"}`}
           aria-label="toggle sidebar"
         >
-          <span
-            className={`absolute top-0.5 size-3.5 bg-background transition-all ${collapsed ? "left-[calc(100%-18px)]" : "left-0.5"}`}
-          />
+          <span className={`absolute top-0.5 size-3.5 bg-background transition-all ${collapsed ? "left-[calc(100%-18px)]" : "left-0.5"}`} />
         </button>
       </div>
     </div>
@@ -204,6 +193,8 @@ export default function Settings() {
           <AboutCard />
         </div>
       </section>
+
+      <OpenClawCard />
     </div>
   )
 }

@@ -194,6 +194,37 @@
     "versionLabel": "Version",
     "buildLabel": "Build",
     "deviceId": "Device ID",
-    "viewLogs": "View logs"
+    "viewLogs": "View logs",
+    "openclaw": {
+      "title": "OpenClaw Bridge",
+      "statusInstalled": "Installed",
+      "statusMissing": "Not found",
+      "statusRunning": "Running",
+      "statusStopped": "Stopped",
+      "hostVersion": "Host version",
+      "gatewayPort": "Gateway port",
+      "bridgeStatus": "Plugin status",
+      "bridgeInstalled": "Synced",
+      "bridgeMissing": "Not synced",
+      "bridgeVersion": "Plugin version",
+      "compat": "Compatibility",
+      "compatOk": "Compatible",
+      "compatFail": "Incompatible",
+      "unknown": "—",
+      "detectedBy": "Detected by",
+      "configDir": "Config dir",
+      "actions": "Actions",
+      "detect": "Re-detect",
+      "sync": "Sync plugin",
+      "uninstall": "Uninstall plugin",
+      "restart": "Restart gateway",
+      "events": "Bridge events",
+      "noEvents": "No events yet",
+      "syncOk": "Plugin synced",
+      "syncFail": "Sync failed: {{message}}",
+      "uninstallOk": "Plugin uninstalled",
+      "restartOk": "Gateway restarted",
+      "restartFail": "Restart failed: {{message}}"
+    }
   }
 }

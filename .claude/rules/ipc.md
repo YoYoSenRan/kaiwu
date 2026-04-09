@@ -62,7 +62,7 @@ export const windowChannels = {
   maximize: "window:maximize",
   close: "window:close",
   isMaximized: "window:is-maximized",
-  maximizedChanged: "window:maximized-changed",  // main → renderer
+  maximizedChanged: "window:maximized-changed", // main → renderer
 } as const
 ```
 
@@ -114,7 +114,6 @@ export const windowBridge: WindowBridge = {
   },
 }
 ```
-
 
 ## 事件订阅模式
 
