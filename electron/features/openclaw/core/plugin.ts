@@ -1,6 +1,6 @@
 import path from "node:path"
 import { promises as fs } from "node:fs"
-import { PLUGIN_SOURCE_DIR } from "./version"
+import { PLUGIN_SOURCE_DIR } from "./compat"
 
 /** 同步到 OpenClaw extensions 目录时排除的文件/目录名。 */
 const EXCLUDE_NAMES = new Set(["node_modules", ".git", ".DS_Store", "dist", ".kaiwu-handshake.json"])
@@ -44,31 +44,18 @@ export async function uninstallBridgePlugin(extensionsDir: string): Promise<bool
 }
 
 /**
- * 写入 kaiwu 与插件通信所需的 handshake 文件。
+ * 检查 kaiwu-bridge 插件是否已同步到指定 extensions 目录，并读取其版本号。
+ * 从 gateway 探测职责中分离出来，单独作为 plugin 层的能力。
  * @param extensionsDir OpenClaw 的 extensions 根目录
- * @param port kaiwu bridge server 端口
- * @param token 共享 token
  */
-export async function writeHandshake(params: { extensionsDir: string; port: number; token: string; pid: number }): Promise<string> {
-  const target = path.join(params.extensionsDir, "kaiwu-bridge", ".kaiwu-handshake.json")
-  await ensureDir(path.dirname(target))
-  const payload = {
-    port: params.port,
-    token: params.token,
-    pid: params.pid,
-    startedAt: Date.now(),
-  }
-  await fs.writeFile(target, JSON.stringify(payload, null, 2), "utf-8")
-  return target
-}
-
-/** 移除 handshake 文件（kaiwu 退出时调用）。 */
-export async function removeHandshake(extensionsDir: string): Promise<void> {
-  const target = path.join(extensionsDir, "kaiwu-bridge", ".kaiwu-handshake.json")
+export async function detectPluginInstall(extensionsDir: string): Promise<{ installed: boolean; version: string | null }> {
+  const pkgPath = path.join(extensionsDir, "kaiwu-bridge", "package.json")
   try {
-    await fs.rm(target, { force: true })
+    const raw = await fs.readFile(pkgPath, "utf-8")
+    const json = JSON.parse(raw) as { version?: string }
+    return { installed: true, version: typeof json.version === "string" ? json.version : null }
   } catch {
-    // ignore
+    return { installed: false, version: null }
   }
 }
 

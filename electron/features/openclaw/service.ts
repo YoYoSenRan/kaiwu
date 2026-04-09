@@ -1,13 +1,14 @@
 import log from "../../core/logger"
 import { isWin } from "../../core/env"
 import { spawn } from "node:child_process"
-import { detectOpenClaw } from "./detector"
 import { openclawChannels } from "./channels"
-import { checkCompatibility } from "./version"
+import { detectGateway } from "./core/gateway"
 import { getMainWindow } from "../../core/window"
-import { startBridgeServer, type BridgeServer } from "./bridge-server"
+import { checkCompatibility } from "./core/compat"
+import { removeHandshake, writeHandshake } from "./core/handshake"
+import { startBridgeServer, type BridgeServer } from "./core/transport"
+import { detectPluginInstall, syncBridgePlugin, uninstallBridgePlugin } from "./core/plugin"
 import type { BridgeEvent, CompatResult, InvokeArgs, InvokeResult, OpenClawStatus } from "./types"
-import { removeHandshake, syncBridgePlugin, uninstallBridgePlugin, writeHandshake } from "./installer"
 
 /** 调用 `openclaw gateway restart` 的超时（ms）。 */
 const RESTART_TIMEOUT_MS = 10_000
@@ -43,11 +44,13 @@ export async function startBridge(): Promise<BridgeServer | null> {
  */
 async function refreshHandshakeIfInstalled(): Promise<void> {
   if (!bridgeServer) return
-  const status = await detectOpenClaw()
-  if (!status.extensionsDir || !status.bridgeInstalled) return
+  const gateway = await detectGateway()
+  if (!gateway.extensionsDir) return
+  const pluginInfo = await detectPluginInstall(gateway.extensionsDir)
+  if (!pluginInfo.installed) return
   try {
     await writeHandshake({
-      extensionsDir: status.extensionsDir,
+      extensionsDir: gateway.extensionsDir,
       port: bridgeServer.info.port,
       token: bridgeServer.info.token,
       pid: bridgeServer.info.pid,
@@ -65,17 +68,28 @@ export async function stopBridge(): Promise<void> {
   bridgeServer = null
 }
 
-/** 探测 OpenClaw 并把结果推给 renderer。 */
+/**
+ * 探测 OpenClaw gateway + kaiwu-bridge 插件安装状态，组合成统一 status 推给 renderer。
+ * gateway 探测和插件探测分属两层，这里负责组合。
+ */
 export async function detect(): Promise<OpenClawStatus> {
-  const status = await detectOpenClaw()
+  const gateway = await detectGateway()
+  const pluginInfo = gateway.extensionsDir
+    ? await detectPluginInstall(gateway.extensionsDir)
+    : { installed: false, version: null }
+  const status: OpenClawStatus = {
+    ...gateway,
+    bridgeInstalled: pluginInfo.installed,
+    installedBridgeVersion: pluginInfo.version,
+  }
   pushStatusChanged(status)
   return status
 }
 
-/** 校验 kaiwu-bridge 对当前 OpenClaw 的兼容性。内部先跑一次探测拿版本。 */
+/** 校验 kaiwu-bridge 对当前 OpenClaw 的兼容性。内部先跑一次 gateway 探测拿版本。 */
 export async function checkCompat(): Promise<CompatResult> {
-  const status = await detectOpenClaw()
-  return checkCompatibility(status.version)
+  const gateway = await detectGateway()
+  return checkCompatibility(gateway.version)
 }
 
 /**
@@ -83,20 +97,20 @@ export async function checkCompat(): Promise<CompatResult> {
  * 先做兼容性校验，不兼容直接抛错，避免装一个跑不起来的插件。
  */
 export async function installBridge(): Promise<OpenClawStatus> {
-  const status = await detectOpenClaw()
-  if (!status.installed || !status.extensionsDir) {
+  const gateway = await detectGateway()
+  if (!gateway.installed || !gateway.extensionsDir) {
     throw new Error("未检测到 OpenClaw 安装（configDir 不存在），请先安装 OpenClaw")
   }
-  const compat = checkCompatibility(status.version)
+  const compat = checkCompatibility(gateway.version)
   if (!compat.compatible) {
     throw new Error(compat.reason ?? "kaiwu-bridge 与当前 OpenClaw 版本不兼容")
   }
 
-  await syncBridgePlugin(status.extensionsDir)
+  await syncBridgePlugin(gateway.extensionsDir)
 
   if (bridgeServer) {
     await writeHandshake({
-      extensionsDir: status.extensionsDir,
+      extensionsDir: gateway.extensionsDir,
       port: bridgeServer.info.port,
       token: bridgeServer.info.token,
       pid: bridgeServer.info.pid,
@@ -110,10 +124,10 @@ export async function installBridge(): Promise<OpenClawStatus> {
 
 /** 卸载已同步的插件和 handshake 文件。 */
 export async function uninstallBridge(): Promise<OpenClawStatus> {
-  const status = await detectOpenClaw()
-  if (status.extensionsDir) {
-    await removeHandshake(status.extensionsDir)
-    await uninstallBridgePlugin(status.extensionsDir)
+  const gateway = await detectGateway()
+  if (gateway.extensionsDir) {
+    await removeHandshake(gateway.extensionsDir)
+    await uninstallBridgePlugin(gateway.extensionsDir)
   }
   return await detect()
 }
@@ -152,14 +166,14 @@ export async function restartOpenclaw(): Promise<{ ok: boolean; error?: string }
  * kaiwu → OpenClaw → 插件 的入站通道。
  */
 export async function invokePlugin(args: InvokeArgs): Promise<InvokeResult> {
-  const status = await detectOpenClaw()
-  if (!status.running || !status.gatewayPort) {
+  const gateway = await detectGateway()
+  if (!gateway.running || !gateway.gatewayPort) {
     return { ok: false, error: { message: "OpenClaw gateway 未运行" } }
   }
   if (!bridgeServer) {
     return { ok: false, error: { message: "bridge server 未启动，无法鉴权" } }
   }
-  const url = `http://127.0.0.1:${status.gatewayPort}/kaiwu/invoke`
+  const url = `http://127.0.0.1:${gateway.gatewayPort}/kaiwu/invoke`
   try {
     const ac = new AbortController()
     const timer = setTimeout(() => ac.abort(), INVOKE_TIMEOUT_MS)

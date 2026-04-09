@@ -2,10 +2,10 @@ import os from "node:os"
 import net from "node:net"
 import path from "node:path"
 import { findLiveLock } from "./lock"
-import { isWin } from "../../core/env"
 import { promises as fs } from "node:fs"
+import { isWin } from "../../../core/env"
 import { spawn } from "node:child_process"
-import type { OpenClawStatus } from "./types"
+import type { OpenClawStatus } from "../types"
 
 /** OpenClaw gateway 默认端口，来自 openclaw/src/config/paths.ts。 */
 export const DEFAULT_GATEWAY_PORT = 18789
@@ -16,14 +16,18 @@ const CLI_TIMEOUT_MS = 3000
 /** `.openclaw` 目录在 Windows 上位于 %APPDATA%，其他平台位于 $HOME。 */
 const OPENCLAW_DIRNAME = ".openclaw"
 
+/** gateway 探测结果：不包含 kaiwu-bridge 插件相关字段，由 plugin 层单独补齐。 */
+export type GatewayStatus = Omit<OpenClawStatus, "bridgeInstalled" | "installedBridgeVersion">
+
 /**
- * 多层侦测本机 OpenClaw。
+ * 多层侦测本机 OpenClaw gateway。
  * 任一层命中即返回，未命中继续下一层。所有字段都尽可能填写（已安装但未运行的情形也有价值）。
+ * 不涉及 kaiwu-bridge 插件状态——插件检测由 plugin.ts 的 detectPluginInstall 负责。
  */
-export async function detectOpenClaw(): Promise<OpenClawStatus> {
+export async function detectGateway(): Promise<GatewayStatus> {
   const configDir = resolveConfigDir()
   const extensionsDir = path.join(configDir, "extensions")
-  const base: OpenClawStatus = {
+  const base: GatewayStatus = {
     installed: false,
     running: false,
     version: null,
@@ -31,8 +35,6 @@ export async function detectOpenClaw(): Promise<OpenClawStatus> {
     extensionsDir,
     gatewayPort: null,
     detectedBy: null,
-    bridgeInstalled: false,
-    installedBridgeVersion: null,
   }
 
   // 先看配置目录在不在，任何一层探测成功都至少说明"装过"
@@ -75,11 +77,6 @@ export async function detectOpenClaw(): Promise<OpenClawStatus> {
   if (base.installed && !base.version) {
     base.version = await readInstalledVersion(configDir)
   }
-
-  // 检查 kaiwu-bridge 插件是否已同步
-  const bridgeInfo = await readInstalledBridge(extensionsDir)
-  base.bridgeInstalled = bridgeInfo.installed
-  base.installedBridgeVersion = bridgeInfo.version
 
   return base
 }
@@ -166,7 +163,6 @@ function probeCli(): Promise<CliResult> {
   })
 }
 
-/** 从 configDir 下的 package.json 或 openclaw.json 读取版本。 */
 /** 从 configDir 读版本。OpenClaw 把版本写在 `openclaw.json` 的 `meta.lastTouchedVersion`。 */
 async function readInstalledVersion(configDir: string): Promise<string | null> {
   const candidates = [path.join(configDir, "openclaw.json"), path.join(configDir, "package.json")]
@@ -181,15 +177,4 @@ async function readInstalledVersion(configDir: string): Promise<string | null> {
     }
   }
   return null
-}
-
-async function readInstalledBridge(extensionsDir: string): Promise<{ installed: boolean; version: string | null }> {
-  const pkgPath = path.join(extensionsDir, "kaiwu-bridge", "package.json")
-  try {
-    const raw = await fs.readFile(pkgPath, "utf-8")
-    const json = JSON.parse(raw) as { version?: string }
-    return { installed: true, version: typeof json.version === "string" ? json.version : null }
-  } catch {
-    return { installed: false, version: null }
-  }
 }

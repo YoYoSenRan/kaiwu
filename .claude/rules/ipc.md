@@ -20,6 +20,32 @@ features/<name>/
 
 **没有 `index.ts` barrel**。原因见下方"禁止 barrel"小节。
 
+## 大型 feature 的子目录例外
+
+当 feature 需要对接多个能力域（比如 `openclaw` 要桥接 session / chat / hook 等）时，允许在 feature 目录下开子目录**分域归档**：
+
+```
+features/openclaw/
+├── channels.ts / types.ts / ipc.ts / bridge.ts / service.ts   # 顶层聚合
+├── core/                 # feature 内部基础设施（不属于任何一个能力域）
+│   └── *.ts
+├── session/              # 一个能力域 = 一个子目录
+│   └── *.ts
+├── chat/
+│   └── *.ts
+└── hook/
+    └── *.ts
+```
+
+**约束**（和下方 barrel 禁令配合）：
+
+1. **子目录内不得创建 `index.ts` barrel**（原因同下）
+2. **外部 import 必须走具体文件路径**：`./session/ipc` / `./session/bridge`，不是 `./session`
+3. **顶层 `ipc.ts` 负责聚合**：调各子目录的 `setup<Cap>()`
+4. **顶层 `bridge.ts` 负责聚合**：组合各子目录的 bridge 片段为单一 `<feature>Bridge` 对象
+5. **命名惯例**：能力域子目录名 = 单数名词（`session` / `chat` / `hook`），不用复数、不加后缀
+6. **适用门槛**：feature 平铺超过 10 个文件 或 承载 ≥3 个独立能力域时才启用；小 feature 仍然扁平
+
 ## 文件职责铁律
 
 - `service.ts` 不 import `ipcMain`、不 import `BrowserWindow`（通过 `core/window` 的 `getMainWindow()` 获取）
