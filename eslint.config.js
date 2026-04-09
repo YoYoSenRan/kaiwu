@@ -1,4 +1,5 @@
 import js from "@eslint/js"
+import globals from "globals"
 import tseslint from "typescript-eslint"
 import reactHooks from "eslint-plugin-react-hooks"
 import reactRefresh from "eslint-plugin-react-refresh"
@@ -30,6 +31,12 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
     },
+  },
+
+  // scripts/ 下的 Node 脚本：启用 Node 全局，避免 no-undef 误报
+  {
+    files: ["scripts/**/*.{js,mjs,cjs}"],
+    languageOptions: { globals: globals.node },
   },
 
   // 关掉与 Prettier 冲突的规则（必须放最后）

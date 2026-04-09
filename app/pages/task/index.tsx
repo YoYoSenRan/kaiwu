@@ -32,10 +32,7 @@ function StatCard({ stat, index }: { stat: (typeof STATS)[number]; index: number
   const { t } = useTranslation()
   const Icon = stat.icon
   return (
-    <div
-      className="group bg-background p-6 deck-rise transition-colors"
-      style={{ animationDelay: `${280 + index * 70}ms` }}
-    >
+    <div className="group bg-background p-6 deck-rise transition-colors" style={{ animationDelay: `${280 + index * 70}ms` }}>
       <div className="flex items-center justify-between">
         <span className="text-[10px] tracking-[0.3em] text-muted-foreground uppercase">{t(`task.stats.${stat.key}`)}</span>
         <Icon className="size-3.5 text-muted-foreground transition-colors group-hover:deck-accent" strokeWidth={1.5} />
@@ -142,7 +139,9 @@ export default function Task() {
                 </div>
                 <span className="text-xs font-mono text-muted-foreground tabular w-12 text-right">{task.progress}%</span>
                 <span className="text-xs font-mono text-muted-foreground tabular w-16 text-right">{task.eta}</span>
-                <span className={`text-[10px] font-mono tracking-wider w-20 text-right ${task.status === "failed" ? "deck-accent" : "text-muted-foreground"}`}>{task.status.toUpperCase()}</span>
+                <span className={`text-[10px] font-mono tracking-wider w-20 text-right ${task.status === "failed" ? "deck-accent" : "text-muted-foreground"}`}>
+                  {task.status.toUpperCase()}
+                </span>
                 <span className="text-xs font-mono text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity w-14 text-right">{task.id}</span>
               </div>
             ))}

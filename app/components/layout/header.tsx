@@ -6,7 +6,7 @@ import { useSettingsStore } from "@/stores/settings"
 
 /**
  * 全局头部：左侧当前页大号 uppercase label，右侧主题 + 语言切换。
- * 页面 label 通过路由匹配 NAV_ITEMS 得到，参考页（/demo 等）显示 REFERENCE。
+ * 页面 label 通过路由匹配 NAV_ITEMS 得到，未在 NAV_ITEMS 的路由降级显示 REFERENCE。
  */
 export function Header() {
   const { t } = useTranslation()

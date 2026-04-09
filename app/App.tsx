@@ -1,5 +1,4 @@
 import Chat from "@/pages/chat"
-import Demo from "@/pages/demo"
 import Task from "@/pages/task"
 import Agent from "@/pages/agent"
 import Connect from "@/pages/connect"
@@ -31,13 +30,7 @@ function App() {
           <div className="app-content">
             <div className="mx-auto max-w-[1600px] px-10 py-10">
               <AnimatePresence mode="wait">
-                <motion.div
-                  key={location.pathname}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
+                <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2, ease: "easeOut" }}>
                   <Routes location={location}>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/agent" element={<Agent />} />
@@ -46,7 +39,6 @@ function App() {
                     <Route path="/knowledge" element={<Knowledge />} />
                     <Route path="/connect" element={<Connect />} />
                     <Route path="/settings" element={<Settings />} />
-                    <Route path="/demo" element={<Demo />} />
                   </Routes>
                 </motion.div>
               </AnimatePresence>

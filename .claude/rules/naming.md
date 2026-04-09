@@ -1,15 +1,15 @@
 # 命名规则
 
-| 类型 | 规则 | 例子 |
-|---|---|---|
-| 文件名 | 小写 + 单个单词 | `service.ts` `bridge.ts` |
-| 目录名 | 小写 + 单个单词 | `updater/` `deeplink/` |
-| 函数名 | camelCase + 动词开头 | `createWindow` `checkUpdate` |
-| 类型/接口 | PascalCase + 名词 | `UpdateInfo` `WindowBridge` |
-| 常量 | UPPER_SNAKE_CASE | `CHECK_INTERVAL_MS` |
-| Boolean | is/has/can/should 前缀 | `isDev` `hasUpdate` `canQuit` |
-| 私有函数 | 不导出即可，无需 `_` 前缀 | — |
-| Hook 文件 | `use-` 前缀 + kebab-case | `use-theme-effect.ts` `use-now.ts` |
+| 类型      | 规则                      | 例子                               |
+| --------- | ------------------------- | ---------------------------------- |
+| 文件名    | 小写 + 单个单词           | `service.ts` `bridge.ts`           |
+| 目录名    | 小写 + 单个单词           | `updater/` `deeplink/`             |
+| 函数名    | camelCase + 动词开头      | `createWindow` `checkUpdate`       |
+| 类型/接口 | PascalCase + 名词         | `UpdateInfo` `WindowBridge`        |
+| 常量      | UPPER_SNAKE_CASE          | `CHECK_INTERVAL_MS`                |
+| Boolean   | is/has/can/should 前缀    | `isDev` `hasUpdate` `canQuit`      |
+| 私有函数  | 不导出即可，无需 `_` 前缀 | —                                  |
+| Hook 文件 | `use-` 前缀 + kebab-case  | `use-theme-effect.ts` `use-now.ts` |
 
 > Hook 文件名是"小写单词"规则的**唯一例外**：React 社区惯例 `use-` 前缀必须保留，多单词时用连字符。Hook 函数本身仍然 camelCase（`useThemeEffect`）。
 

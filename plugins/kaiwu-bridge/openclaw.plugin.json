@@ -1,0 +1,24 @@
+{
+  "id": "kaiwu-bridge",
+  "name": "Kaiwu Bridge",
+  "description": "Two-way bridge between OpenClaw and the Kaiwu desktop application.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "bridgePort": {
+        "type": "number",
+        "description": "Local port Kaiwu bridge server listens on. Overrides handshake file."
+      },
+      "token": {
+        "type": "string",
+        "description": "Shared secret for bridge authentication. Overrides handshake file."
+      },
+      "logLevel": {
+        "type": "string",
+        "enum": ["debug", "info", "warn", "error"],
+        "default": "info"
+      }
+    }
+  }
+}

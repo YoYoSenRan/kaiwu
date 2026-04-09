@@ -40,8 +40,7 @@ export function useThemeEffect(): void {
       if (event.key.toLowerCase() !== "d") return
 
       const current = useSettingsStore.getState().theme
-      const next: Parameters<typeof setTheme>[0] =
-        current === "dark" ? "light" : current === "light" ? "dark" : getSystemTheme() === "dark" ? "light" : "dark"
+      const next: Parameters<typeof setTheme>[0] = current === "dark" ? "light" : current === "light" ? "dark" : getSystemTheme() === "dark" ? "light" : "dark"
       setTheme(next)
     }
 

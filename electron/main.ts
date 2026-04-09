@@ -5,8 +5,10 @@ import { setupCSP } from "./core/security"
 import { setupAppMenu } from "./core/menu"
 import { setupChrome } from "./features/chrome/ipc"
 import { setupUpdater } from "./features/updater/ipc"
+import { setupOpenclaw } from "./features/openclaw/ipc"
 import { createMainWindow } from "./core/window"
 import { setupDeeplinkListeners } from "./features/deeplink/ipc"
+import { stopBridge } from "./features/openclaw/service"
 import { prepareApp, setupAppLifecycle, requestSingleInstance } from "./core/app"
 import { setupProtocol, flushPendingDeepLink } from "./features/deeplink/service"
 
@@ -48,7 +50,13 @@ app.whenReady().then(() => {
   setupChrome()
   setupUpdater()
   setupLog()
+  setupOpenclaw()
 
   // 处理 macOS 冷启动时暂存的深度链接
   flushPendingDeepLink()
+})
+
+// 退出前关闭本地 bridge server，释放端口
+app.on("before-quit", () => {
+  void stopBridge()
 })

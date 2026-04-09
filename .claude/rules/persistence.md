@@ -12,10 +12,10 @@ paths:
 
 ## 两套方案
 
-| 方案 | 位置 | 进程 | 同步读取 | 适用场景 |
-|---|---|---|---|---|
-| **zustand persist** | `localStorage`（自动托管） | 渲染进程 | ✅ 同步 | UI state / 偏好 / "首帧即需"的状态 |
-| **electron-store** | `<userData>/config.json` | 主进程 | ❌ 需 IPC | 系统状态、业务数据、敏感信息 |
+| 方案                | 位置                       | 进程     | 同步读取  | 适用场景                           |
+| ------------------- | -------------------------- | -------- | --------- | ---------------------------------- |
+| **zustand persist** | `localStorage`（自动托管） | 渲染进程 | ✅ 同步   | UI state / 偏好 / "首帧即需"的状态 |
+| **electron-store**  | `<userData>/config.json`   | 主进程   | ❌ 需 IPC | 系统状态、业务数据、敏感信息       |
 
 ### 为什么是 zustand persist 而不是手写 localStorage
 
@@ -29,21 +29,21 @@ paths:
 
 ### 必须用 electron-store
 
-| 数据 | 原因 |
-|---|---|
-| 窗口状态（bounds、全屏、置顶） | 主进程自己要读 |
-| 用户凭证 / API key | localStorage 明文不安全，electron-store 支持加密 |
-| 业务核心数据（最近项目、文件路径、收藏） | 用户需要备份/迁移 |
-| 多进程共享状态 | localStorage 只在 renderer，main 读不到 |
+| 数据                                     | 原因                                             |
+| ---------------------------------------- | ------------------------------------------------ |
+| 窗口状态（bounds、全屏、置顶）           | 主进程自己要读                                   |
+| 用户凭证 / API key                       | localStorage 明文不安全，electron-store 支持加密 |
+| 业务核心数据（最近项目、文件路径、收藏） | 用户需要备份/迁移                                |
+| 多进程共享状态                           | localStorage 只在 renderer，main 读不到          |
 
 ### 必须用 zustand persist
 
-| 数据 | 原因 |
-|---|---|
-| theme / lang | 首帧要读，避免闪烁 |
-| UI 偏好（侧栏折叠、列表排序、视图模式） | 同上 |
-| 搜索历史、表单草稿 | 只 renderer 用，不敏感 |
-| 需要跨组件共享的本地 state | zustand 天然支持 |
+| 数据                                    | 原因                   |
+| --------------------------------------- | ---------------------- |
+| theme / lang                            | 首帧要读，避免闪烁     |
+| UI 偏好（侧栏折叠、列表排序、视图模式） | 同上                   |
+| 搜索历史、表单草稿                      | 只 renderer 用，不敏感 |
+| 需要跨组件共享的本地 state              | zustand 天然支持       |
 
 ### 模糊地带的判断
 
@@ -164,12 +164,12 @@ persist(
 
 ## 反模式（一律禁止）
 
-| 反模式 | 原因 |
-|---|---|
-| 组件里 `localStorage.getItem("theme")` | 绕过 store，失去类型约束和跨组件同步 |
-| 新建 `lib/storage.ts` 再自己包一层 | 项目有 zustand，不要重复造轮子 |
-| 往 `settings` store 塞业务数据（收藏列表、搜索历史） | settings 只放应用级偏好，业务数据另起 store |
-| 多个 store 用同一个 `persist name` | localStorage key 冲突，互相覆盖 |
-| 在 store 外部直接调 `localStorage.setItem("settings", ...)` 绕过 zustand | 会让 store 内存状态和持久化状态不同步 |
-| `localStorage.setItem("token", ...)` | 凭证/密钥必须走主进程的 electron-store 加密存储 |
-| 在 localStorage 和 electron-store 之间手动同步 | 同一份数据两处存必然不一致 |
+| 反模式                                                                   | 原因                                            |
+| ------------------------------------------------------------------------ | ----------------------------------------------- |
+| 组件里 `localStorage.getItem("theme")`                                   | 绕过 store，失去类型约束和跨组件同步            |
+| 新建 `lib/storage.ts` 再自己包一层                                       | 项目有 zustand，不要重复造轮子                  |
+| 往 `settings` store 塞业务数据（收藏列表、搜索历史）                     | settings 只放应用级偏好，业务数据另起 store     |
+| 多个 store 用同一个 `persist name`                                       | localStorage key 冲突，互相覆盖                 |
+| 在 store 外部直接调 `localStorage.setItem("settings", ...)` 绕过 zustand | 会让 store 内存状态和持久化状态不同步           |
+| `localStorage.setItem("token", ...)`                                     | 凭证/密钥必须走主进程的 electron-store 加密存储 |
+| 在 localStorage 和 electron-store 之间手动同步                           | 同一份数据两处存必然不一致                      |

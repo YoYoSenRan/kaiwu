@@ -51,18 +51,18 @@ electron/
 ## 主进程启动顺序
 
 ```ts
-prepareApp()                    // 同步准备：禁用 GPU / setAppUserModelId
-setupProtocol()                 // 自定义协议必须在 singleInstanceLock 之前
-setupDeeplinkListeners()        // open-url 必须在 whenReady 之前
+prepareApp() // 同步准备：禁用 GPU / setAppUserModelId
+setupProtocol() // 自定义协议必须在 singleInstanceLock 之前
+setupDeeplinkListeners() // open-url 必须在 whenReady 之前
 if (!requestSingleInstance()) app.quit()
-setupAppLifecycle()             // window-all-closed / activate
+setupAppLifecycle() // window-all-closed / activate
 
 app.whenReady().then(() => {
-  setupCSP()                    // CSP 必须在创建窗口前
-  createMainWindow()            // 先建窗口
-  setupWindow()                 // 后注册 IPC（部分 IPC 需要绑定窗口事件）
+  setupCSP() // CSP 必须在创建窗口前
+  createMainWindow() // 先建窗口
+  setupWindow() // 后注册 IPC（部分 IPC 需要绑定窗口事件）
   setupUpdater()
   setupLog()
-  flushPendingDeepLink()        // 处理冷启动暂存的 URL
+  flushPendingDeepLink() // 处理冷启动暂存的 URL
 })
 ```

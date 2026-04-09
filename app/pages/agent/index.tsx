@@ -32,10 +32,7 @@ function StatCard({ stat, index }: { stat: (typeof STATS)[number]; index: number
   const { t } = useTranslation()
   const Icon = stat.icon
   return (
-    <div
-      className="group bg-background p-6 deck-rise transition-colors"
-      style={{ animationDelay: `${280 + index * 70}ms` }}
-    >
+    <div className="group bg-background p-6 deck-rise transition-colors" style={{ animationDelay: `${280 + index * 70}ms` }}>
       <div className="flex items-center justify-between">
         <span className="text-[10px] tracking-[0.3em] text-muted-foreground uppercase">{t(`agent.stats.${stat.key}`)}</span>
         <Icon className="size-3.5 text-muted-foreground transition-colors group-hover:deck-accent" strokeWidth={1.5} />
@@ -143,7 +140,9 @@ export default function Agent() {
                   <div className={`h-full ${getLoadBarColor(agent.status)}`} style={{ width: `${agent.load}%` }} />
                 </div>
                 <span className="text-xs font-mono text-muted-foreground tabular w-10 text-right">{agent.load}%</span>
-                <span className={`text-[10px] font-mono tracking-wider w-16 text-right ${agent.status === "error" ? "deck-accent" : "text-muted-foreground"}`}>{agent.status.toUpperCase()}</span>
+                <span className={`text-[10px] font-mono tracking-wider w-16 text-right ${agent.status === "error" ? "deck-accent" : "text-muted-foreground"}`}>
+                  {agent.status.toUpperCase()}
+                </span>
                 <span className="text-xs font-mono text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity w-16 text-right">{agent.id}</span>
               </div>
             ))}
