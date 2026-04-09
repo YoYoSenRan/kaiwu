@@ -1,6 +1,6 @@
 /**
  * session 能力契约（主进程侧）。
- * 镜像 plugins/kaiwu-bridge/src/session/contract.ts，两端字段必须保持一致。
+ * 镜像 plugins/kaiwu/src/session/contract.ts，两端字段必须保持一致。
  */
 
 export interface SessionLifecycleEvent {

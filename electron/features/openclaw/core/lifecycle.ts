@@ -1,14 +1,14 @@
-import log from "../../core/logger"
-import { isWin } from "../../core/env"
+import log from "../../../core/logger"
+import { isWin } from "../../../core/env"
 import { spawn } from "node:child_process"
-import { openclawChannels } from "./channels"
-import { detectGateway } from "./core/gateway"
-import { getMainWindow } from "../../core/window"
-import { checkCompatibility } from "./core/compat"
-import { removeHandshake, writeHandshake } from "./core/handshake"
-import { startBridgeServer, type BridgeServer } from "./core/transport"
-import { detectPluginInstall, syncBridgePlugin, uninstallBridgePlugin } from "./core/plugin"
-import type { BridgeEvent, CompatResult, InvokeArgs, InvokeResult, OpenClawStatus } from "./types"
+import { detectGateway } from "./gateway"
+import { checkCompatibility } from "./compat"
+import { pushBridgeEvent, pushStatusChanged } from "./push"
+import { dispatchMonitorEvent, isMonitorEvent } from "../hook/dispatcher"
+import { removeHandshake, writeHandshake } from "./handshake"
+import { startBridgeServer, type BridgeServer } from "./transport"
+import { detectPluginInstall, syncBridgePlugin, uninstallBridgePlugin } from "./plugin"
+import type { CompatResult, InvokeArgs, InvokeResult, OpenClawStatus } from "../types"
 
 /** 调用 `openclaw gateway restart` 的超时（ms）。 */
 const RESTART_TIMEOUT_MS = 10_000
@@ -21,13 +21,16 @@ let bridgeServer: BridgeServer | null = null
  * 启动本地 bridge WS server。kaiwu 启动时调用一次；幂等。
  * 启动后自动刷新 handshake 文件（如果插件已安装），避免插件用上一次 kaiwu 进程
  * 留下的 stale port/token 去连接一个已死的 WS。
- * 不会失败整个启动流程 —— 失败只记日志，让后续 detect 仍能跑。
  */
 export async function startBridge(): Promise<BridgeServer | null> {
   if (bridgeServer) return bridgeServer
   try {
     bridgeServer = await startBridgeServer()
-    bridgeServer.onEvent((event) => pushBridgeEvent(event))
+    bridgeServer.onEvent((event) => {
+      // monitor 事件走独立通道，其余走通用 bridgeEvent 通道
+      if (isMonitorEvent(event)) dispatchMonitorEvent(event)
+      else pushBridgeEvent(event)
+    })
     log.info(`[openclaw] bridge server up on 127.0.0.1:${bridgeServer.info.port}`)
     await refreshHandshakeIfInstalled()
     return bridgeServer
@@ -38,9 +41,8 @@ export async function startBridge(): Promise<BridgeServer | null> {
 }
 
 /**
- * 如果 kaiwu-bridge 插件已经被同步到 OpenClaw extensions 目录，
- * 用当前 bridge server 的 port/token 重写 handshake 文件。
- * 用户下次重启 OpenClaw gateway 时，插件会读到新 handshake 并连上来。
+ * 如果插件已同步到 extensions 目录，用当前 bridge server 的 port/token 重写 handshake。
+ * 用户下次重启 gateway 时，插件会读到新 handshake 并连上来。
  */
 async function refreshHandshakeIfInstalled(): Promise<void> {
   if (!bridgeServer) return
@@ -69,14 +71,12 @@ export async function stopBridge(): Promise<void> {
 }
 
 /**
- * 探测 OpenClaw gateway + kaiwu-bridge 插件安装状态，组合成统一 status 推给 renderer。
- * gateway 探测和插件探测分属两层，这里负责组合。
+ * 探测 OpenClaw gateway + kaiwu 插件安装状态。
+ * gateway 探测和插件探测分属两层，这里负责组合并推送给 renderer。
  */
 export async function detect(): Promise<OpenClawStatus> {
   const gateway = await detectGateway()
-  const pluginInfo = gateway.extensionsDir
-    ? await detectPluginInstall(gateway.extensionsDir)
-    : { installed: false, version: null }
+  const pluginInfo = gateway.extensionsDir ? await detectPluginInstall(gateway.extensionsDir) : { installed: false, version: null }
   const status: OpenClawStatus = {
     ...gateway,
     bridgeInstalled: pluginInfo.installed,
@@ -86,7 +86,7 @@ export async function detect(): Promise<OpenClawStatus> {
   return status
 }
 
-/** 校验 kaiwu-bridge 对当前 OpenClaw 的兼容性。内部先跑一次 gateway 探测拿版本。 */
+/** 校验 kaiwu 对当前 OpenClaw 的兼容性。 */
 export async function checkCompat(): Promise<CompatResult> {
   const gateway = await detectGateway()
   return checkCompatibility(gateway.version)
@@ -94,7 +94,7 @@ export async function checkCompat(): Promise<CompatResult> {
 
 /**
  * 同步插件源码到 OpenClaw extensions 目录并写入 handshake。
- * 先做兼容性校验，不兼容直接抛错，避免装一个跑不起来的插件。
+ * 先做兼容性校验，不兼容直接抛错。
  */
 export async function installBridge(): Promise<OpenClawStatus> {
   const gateway = await detectGateway()
@@ -103,11 +103,9 @@ export async function installBridge(): Promise<OpenClawStatus> {
   }
   const compat = checkCompatibility(gateway.version)
   if (!compat.compatible) {
-    throw new Error(compat.reason ?? "kaiwu-bridge 与当前 OpenClaw 版本不兼容")
+    throw new Error(compat.reason ?? "kaiwu 与当前 OpenClaw 版本不兼容")
   }
-
   await syncBridgePlugin(gateway.extensionsDir)
-
   if (bridgeServer) {
     await writeHandshake({
       extensionsDir: gateway.extensionsDir,
@@ -118,7 +116,6 @@ export async function installBridge(): Promise<OpenClawStatus> {
   } else {
     log.warn("[openclaw] bridge server not running when installing; plugin will be idle")
   }
-
   return await detect()
 }
 
@@ -132,10 +129,7 @@ export async function uninstallBridge(): Promise<OpenClawStatus> {
   return await detect()
 }
 
-/**
- * 调用 `openclaw gateway restart` 重启 gateway 进程。
- * 依赖系统上存在 openclaw CLI；不在 PATH 里会失败。
- */
+/** 调用 `openclaw gateway restart` 重启 gateway 进程。 */
 export async function restartOpenclaw(): Promise<{ ok: boolean; error?: string }> {
   return await new Promise((resolve) => {
     // Windows 上 spawn 默认不会解析 .cmd/.bat，用 shell 模式确保能找到 openclaw 入口
@@ -162,8 +156,9 @@ export async function restartOpenclaw(): Promise<{ ok: boolean; error?: string }
 }
 
 /**
- * 通过 OpenClaw gateway 调用 kaiwu-bridge 插件的 /kaiwu/invoke 路由。
+ * 通过 OpenClaw gateway 调用 kaiwu 插件的 HTTP 路由。
  * kaiwu → OpenClaw → 插件 的入站通道。
+ * @param args 包含 action 和 params 的调用参数
  */
 export async function invokePlugin(args: InvokeArgs): Promise<InvokeResult> {
   const gateway = await detectGateway()
@@ -187,23 +182,8 @@ export async function invokePlugin(args: InvokeArgs): Promise<InvokeResult> {
       body: JSON.stringify(args),
     })
     clearTimeout(timer)
-    const body = (await res.json()) as InvokeResult
-    return body
+    return (await res.json()) as InvokeResult
   } catch (err) {
     return { ok: false, error: { message: (err as Error).message } }
   }
-}
-
-// ---------- renderer push helpers ----------
-
-function pushBridgeEvent(event: BridgeEvent): void {
-  const win = getMainWindow()
-  if (!win) return
-  win.webContents.send(openclawChannels.bridgeEvent, event)
-}
-
-function pushStatusChanged(status: OpenClawStatus): void {
-  const win = getMainWindow()
-  if (!win) return
-  win.webContents.send(openclawChannels.statusChanged, status)
 }

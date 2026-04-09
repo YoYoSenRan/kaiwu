@@ -16,13 +16,13 @@ const CLI_TIMEOUT_MS = 3000
 /** `.openclaw` 目录在 Windows 上位于 %APPDATA%，其他平台位于 $HOME。 */
 const OPENCLAW_DIRNAME = ".openclaw"
 
-/** gateway 探测结果：不包含 kaiwu-bridge 插件相关字段，由 plugin 层单独补齐。 */
+/** gateway 探测结果：不包含 kaiwu 插件相关字段，由 plugin 层单独补齐。 */
 export type GatewayStatus = Omit<OpenClawStatus, "bridgeInstalled" | "installedBridgeVersion">
 
 /**
  * 多层侦测本机 OpenClaw gateway。
  * 任一层命中即返回，未命中继续下一层。所有字段都尽可能填写（已安装但未运行的情形也有价值）。
- * 不涉及 kaiwu-bridge 插件状态——插件检测由 plugin.ts 的 detectPluginInstall 负责。
+ * 不涉及 kaiwu 插件状态——插件检测由 plugin.ts 的 detectPluginInstall 负责。
  */
 export async function detectGateway(): Promise<GatewayStatus> {
   const configDir = resolveConfigDir()

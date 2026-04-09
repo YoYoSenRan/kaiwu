@@ -4,7 +4,7 @@ import { WebSocketServer, type WebSocket } from "ws"
 import { extractTokenFromUrl, generateBridgeToken, verifyToken } from "./security"
 
 /** WS 路径：插件和 kaiwu 两端约定一致。 */
-const WS_PATH = "/kaiwu-bridge"
+const WS_PATH = "/kaiwu"
 
 export interface BridgeServerInfo {
   port: number
@@ -21,7 +21,7 @@ export interface BridgeServer {
 }
 
 /**
- * 启动本地 WebSocket 服务端，供 kaiwu-bridge 插件连接。
+ * 启动本地 WebSocket 服务端，供 kaiwu 插件连接。
  * 在 127.0.0.1 上监听随机端口，写入 handshake 文件由插件读取。
  * 鉴权/token 逻辑下沉到 security.ts，本层只负责 transport。
  */

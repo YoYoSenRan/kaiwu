@@ -12,5 +12,5 @@
     "isolatedModules": true,
     "types": ["node"]
   },
-  "include": ["./*.ts", "./src/**/*.ts", "./sdk.d.ts"]
+  "include": ["./*.ts", "./src/**/*.ts", "./types/**/*.d.ts"]
 }

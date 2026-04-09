@@ -13,7 +13,7 @@ const HANDSHAKE_FILENAME = ".kaiwu-handshake.json"
  * @param params.pid kaiwu 主进程 pid（供诊断）
  */
 export async function writeHandshake(params: { extensionsDir: string; port: number; token: string; pid: number }): Promise<string> {
-  const target = path.join(params.extensionsDir, "kaiwu-bridge", HANDSHAKE_FILENAME)
+  const target = path.join(params.extensionsDir, "kaiwu", HANDSHAKE_FILENAME)
   await fs.mkdir(path.dirname(target), { recursive: true })
   const payload = {
     port: params.port,
@@ -27,7 +27,7 @@ export async function writeHandshake(params: { extensionsDir: string; port: numb
 
 /** 移除 handshake 文件（kaiwu 退出或卸载插件时调用）。 */
 export async function removeHandshake(extensionsDir: string): Promise<void> {
-  const target = path.join(extensionsDir, "kaiwu-bridge", HANDSHAKE_FILENAME)
+  const target = path.join(extensionsDir, "kaiwu", HANDSHAKE_FILENAME)
   try {
     await fs.rm(target, { force: true })
   } catch {

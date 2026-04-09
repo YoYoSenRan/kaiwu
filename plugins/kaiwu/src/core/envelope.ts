@@ -1,5 +1,5 @@
 /**
- * kaiwu-bridge ↔ kaiwu 的 JSON 消息协议契约。
+ * kaiwu ↔ kaiwu 的 JSON 消息协议契约。
  *
  * 所有消息必须带 `type` 字段。请求/响应类型复用同一个联合，通过 `type` 判别。
  * kaiwu 端在 electron/features/openclaw/types.ts 里应镜像这份定义。

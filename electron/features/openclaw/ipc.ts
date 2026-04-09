@@ -1,7 +1,7 @@
 import { ipcMain } from "electron"
 import type { InvokeArgs } from "./types"
 import { openclawChannels } from "./channels"
-import { checkCompat, detect, installBridge, invokePlugin, restartOpenclaw, startBridge, uninstallBridge } from "./service"
+import { checkCompat, detect, installBridge, invokePlugin, restartOpenclaw, startBridge, uninstallBridge } from "./core/lifecycle"
 
 /**
  * 注册 openclaw feature 的所有 IPC handler，并启动本地 bridge server。

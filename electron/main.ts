@@ -8,7 +8,7 @@ import { setupUpdater } from "./features/updater/ipc"
 import { setupOpenclaw } from "./features/openclaw/ipc"
 import { createMainWindow } from "./core/window"
 import { setupDeeplinkListeners } from "./features/deeplink/ipc"
-import { stopBridge } from "./features/openclaw/service"
+import { stopBridge } from "./features/openclaw/core/lifecycle"
 import { prepareApp, setupAppLifecycle, requestSingleInstance } from "./core/app"
 import { setupProtocol, flushPendingDeepLink } from "./features/deeplink/service"
 

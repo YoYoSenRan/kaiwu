@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * kaiwu-bridge 插件开发辅助脚本。
+ * kaiwu 插件开发辅助脚本。
  *
  * 用法：
  *   node scripts/plugin-dev.mjs          # watch：首次全量同步 + 增量同步 + 自动重启
@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url"
 import { promises as fs } from "node:fs"
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
-const PLUGIN_SRC = path.join(REPO_ROOT, "plugins", "kaiwu-bridge")
+const PLUGIN_SRC = path.join(REPO_ROOT, "plugins", "kaiwu")
 const EXCLUDE = new Set(["node_modules", ".git", ".DS_Store", "dist", ".kaiwu-handshake.json"])
 const DEBOUNCE_MS = 300
 const RESTART_TIMEOUT_MS = 10_000
@@ -130,7 +130,7 @@ async function removeFile(target, relPath) {
 
 // ---------- 主流程 ----------
 async function main() {
-  const target = path.join(resolveExtensionsDir(), "kaiwu-bridge")
+  const target = path.join(resolveExtensionsDir(), "kaiwu")
   log.info(`source:  ${PLUGIN_SRC}`)
   log.info(`target:  ${target}`)
 

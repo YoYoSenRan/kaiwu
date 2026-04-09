@@ -1,5 +1,5 @@
 /**
- * hook 能力契约（主进程侧）。镜像 plugins/kaiwu-bridge/src/hook/contract.ts。
+ * hook 能力契约（主进程侧）。镜像 plugins/kaiwu/src/hook/contract.ts。
  */
 
 export interface HookSubscribeRequest {
