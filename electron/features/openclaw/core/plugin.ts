@@ -13,13 +13,13 @@ export interface InstallResult {
 }
 
 /**
- * 将 plugins/kaiwu-bridge 源码同步到 OpenClaw extensions 目录。
+ * 将 plugins/kaiwu 源码同步到 OpenClaw extensions 目录。
  * 策略：先拷贝到 <target>.tmp，原子替换到最终位置，保证目标始终是完整状态。
  * @param extensionsDir OpenClaw 的 extensions 根目录
  */
 export async function syncBridgePlugin(extensionsDir: string): Promise<InstallResult> {
   await ensureDir(extensionsDir)
-  const target = path.join(extensionsDir, "kaiwu-bridge")
+  const target = path.join(extensionsDir, "kaiwu")
   const staging = `${target}.tmp-${Date.now()}`
 
   const stats = { bytesWritten: 0, filesCopied: 0 }
@@ -30,11 +30,11 @@ export async function syncBridgePlugin(extensionsDir: string): Promise<InstallRe
 }
 
 /**
- * 卸载已同步的 kaiwu-bridge 插件。不存在时静默返回。
+ * 卸载已同步的 kaiwu 插件。不存在时静默返回。
  * @param extensionsDir OpenClaw 的 extensions 根目录
  */
 export async function uninstallBridgePlugin(extensionsDir: string): Promise<boolean> {
-  const target = path.join(extensionsDir, "kaiwu-bridge")
+  const target = path.join(extensionsDir, "kaiwu")
   try {
     await fs.rm(target, { recursive: true, force: true })
     return true
@@ -44,12 +44,12 @@ export async function uninstallBridgePlugin(extensionsDir: string): Promise<bool
 }
 
 /**
- * 检查 kaiwu-bridge 插件是否已同步到指定 extensions 目录，并读取其版本号。
+ * 检查 kaiwu 插件是否已同步到指定 extensions 目录，并读取其版本号。
  * 从 gateway 探测职责中分离出来，单独作为 plugin 层的能力。
  * @param extensionsDir OpenClaw 的 extensions 根目录
  */
 export async function detectPluginInstall(extensionsDir: string): Promise<{ installed: boolean; version: string | null }> {
-  const pkgPath = path.join(extensionsDir, "kaiwu-bridge", "package.json")
+  const pkgPath = path.join(extensionsDir, "kaiwu", "package.json")
   try {
     const raw = await fs.readFile(pkgPath, "utf-8")
     const json = JSON.parse(raw) as { version?: string }

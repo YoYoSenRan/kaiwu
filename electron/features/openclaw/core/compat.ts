@@ -5,9 +5,9 @@ import type { CompatResult } from "../types"
 import { APP_ROOT } from "../../../core/paths"
 
 /**
- * kaiwu-bridge 插件兼容的最低 OpenClaw 版本范围。
+ * kaiwu 插件兼容的最低 OpenClaw 版本范围。
  * 每次 OpenClaw 发生插件 API breaking change 时，更新这里和
- * plugins/kaiwu-bridge/package.json 的 openclaw.compat.pluginApi。
+ * plugins/kaiwu/package.json 的 openclaw.compat.pluginApi。
  */
 export const SUPPORTED_OPENCLAW_RANGE = ">=2026.3.1"
 
@@ -23,10 +23,10 @@ export const KNOWN_BREAKING_CHANGES: { version: string; change: string }[] = [
 ]
 
 /** 插件源码在 kaiwu 仓库中的目录。 */
-export const PLUGIN_SOURCE_DIR = path.join(APP_ROOT, "plugins", "kaiwu-bridge")
+export const PLUGIN_SOURCE_DIR = path.join(APP_ROOT, "plugins", "kaiwu")
 
 /**
- * 校验 host 版本是否满足 kaiwu-bridge 插件的兼容性要求。
+ * 校验 host 版本是否满足 kaiwu 插件的兼容性要求。
  * @param hostVersion OpenClaw 当前版本，null 表示未探测到
  */
 export function checkCompatibility(hostVersion: string | null): CompatResult {

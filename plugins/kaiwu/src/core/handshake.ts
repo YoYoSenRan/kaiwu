@@ -41,7 +41,7 @@ export function resolveBridgeConfig(params: { rootDir: string | undefined; plugi
   }
 
   if (!rootDir) {
-    logger.warn?.("[kaiwu-bridge] no rootDir available, cannot locate handshake file")
+    logger.warn?.("[kaiwu] no rootDir available, cannot locate handshake file")
     return null
   }
 
@@ -75,14 +75,14 @@ function readHandshake(rootDir: string, logger: PluginLogger): KaiwuHandshake | 
     const raw = readFileSync(handshakePath, "utf-8")
     const parsed: unknown = JSON.parse(raw)
     if (!isHandshake(parsed)) {
-      logger.warn?.(`[kaiwu-bridge] handshake file malformed: ${handshakePath}`)
+      logger.warn?.(`[kaiwu] handshake file malformed: ${handshakePath}`)
       return null
     }
     return parsed
   } catch (err) {
     // 文件不存在是常态（kaiwu 尚未启动），不算错误
     if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
-      logger.warn?.(`[kaiwu-bridge] failed to read handshake: ${(err as Error).message}`)
+      logger.warn?.(`[kaiwu] failed to read handshake: ${(err as Error).message}`)
     }
     return null
   }

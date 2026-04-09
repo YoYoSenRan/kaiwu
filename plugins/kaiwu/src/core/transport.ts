@@ -38,29 +38,29 @@ export function createBridgeClient(params: {
   const outbox: BridgeOutboundMessage[] = []
 
   function buildUrl(config: BridgeConfig): string {
-    return `ws://127.0.0.1:${config.port}/kaiwu-bridge?token=${encodeURIComponent(config.token)}`
+    return `ws://127.0.0.1:${config.port}/kaiwu?token=${encodeURIComponent(config.token)}`
   }
 
   function connect(): void {
     if (stopped) return
     const config = configFactory()
     if (!config) {
-      logger.debug?.("[kaiwu-bridge] no config yet, retrying later")
+      logger.debug?.("[kaiwu] no config yet, retrying later")
       scheduleReconnect()
       return
     }
     const url = buildUrl(config)
-    logger.debug?.(`[kaiwu-bridge] connecting ${url}`)
+    logger.debug?.(`[kaiwu] connecting ${url}`)
     try {
       ws = new WebSocket(url)
     } catch (err) {
-      logger.warn?.(`[kaiwu-bridge] ws construct failed: ${(err as Error).message}`)
+      logger.warn?.(`[kaiwu] ws construct failed: ${(err as Error).message}`)
       scheduleReconnect()
       return
     }
 
     ws.addEventListener("open", () => {
-      logger.info?.("[kaiwu-bridge] connected to kaiwu")
+      logger.info?.("[kaiwu] connected to kaiwu")
       reconnectDelay = INITIAL_RECONNECT_MS
       flushOutbox()
       startHeartbeat()
@@ -69,7 +69,7 @@ export function createBridgeClient(params: {
 
     ws.addEventListener("close", (ev) => {
       stopHeartbeat()
-      logger.debug?.(`[kaiwu-bridge] ws closed code=${ev.code}`)
+      logger.debug?.(`[kaiwu] ws closed code=${ev.code}`)
       params.onClose?.(`close:${ev.code}`)
       ws = null
       scheduleReconnect()
@@ -101,7 +101,7 @@ export function createBridgeClient(params: {
     try {
       ws?.send(JSON.stringify(message))
     } catch (err) {
-      logger.warn?.(`[kaiwu-bridge] ws send failed: ${(err as Error).message}`)
+      logger.warn?.(`[kaiwu] ws send failed: ${(err as Error).message}`)
     }
   }
 
