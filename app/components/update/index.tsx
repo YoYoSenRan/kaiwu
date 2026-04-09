@@ -18,7 +18,7 @@ const Update = () => {
     onOk?: () => void
   }>({
     onCancel: () => setModalOpen(false),
-    onOk: () => window.electron.updater.startDownload(),
+    onOk: () => window.electron.updater.download(),
   })
 
   const checkUpdate = async () => {
@@ -28,14 +28,14 @@ const Update = () => {
     setChecking(false)
     setModalOpen(true)
     // check() 失败时返回 { message, error } 错误对象，成功时返回 null
-    // （成功时的可用性结果通过 onCanAvailable 事件推送）
+    // （成功时的可用性结果通过 onAvailable 事件推送）
     if (result) {
       setUpdateAvailable(false)
       setUpdateError(result)
     }
   }
 
-  const onUpdateCanAvailable = useCallback((info: VersionInfo) => {
+  const onUpdateAvailable = useCallback((info: VersionInfo) => {
     setVersionInfo(info)
     setUpdateError(undefined)
     // 有可用更新时切换按钮文案
@@ -44,7 +44,7 @@ const Update = () => {
         ...state,
         cancelText: "Cancel",
         okText: "Update",
-        onOk: () => window.electron.updater.startDownload(),
+        onOk: () => window.electron.updater.download(),
       }))
       setUpdateAvailable(true)
     } else {
@@ -61,29 +61,29 @@ const Update = () => {
     setProgressInfo(info)
   }, [])
 
-  const onUpdateDownloaded = useCallback(() => {
+  const onUpdateDone = useCallback(() => {
     setProgressInfo({ percent: 100 })
     setModalBtn((state) => ({
       ...state,
       cancelText: "Later",
       okText: "Install now",
-      onOk: () => window.electron.updater.quitAndInstall(),
+      onOk: () => window.electron.updater.install(),
     }))
   }, [])
 
   useEffect(() => {
     // 每个订阅都返回取消函数，组件卸载时统一清理
     const unsubscribers = [
-      window.electron.updater.onCanAvailable(onUpdateCanAvailable),
+      window.electron.updater.onAvailable(onUpdateAvailable),
       window.electron.updater.onError(onUpdateError),
-      window.electron.updater.onDownloadProgress(onDownloadProgress),
-      window.electron.updater.onDownloaded(onUpdateDownloaded),
+      window.electron.updater.onProgress(onDownloadProgress),
+      window.electron.updater.onDone(onUpdateDone),
     ]
 
     return () => {
       unsubscribers.forEach((off) => off())
     }
-  }, [onUpdateCanAvailable, onUpdateError, onDownloadProgress, onUpdateDownloaded])
+  }, [onUpdateAvailable, onUpdateError, onDownloadProgress, onUpdateDone])
 
   return (
     <>

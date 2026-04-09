@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { launchApp, SHOULD_SKIP, type LaunchedApp } from "../../helpers/launch"
 
-// 覆盖 openclaw.checkCompat() 的 shape 与必填字段。
+// 覆盖 openclaw.check() 的 shape 与必填字段。
 
 if (SHOULD_SKIP) {
   test.skip("linux: e2e 在 CI 环境不跑", () => {})
@@ -18,8 +18,8 @@ if (SHOULD_SKIP) {
   })
 
   describe("openclaw compat", () => {
-    test("openclaw: checkCompat() 返回 pluginApiRange 与 knownBreaking", async () => {
-      const compat = await ctx.page.evaluate(() => window.electron.openclaw.checkCompat())
+    test("openclaw: check() 返回 pluginApiRange 与 knownBreaking", async () => {
+      const compat = await ctx.page.evaluate(() => window.electron.openclaw.check())
       expect(typeof compat.compatible).toBe("boolean")
       expect(typeof compat.pluginApiRange).toBe("string")
       expect(compat.pluginApiRange.length).toBeGreaterThan(0)

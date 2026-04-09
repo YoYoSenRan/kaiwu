@@ -2,6 +2,9 @@
 export const PROTOCOL = "electron-vite-react"
 
 export const deeplinkChannels = {
-  /** 主进程 → 渲染进程推送：解析后的深度链接 */
-  received: "deeplink:received",
+  /** 深度链接相关事件 */
+  event: {
+    /** 主进程 → 渲染进程推送：解析后的深度链接 */
+    received: "deeplink:event:received",
+  },
 } as const

@@ -31,5 +31,5 @@ export function dispatchMonitorEvent(event: BridgeEvent): void {
   const win = getMainWindow()
   if (!win) return
   const payload = event.payload as { data?: unknown }
-  win.webContents.send(openclawChannels.monitorEvent, payload.data)
+  win.webContents.send(openclawChannels.bridge.monitor, payload.data)
 }

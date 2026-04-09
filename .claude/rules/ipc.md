@@ -84,13 +84,55 @@ import { deeplinkBridge } from "./features/deeplink/bridge"
 
 ```ts
 export const windowChannels = {
-  minimize: "window:minimize",
-  maximize: "window:maximize",
-  close: "window:close",
-  isMaximized: "window:is-maximized",
-  maximizedChanged: "window:maximized-changed", // main → renderer
+  window: {
+    minimize: "chrome:window:minimize",
+    maximize: "chrome:window:maximize",
+    close: "chrome:window:close",
+    state: "chrome:window:state",
+    change: "chrome:window:change",
+  },
 } as const
 ```
+
+## channel 命名规范（必读）
+
+### 字符串格式
+
+**统一使用 `feature:domain:action` 三层冒号结构**。扁平小 feature 可省略 domain，变为 `feature:action`。
+
+- ✅ `updater:event:progress`
+- ✅ `chrome:window:change`
+- ❌ `chrome:maximized-changed`（含短横线）
+- ❌ `openclaw:connectGateway`（camelCase）
+
+### action 规则
+
+- **单字优先**：能用单个英文单词就不用多词。`check` 优于 `check-compat`，`state` 优于 `is-maximized`，`done` 优于 `downloaded`。
+- 确实无法单字表达时，才用 kebab-case 连接（如 `status-changed` 仅在历史遗留场景允许）。
+
+### 嵌套对象组织
+
+- **小 feature**（≤5 个 channel）：允许扁平对象，直接 `export const xChannels = { write: "log:write" }`。
+- **大 feature / 多域 feature**（>5 个 channel 或明显跨域）：必须用**一层嵌套对象**按域分组。
+
+```ts
+export const openclawChannels = {
+  lifecycle: { detect: "openclaw:lifecycle:detect", check: "openclaw:lifecycle:check" },
+  gateway: { connect: "openclaw:gateway:connect", state: "openclaw:gateway:state" },
+} as const
+```
+
+**约束**：
+
+- 嵌套仅限一层，禁止 `channels.a.b.c`
+- `ipc.ts` 和 `bridge.ts` 引用时必须写完整路径：`openclawChannels.gateway.connect`
+- `channels.ts` 内对象键按字母 / 行长升序排列
+
+### renderer API 命名（types.ts / bridge.ts）
+
+- 与 channel 名保持一致原则，但允许为了可读性保留 `onXxx` 前缀。
+- 例如 channel 为 `gateway.status`，对应订阅 API 仍可叫 `onGatewayStatus`；channel 为 `bridge.event`，对应 API 叫 `onEvent`。
+- 避免 renderer 侧出现 `checkCompat` + `installBridge` 这类业务动词堆砌，优先改为 `check` + `install`。
 
 ### types.ts
 

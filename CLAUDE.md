@@ -38,6 +38,7 @@ pnpm pretest && pnpm exec vitest run test/e2e.spec.ts -t "startup"
 | `naming.md`       | 文件名小写单词、组件 PascalCase、动词函数名                                       |
 | `comments.md`     | 导出函数 JSDoc 必写、行内注释解释"为什么"                                         |
 | `quality.md`      | 函数 ≤ 40 行、文件 ≤ 200 行、嵌套 ≤ 3 层、魔法值入 constants                      |
+| `principles.md`   | 高内聚低耦合、单一职责、关注点分离、依赖倒置、开闭原则、封装、正交性              |
 | `design.md`       | UI 设计语言 "Operations Deck"（仅 `app/**/*.tsx` `app/**/*.css` 受约束）          |
 
 ## 架构鸟瞰

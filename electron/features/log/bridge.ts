@@ -3,8 +3,8 @@ import { logChannels } from "./channels"
 import type { LogBridge } from "./types"
 
 export const logBridge: LogBridge = {
-  info: (...args) => ipcRenderer.send(logChannels.write, "info", ...args),
-  warn: (...args) => ipcRenderer.send(logChannels.write, "warn", ...args),
-  error: (...args) => ipcRenderer.send(logChannels.write, "error", ...args),
-  debug: (...args) => ipcRenderer.send(logChannels.write, "debug", ...args),
+  info: (...args) => ipcRenderer.send(logChannels.output.write, "info", ...args),
+  warn: (...args) => ipcRenderer.send(logChannels.output.write, "warn", ...args),
+  error: (...args) => ipcRenderer.send(logChannels.output.write, "error", ...args),
+  debug: (...args) => ipcRenderer.send(logChannels.output.write, "debug", ...args),
 }

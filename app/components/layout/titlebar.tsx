@@ -10,10 +10,10 @@ export function TitleBar() {
 
   useEffect(() => {
     // 初始化时查询当前最大化状态
-    window.electron.chrome.isMaximized().then(setIsMaximized)
+    window.electron.chrome.state().then(setIsMaximized)
 
     // 监听主进程推送的最大化状态变化，组件卸载时自动取消订阅
-    const unsubscribe = window.electron.chrome.onMaximizedChange(setIsMaximized)
+    const unsubscribe = window.electron.chrome.onChange(setIsMaximized)
     return unsubscribe
   }, [])
 

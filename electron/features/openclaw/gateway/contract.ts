@@ -69,6 +69,7 @@ export interface ConnectParams {
   auth: {
     token?: string
     deviceToken?: string
+    password?: string
   }
   device?: {
     id: string
