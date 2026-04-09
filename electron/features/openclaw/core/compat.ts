@@ -1,8 +1,8 @@
 import semver from "semver"
 import path from "node:path"
 import { promises as fs } from "node:fs"
-import { APP_ROOT } from "../../core/paths"
-import type { CompatResult } from "./types"
+import type { CompatResult } from "../types"
+import { APP_ROOT } from "../../../core/paths"
 
 /**
  * kaiwu-bridge 插件兼容的最低 OpenClaw 版本范围。
