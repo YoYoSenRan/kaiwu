@@ -8,7 +8,7 @@ import { setupChrome } from "./features/chrome/ipc"
 import { setupDeeplinkListeners } from "./features/deeplink/ipc"
 import { flushPendingDeepLink, setupProtocol } from "./features/deeplink/service"
 import { setupLog } from "./features/log/ipc"
-import { stopBridge } from "./features/openclaw/core/lifecycle"
+import { stopPlugin } from "./features/openclaw/core/lifecycle"
 import { setupOpenclaw } from "./features/openclaw/ipc"
 import { setupUpdater } from "./features/updater/ipc"
 
@@ -58,5 +58,5 @@ app.whenReady().then(() => {
 
 // 退出前关闭本地 bridge server，释放端口
 app.on("before-quit", () => {
-  void stopBridge()
+  void stopPlugin()
 })

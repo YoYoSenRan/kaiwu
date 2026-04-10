@@ -173,7 +173,33 @@
   "connect": {
     "label": "CONNECT",
     "title": "Connect",
-    "description": "External data sources and MCP services."
+    "description": "Manage the connection to OpenClaw gateway.",
+    "section": {
+      "status": "Connection Status",
+      "manual": "Manual Connect"
+    },
+    "status": {
+      "idle": "Disconnected",
+      "detecting": "Scanning…",
+      "connecting": "Connecting…",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "auth-error": "Auth Failed",
+      "error": "Connection Error"
+    },
+    "mode": {
+      "scan": "Auto Scan",
+      "manual": "Manual"
+    },
+    "label": {
+      "url": "URL",
+      "mode": "Mode"
+    },
+    "action": {
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "scan": "Scan Local"
+    }
   },
   "settings": {
     "label": "SETTINGS",

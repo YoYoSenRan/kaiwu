@@ -1,42 +1,42 @@
 import type { CompatResult, InvokeArgs, InvokeResult, OpenClawStatus } from "../types"
-import type { BridgeServer } from "./transport"
+import type { PluginServer } from "./transport"
 
 import { spawn } from "node:child_process"
 import { isWin } from "../../../core/env"
 import log from "../../../core/logger"
 import { dispatchMonitorEvent, isMonitorEvent } from "../hook/dispatcher"
-import { stopGatewayConnection } from "../service"
+import { stopGatewayConnection } from "./connection"
 import { checkCompatibility } from "./compat"
 import { detectGateway } from "./gateway"
 import { removeHandshake, writeHandshake } from "./handshake"
-import { detectPluginInstall, syncBridgePlugin, uninstallBridgePlugin } from "./plugin"
-import { pushBridgeEvent, pushStatusChanged } from "./push"
-import { startBridgeServer } from "./transport"
+import { detectPluginInstall, removePluginFiles, syncPlugin } from "./plugin"
+import { pushPluginEvent, pushStatusChanged } from "./push"
+import { startPluginServer } from "./transport"
 
 /** 调用 `openclaw gateway restart` 的超时（ms）。 */
 const RESTART_TIMEOUT_MS = 10_000
 /** fetch 插件 HTTP 路由的超时（ms）。 */
 const INVOKE_TIMEOUT_MS = 8_000
 
-let bridgeServer: BridgeServer | null = null
+let pluginServer: PluginServer | null = null
 
 /**
  * 启动本地 bridge WS server。kaiwu 启动时调用一次；幂等。
  * 启动后自动刷新 handshake 文件（如果插件已安装），避免插件用上一次 kaiwu 进程
  * 留下的 stale port/token 去连接一个已死的 WS。
  */
-export async function startBridge(): Promise<BridgeServer | null> {
-  if (bridgeServer) return bridgeServer
+export async function startPlugin(): Promise<PluginServer | null> {
+  if (pluginServer) return pluginServer
   try {
-    bridgeServer = await startBridgeServer()
-    bridgeServer.onEvent((event) => {
+    pluginServer = await startPluginServer()
+    pluginServer.onEvent((event) => {
       // monitor 事件走独立通道，其余走通用 bridgeEvent 通道
       if (isMonitorEvent(event)) dispatchMonitorEvent(event)
-      else pushBridgeEvent(event)
+      else pushPluginEvent(event)
     })
-    log.info(`[openclaw] bridge server up on 127.0.0.1:${bridgeServer.info.port}`)
+    log.info(`[openclaw] bridge server up on 127.0.0.1:${pluginServer.info.port}`)
     await refreshHandshakeIfInstalled()
-    return bridgeServer
+    return pluginServer
   } catch (err) {
     log.error(`[openclaw] bridge server failed to start: ${(err as Error).message}`)
     return null
@@ -48,7 +48,7 @@ export async function startBridge(): Promise<BridgeServer | null> {
  * 用户下次重启 gateway 时，插件会读到新 handshake 并连上来。
  */
 async function refreshHandshakeIfInstalled(): Promise<void> {
-  if (!bridgeServer) return
+  if (!pluginServer) return
   const gateway = await detectGateway()
   if (!gateway.extensionsDir) return
   const pluginInfo = await detectPluginInstall(gateway.extensionsDir)
@@ -56,9 +56,9 @@ async function refreshHandshakeIfInstalled(): Promise<void> {
   try {
     await writeHandshake({
       extensionsDir: gateway.extensionsDir,
-      port: bridgeServer.info.port,
-      token: bridgeServer.info.token,
-      pid: bridgeServer.info.pid,
+      port: pluginServer.info.port,
+      token: pluginServer.info.token,
+      pid: pluginServer.info.pid,
     })
     log.info("[openclaw] handshake refreshed for existing install")
   } catch (err) {
@@ -67,11 +67,11 @@ async function refreshHandshakeIfInstalled(): Promise<void> {
 }
 
 /** 关闭 bridge server 和 gateway 连接（kaiwu 退出时调用）。 */
-export async function stopBridge(): Promise<void> {
+export async function stopPlugin(): Promise<void> {
   stopGatewayConnection()
-  if (!bridgeServer) return
-  await bridgeServer.close()
-  bridgeServer = null
+  if (!pluginServer) return
+  await pluginServer.close()
+  pluginServer = null
 }
 
 /**
@@ -100,7 +100,7 @@ export async function checkCompat(): Promise<CompatResult> {
  * 同步插件源码到 OpenClaw extensions 目录并写入 handshake。
  * 先做兼容性校验，不兼容直接抛错。
  */
-export async function installBridge(): Promise<OpenClawStatus> {
+export async function installPlugin(): Promise<OpenClawStatus> {
   const gateway = await detectGateway()
   if (!gateway.installed || !gateway.extensionsDir) {
     throw new Error("未检测到 OpenClaw 安装（configDir 不存在），请先安装 OpenClaw")
@@ -109,13 +109,13 @@ export async function installBridge(): Promise<OpenClawStatus> {
   if (!compat.compatible) {
     throw new Error(compat.reason ?? "kaiwu 与当前 OpenClaw 版本不兼容")
   }
-  await syncBridgePlugin(gateway.extensionsDir)
-  if (bridgeServer) {
+  await syncPlugin(gateway.extensionsDir)
+  if (pluginServer) {
     await writeHandshake({
       extensionsDir: gateway.extensionsDir,
-      port: bridgeServer.info.port,
-      token: bridgeServer.info.token,
-      pid: bridgeServer.info.pid,
+      port: pluginServer.info.port,
+      token: pluginServer.info.token,
+      pid: pluginServer.info.pid,
     })
   } else {
     log.warn("[openclaw] bridge server not running when installing; plugin will be idle")
@@ -124,11 +124,11 @@ export async function installBridge(): Promise<OpenClawStatus> {
 }
 
 /** 卸载已同步的插件和 handshake 文件。 */
-export async function uninstallBridge(): Promise<OpenClawStatus> {
+export async function uninstallPlugin(): Promise<OpenClawStatus> {
   const gateway = await detectGateway()
   if (gateway.extensionsDir) {
     await removeHandshake(gateway.extensionsDir)
-    await uninstallBridgePlugin(gateway.extensionsDir)
+    await removePluginFiles(gateway.extensionsDir)
   }
   return await detect()
 }
@@ -169,7 +169,7 @@ export async function invokePlugin(args: InvokeArgs): Promise<InvokeResult> {
   if (!gateway.running || !gateway.gatewayPort) {
     return { ok: false, error: { message: "OpenClaw gateway 未运行" } }
   }
-  if (!bridgeServer) {
+  if (!pluginServer) {
     return { ok: false, error: { message: "bridge server 未启动，无法鉴权" } }
   }
   const url = `http://127.0.0.1:${gateway.gatewayPort}/kaiwu/invoke`
@@ -181,7 +181,7 @@ export async function invokePlugin(args: InvokeArgs): Promise<InvokeResult> {
       signal: ac.signal,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${bridgeServer.info.token}`,
+        Authorization: `Bearer ${pluginServer.info.token}`,
       },
       body: JSON.stringify(args),
     })

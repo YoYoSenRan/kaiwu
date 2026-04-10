@@ -6,20 +6,17 @@ export const openclawChannels = {
     check: "openclaw:lifecycle:check",
     restart: "openclaw:lifecycle:restart",
   },
-  /** 插件同步相关通道 */
+  /** 插件管理与通信 */
   plugin: {
     install: "openclaw:plugin:install",
     uninstall: "openclaw:plugin:uninstall",
-  },
-  /** 插件桥接通信相关通道 */
-  bridge: {
-    invoke: "openclaw:bridge:invoke",
+    invoke: "openclaw:plugin:invoke",
     /** 主进程 → 渲染进程 */
-    event: "openclaw:bridge:event",
+    event: "openclaw:plugin:event",
     /** 主进程 → 渲染进程 */
-    status: "openclaw:bridge:status",
+    status: "openclaw:plugin:status",
     /** 主进程 → 渲染进程 */
-    monitor: "openclaw:bridge:monitor",
+    monitor: "openclaw:plugin:monitor",
   },
   /** gateway 连接管理 */
   gateway: {

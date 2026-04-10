@@ -17,7 +17,7 @@ export interface InstallResult {
  * 策略：先拷贝到 <target>.tmp，原子替换到最终位置，保证目标始终是完整状态。
  * @param extensionsDir OpenClaw 的 extensions 根目录
  */
-export async function syncBridgePlugin(extensionsDir: string): Promise<InstallResult> {
+export async function syncPlugin(extensionsDir: string): Promise<InstallResult> {
   await ensureDir(extensionsDir)
   const target = path.join(extensionsDir, "kaiwu")
   const staging = `${target}.tmp-${Date.now()}`
@@ -33,7 +33,7 @@ export async function syncBridgePlugin(extensionsDir: string): Promise<InstallRe
  * 卸载已同步的 kaiwu 插件。不存在时静默返回。
  * @param extensionsDir OpenClaw 的 extensions 根目录
  */
-export async function uninstallBridgePlugin(extensionsDir: string): Promise<boolean> {
+export async function removePluginFiles(extensionsDir: string): Promise<boolean> {
   const target = path.join(extensionsDir, "kaiwu")
   try {
     await fs.rm(target, { recursive: true, force: true })

@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/footer"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TitleBar } from "@/components/layout/titlebar"
+import { useGateway } from "@/hooks/use-gateway"
 import { useSidebarShortcut } from "@/hooks/use-sidebar-shortcut"
 import { useThemeEffect } from "@/hooks/use-theme-effect"
 import Agent from "@/pages/agent"
@@ -18,6 +19,7 @@ import Task from "@/pages/task"
 function App() {
   useThemeEffect()
   useSidebarShortcut()
+  useGateway()
   // 路由切换时用 location.pathname 当 key，让 AnimatePresence 触发新旧节点的进退场
   const location = useLocation()
 

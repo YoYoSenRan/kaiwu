@@ -4,7 +4,7 @@ import { Activity, Download, RefreshCw, Trash2, Zap } from "lucide-react"
 
 type Status = Awaited<ReturnType<typeof window.electron.openclaw.detect>>
 type Compat = Awaited<ReturnType<typeof window.electron.openclaw.check>>
-type BridgeEvent = Parameters<Parameters<typeof window.electron.openclaw.on.event>[0]>[0]
+type PluginEvent = Parameters<Parameters<typeof window.electron.openclaw.on.event>[0]>[0]
 type BusyAction = null | "detect" | "sync" | "uninstall" | "restart"
 
 /** 卡片顶部标题栏，带状态点 + i18n 标签。 */
@@ -99,7 +99,7 @@ function ActionButton({
 }
 
 /** 桥接事件日志。自动过滤 heartbeat 噪音，只显示有意义的事件。 */
-export function EventsList({ t, events }: { t: TFunction; events: BridgeEvent[] }) {
+export function EventsList({ t, events }: { t: TFunction; events: PluginEvent[] }) {
   const filtered = events.filter((ev) => {
     if (ev.type !== "custom") return true
     const payload = ev.payload as { channel?: string } | null

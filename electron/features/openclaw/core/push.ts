@@ -1,17 +1,17 @@
-import type { BridgeEvent, GatewayState, OpenClawStatus } from "../types"
+import type { GatewayState, OpenClawStatus, PluginEvent } from "../types"
 
 import log from "../../../core/logger"
 import { getMainWindow } from "../../../core/window"
 import { openclawChannels } from "../channels"
 
 /**
- * 向 renderer 推送插件桥接事件。
- * @param event 插件通过 bridge WS 发来的事件
+ * 向 renderer 推送插件事件。
+ * @param event 插件通过 WS 发来的事件
  */
-export function pushBridgeEvent(event: BridgeEvent): void {
+export function pushPluginEvent(event: PluginEvent): void {
   const win = getMainWindow()
   if (!win) return
-  win.webContents.send(openclawChannels.bridge.event, event)
+  win.webContents.send(openclawChannels.plugin.event, event)
 }
 
 /**
@@ -21,7 +21,7 @@ export function pushBridgeEvent(event: BridgeEvent): void {
 export function pushStatusChanged(status: OpenClawStatus): void {
   const win = getMainWindow()
   if (!win) return
-  win.webContents.send(openclawChannels.bridge.status, status)
+  win.webContents.send(openclawChannels.plugin.status, status)
 }
 
 /**
