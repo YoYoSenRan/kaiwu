@@ -1,6 +1,6 @@
+import { ArrowUpRight, CheckCircle2, Clock, ListChecks, Play, RotateCcw, X, XCircle } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowUpRight, CheckCircle2, Clock, ListChecks, Play, RotateCcw, X, XCircle } from "lucide-react"
 
 const TASKS = [
   { id: "tsk_01", name: "Index knowledge base", status: "running", progress: 64, eta: "02m 14s" },

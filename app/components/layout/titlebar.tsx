@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { Minus, Square, Copy, X } from "lucide-react"
+import { Copy, Minus, Square, X } from "lucide-react"
+import { useEffect, useState } from "react"
 
 // 通过 userAgent 判断是否为 macOS
 // macOS 使用系统原生红绿灯按钮，不需要渲染自定义按钮

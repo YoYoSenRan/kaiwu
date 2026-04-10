@@ -1,7 +1,8 @@
 import { Moon, Sun } from "lucide-react"
-import { NAV_ITEMS } from "./nav-items"
-import { useLocation } from "react-router"
 import { useTranslation } from "react-i18next"
+import { useLocation } from "react-router"
+import { NAV_ITEMS } from "./nav-items"
+
 import { useSettingsStore } from "@/stores/settings"
 
 /**

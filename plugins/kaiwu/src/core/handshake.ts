@@ -1,6 +1,7 @@
-import { join } from "node:path"
-import { readFileSync } from "node:fs"
 import type { PluginLogger } from "../../api.js"
+
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 
 /** handshake 文件名。固定在插件自己的 rootDir 下，由 kaiwu 写入。 */
 export const HANDSHAKE_FILENAME = ".kaiwu-handshake.json"

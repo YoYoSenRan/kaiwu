@@ -1,5 +1,7 @@
+import type { LaunchedApp } from "../../helpers/launch"
+
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
-import { launchApp, SHOULD_SKIP, type LaunchedApp } from "../../helpers/launch"
+import { launchApp, SHOULD_SKIP } from "../../helpers/launch"
 
 // 覆盖 openclaw.detect() 的 shape 合同与性能预算。
 // 只做只读侦测，不触发任何副作用，任何机器（有无 OpenClaw）都能跑。

@@ -1,5 +1,5 @@
-import { useTranslation } from "react-i18next"
 import { Activity, ArrowUpRight, Bot, GitBranch, Layers, MessageSquare, Radio, Zap } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 const STATS = [
   { key: "agents", value: "03", suffix: "online", icon: Bot },

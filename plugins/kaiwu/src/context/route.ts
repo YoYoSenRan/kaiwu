@@ -6,6 +6,7 @@
  */
 
 import type { StageClearParams, StageSetParams } from "./contract.js"
+
 import { clearStageContext, setStageContext } from "./store.js"
 
 /** 写入或覆盖阶段上下文。 */

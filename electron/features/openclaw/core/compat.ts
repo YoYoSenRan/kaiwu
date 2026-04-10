@@ -1,7 +1,8 @@
-import semver from "semver"
-import path from "node:path"
-import { promises as fs } from "node:fs"
 import type { CompatResult } from "../types"
+
+import { promises as fs } from "node:fs"
+import path from "node:path"
+import semver from "semver"
 import { APP_ROOT } from "../../../core/paths"
 
 /**

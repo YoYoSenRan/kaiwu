@@ -1,5 +1,5 @@
-import { isDev } from "./env"
 import { session } from "electron"
+import { isDev } from "./env"
 
 // 开发环境 CSP：允许 Vite HMR 所需的 unsafe-eval 和本地 WebSocket
 const DEV_CSP =

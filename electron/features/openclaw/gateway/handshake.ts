@@ -1,5 +1,6 @@
+import type { ConnectChallenge, ConnectParams } from "./contract"
 import { app } from "electron"
-import { PROTOCOL_VERSION, type ConnectChallenge, type ConnectParams } from "./contract"
+import { PROTOCOL_VERSION } from "./contract"
 import { getCachedDeviceToken, getDeviceId, getPublicKeyBase64, signChallenge } from "./auth"
 
 /** 向 gateway 自报的客户端身份常量。 */

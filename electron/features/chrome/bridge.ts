@@ -1,6 +1,7 @@
+import type { ChromeBridge } from "./types"
+
 import { ipcRenderer } from "electron"
 import { chromeChannels } from "./channels"
-import type { ChromeBridge } from "./types"
 
 export const chromeBridge: ChromeBridge = {
   minimize: () => ipcRenderer.invoke(chromeChannels.window.minimize),

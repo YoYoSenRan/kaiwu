@@ -1,6 +1,7 @@
-import { useTranslation } from "react-i18next"
 import { Check, ChevronRight, Globe, LayoutTemplate, Monitor, Moon, Palette, Sun } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { OpenClawCard } from "./components/openclaw-card"
+
 import { useSettingsStore } from "@/stores/settings"
 
 const THEMES = [

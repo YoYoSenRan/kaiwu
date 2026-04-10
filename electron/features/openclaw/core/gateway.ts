@@ -1,11 +1,12 @@
-import os from "node:os"
-import net from "node:net"
-import path from "node:path"
-import { findLiveLock } from "./lock"
-import { promises as fs } from "node:fs"
-import { isWin } from "../../../core/env"
-import { spawn } from "node:child_process"
 import type { OpenClawStatus } from "../types"
+
+import { spawn } from "node:child_process"
+import { promises as fs } from "node:fs"
+import net from "node:net"
+import os from "node:os"
+import path from "node:path"
+import { isWin } from "../../../core/env"
+import { findLiveLock } from "./lock"
 
 /** OpenClaw gateway 默认端口，来自 openclaw/src/config/paths.ts。 */
 export const DEFAULT_GATEWAY_PORT = 18789

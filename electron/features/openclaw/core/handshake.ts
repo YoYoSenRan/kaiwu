@@ -1,5 +1,5 @@
-import path from "node:path"
 import { promises as fs } from "node:fs"
+import path from "node:path"
 
 /** handshake 文件名。固定在插件目录下，由 kaiwu 写入、插件启动时读取。 */
 const HANDSHAKE_FILENAME = ".kaiwu-handshake.json"

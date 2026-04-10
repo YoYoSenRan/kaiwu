@@ -1,9 +1,9 @@
-import log from "./logger"
-import store from "./store"
 import path from "node:path"
-import { isMac } from "./env"
 import { BrowserWindow, shell } from "electron"
+import { isMac } from "./env"
+import log from "./logger"
 import { INDEX_HTML, PRELOAD_PATH, VITE_DEV_SERVER_URL, VITE_PUBLIC } from "./paths"
+import store from "./store"
 
 // 模块级单例：全项目共享同一个主窗口引用
 let mainWindow: BrowserWindow | null = null

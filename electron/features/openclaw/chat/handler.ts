@@ -9,13 +9,13 @@
  * 不直接注册 IPC handler——由顶层 ipc.ts 调用本模块的函数。
  */
 
+import type { GatewayClient } from "../gateway/client"
+import type { ChatEvent } from "../gateway/contract"
+import type { ChatSendRequest, ChatStreamChunk } from "./contract"
+
 import log from "../../../core/logger"
 import { getMainWindow } from "../../../core/window"
-import type { GatewayMethods } from "../gateway/methods"
-import type { ChatEventStream } from "../gateway/stream"
-import type { ChatEvent } from "../gateway/contract"
 import { touchSession, updateSessionStatus } from "../session/manager"
-import type { ChatSendRequest, ChatStreamChunk } from "./contract"
 
 /** 推 ChatStreamChunk 到 renderer 的 IPC 通道名。 */
 const CHAT_STREAM_CHANNEL = "openclaw:chat:stream"
@@ -23,20 +23,19 @@ const CHAT_STREAM_CHANNEL = "openclaw:chat:stream"
 /**
  * 发送消息并自动订阅流式响应。
  * @param request 发送请求
- * @param rpc gateway RPC 方法集
- * @param stream chat 事件流
+ * @param client gateway 客户端
  */
-export async function sendMessage(request: ChatSendRequest, rpc: GatewayMethods, stream: ChatEventStream): Promise<{ ok: boolean; error?: string }> {
+export async function sendMessage(request: ChatSendRequest, client: GatewayClient): Promise<{ ok: boolean; error?: string }> {
   const { sessionKey, message, thinking } = request
   try {
     updateSessionStatus(sessionKey, "active")
 
-    const result = (await rpc.chatSend({ sessionKey, message, thinking })) as { runId?: string } | undefined
+    const result = (await client.chatSend({ sessionKey, message, thinking })) as { runId?: string } | undefined
     const runId = result?.runId
     if (runId) updateSessionStatus(sessionKey, "active", { lastRunId: runId })
 
     // 订阅流式响应，直到 final/error/aborted
-    subscribeUntilDone(sessionKey, stream)
+    subscribeUntilDone(sessionKey, client)
 
     return { ok: true }
   } catch (err) {
@@ -50,10 +49,10 @@ export async function sendMessage(request: ChatSendRequest, rpc: GatewayMethods,
 /**
  * 订阅 ChatEvent 直到会话完成，期间将每个事件转为 ChatStreamChunk 推给 renderer。
  * @param sessionKey 目标会话
- * @param stream chat 事件流
+ * @param client gateway 客户端
  */
-function subscribeUntilDone(sessionKey: string, stream: ChatEventStream): void {
-  const unsub = stream.subscribe(sessionKey, (event: ChatEvent) => {
+function subscribeUntilDone(sessionKey: string, client: GatewayClient): void {
+  const unsub = client.subscribeChatEvent(sessionKey, (event: ChatEvent) => {
     touchSession(sessionKey)
     pushStreamChunk(toChunk(event))
 

@@ -1,5 +1,7 @@
+import type { LaunchedApp } from "../../helpers/launch"
+
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
-import { launchApp, SHOULD_SKIP, type LaunchedApp } from "../../helpers/launch"
+import { launchApp, SHOULD_SKIP } from "../../helpers/launch"
 
 // 覆盖 openclaw.check() 的 shape 与必填字段。
 

@@ -1,10 +1,11 @@
 import type { OpenClawPluginApi } from "../api.js"
+
 import { createPromptHook } from "./context/hook.js"
-import { createMonitorSink } from "./monitor/relay.js"
-import { setupCollector } from "./monitor/collector.js"
+import { resolveBridgeConfig } from "./core/handshake.js"
 import { createKaiwuRouteHandler } from "./core/http.js"
 import { createBridgeClient } from "./core/transport.js"
-import { resolveBridgeConfig } from "./core/handshake.js"
+import { setupCollector } from "./monitor/collector.js"
+import { createMonitorSink } from "./monitor/relay.js"
 
 /** HTTP 路由前缀，kaiwu 端也写死用这个路径。 */
 const HTTP_ROUTE_PREFIX = "/kaiwu/"

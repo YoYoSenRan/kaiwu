@@ -7,8 +7,9 @@
  */
 
 import type { BridgeClient } from "../core/transport.js"
-import { makeEvent } from "../core/envelope.js"
 import type { MonitorEvent } from "./contract.js"
+
+import { makeEvent } from "../core/envelope.js"
 import { MONITOR_CHANNEL } from "./contract.js"
 
 /**

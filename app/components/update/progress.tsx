@@ -1,5 +1,5 @@
-import React from "react"
 import "./progress.css"
+import React from "react"
 
 const Progress: React.FC<
   React.PropsWithChildren<{

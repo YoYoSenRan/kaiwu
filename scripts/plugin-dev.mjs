@@ -8,11 +8,11 @@
  *   node scripts/plugin-dev.mjs --check  # 只检查 OpenClaw 兼容性
  */
 import { spawn } from "node:child_process"
-import chokidar from "chokidar"
+import { promises as fs } from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { promises as fs } from "node:fs"
+import chokidar from "chokidar"
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const PLUGIN_SRC = path.join(REPO_ROOT, "plugins", "kaiwu")

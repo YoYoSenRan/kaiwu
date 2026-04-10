@@ -1,8 +1,9 @@
 import type { ProgressInfo } from "electron-updater"
+
+import "./update.css"
 import { useCallback, useEffect, useState } from "react"
 import Modal from "./modal"
 import Progress from "./progress"
-import "./update.css"
 
 const Update = () => {
   const [checking, setChecking] = useState(false)

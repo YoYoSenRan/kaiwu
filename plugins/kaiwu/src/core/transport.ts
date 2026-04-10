@@ -1,6 +1,6 @@
 import type { PluginLogger } from "../../api.js"
-import type { BridgeConfig } from "./handshake.js"
 import type { BridgeOutboundMessage } from "./envelope.js"
+import type { BridgeConfig } from "./handshake.js"
 
 /** 首次重连延迟（ms）。指数退避起点。 */
 const INITIAL_RECONNECT_MS = 500
