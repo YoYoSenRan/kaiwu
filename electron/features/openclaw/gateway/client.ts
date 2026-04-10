@@ -48,18 +48,18 @@ type PendingReq = { resolve: (v: unknown) => void; reject: (e: Error) => void; t
  */
 export class GatewayClient {
   private ws: WebSocket | null = null
-  private connected = false
   private stopped = false
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null
-  private reconnectAttempt = 0
+  private connected = false
+  private idCounter = 0
   private currentUrl = ""
   private currentAuth: { token?: string; password?: string } = {}
-  private idCounter = 0
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  private reconnectAttempt = 0
 
+  private readonly pending = new Map<string, PendingReq>()
+  private readonly eventListeners = new Set<EventListener>()
   private readonly connectionListeners = new Set<ConnectionListener>()
   private readonly connectErrorListeners = new Set<ConnectErrorListener>()
-  private readonly eventListeners = new Set<EventListener>()
-  private readonly pending = new Map<string, PendingReq>()
   private challengeResolver: ((c: ConnectChallenge) => void) | null = null
 
   // ChatEvent 按 session 分发
