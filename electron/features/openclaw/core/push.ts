@@ -1,6 +1,7 @@
-import { openclawChannels } from "../channels"
-import { getMainWindow } from "../../../core/window"
 import type { BridgeEvent, OpenClawStatus } from "../types"
+
+import { getMainWindow } from "../../../core/window"
+import { openclawChannels } from "../channels"
 
 /**
  * 向 renderer 推送插件桥接事件。

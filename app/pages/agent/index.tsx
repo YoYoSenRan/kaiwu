@@ -1,6 +1,6 @@
+import { Activity, AlertCircle, ArrowUpRight, Bot, Cpu, Play, Plus, Square, Zap } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Activity, AlertCircle, ArrowUpRight, Bot, Cpu, Play, Plus, Square, Zap } from "lucide-react"
 
 const AGENTS = [
   { id: "agt_01", name: "Explorer Alpha", type: "explorer", status: "running", load: 72, tasks: 1247 },

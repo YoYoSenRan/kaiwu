@@ -1,9 +1,11 @@
-import path from "node:path"
-import log from "../../core/logger"
-import { app, BrowserWindow } from "electron"
 import type { DeepLinkPayload } from "./types"
+import type { BrowserWindow } from "electron"
+
+import path from "node:path"
+import { app } from "electron"
+import log from "../../core/logger"
 import { getMainWindow } from "../../core/window"
-import { PROTOCOL, deeplinkChannels } from "./channels"
+import { deeplinkChannels, PROTOCOL } from "./channels"
 
 // 冷启动时窗口尚未创建，暂存 URL 等待 flush
 let pendingUrl: string | null = null

@@ -1,5 +1,6 @@
 import { useEffect } from "react"
-import { useSettingsStore, applyThemeClass, getSystemTheme } from "@/stores/settings"
+
+import { applyThemeClass, getSystemTheme, useSettingsStore } from "@/stores/settings"
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
 

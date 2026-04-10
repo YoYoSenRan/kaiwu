@@ -1,8 +1,8 @@
-import { join } from "node:path"
 import { promises as fs } from "node:fs"
+import { join } from "node:path"
 import log from "../../core/logger"
 import { detectGateway } from "./core/gateway"
-import { createGatewayConnection, type GatewayConnection } from "./gateway/connect"
+import { GatewayClient } from "./gateway/client"
 
 const POLL_INTERVAL_MS = 10_000
 
@@ -14,7 +14,7 @@ export interface GatewayState {
   error: string | null
 }
 
-let connection: GatewayConnection | null = null
+let client: GatewayClient | null = null
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let state: GatewayState = { status: "idle", url: null, error: null }
 let stateListener: ((s: GatewayState) => void) | null = null
@@ -29,22 +29,27 @@ export function getGatewayState(): GatewayState {
   return state
 }
 
+/** 获取当前 GatewayClient 实例（未连接时为 null）。 */
+export function getGatewayClient(): GatewayClient | null {
+  return client
+}
+
 /**
  * 启动 gateway 自动连接。
  * 检测 gateway 在线后立即连接；未在线时定期轮询等待上线。
  * @param onStateChange 状态变化回调
  */
 export async function startGatewayConnection(onStateChange?: (s: GatewayState) => void): Promise<void> {
-  if (pollTimer || connection?.isConnected()) return
+  if (pollTimer || client?.isConnected()) return
   stateListener = onStateChange ?? null
   setState({ status: "detecting", url: null, error: null })
 
   await tryConnect()
 
   pollTimer = setInterval(() => {
-    if (connection?.isConnected()) return
-    connection?.disconnect()
-    connection = null
+    if (client?.isConnected()) return
+    client?.disconnect()
+    client = null
     void tryConnect()
   }, POLL_INTERVAL_MS)
 }
@@ -55,8 +60,8 @@ export function stopGatewayConnection(): void {
     clearInterval(pollTimer)
     pollTimer = null
   }
-  connection?.disconnect()
-  connection = null
+  client?.disconnect()
+  client = null
   setState({ status: "idle", url: null, error: null })
   stateListener = null
 }
@@ -75,10 +80,10 @@ async function tryConnect(): Promise<void> {
   setState({ status: "connecting", url, error: null })
 
   try {
-    const conn = await createGatewayConnection(url, { token: auth.token ?? undefined, password: auth.password ?? undefined })
-    connection = conn
+    const c = new GatewayClient()
 
-    conn.client.onConnectionChange((connected) => {
+    // 先注册监听再连接，确保不丢首次连接通知
+    c.onConnectionChange((connected) => {
       if (connected && state.status !== "connected") {
         setState({ status: "connected", url, error: null })
       } else if (!connected && state.status === "connected") {
@@ -86,7 +91,7 @@ async function tryConnect(): Promise<void> {
       }
     })
 
-    conn.client.onConnectError((err) => {
+    c.onConnectError((err) => {
       const msg = err.message.toLowerCase()
       const isAuth =
         msg.includes("auth") || msg.includes("token") || msg.includes("password") || msg.includes("mismatch") || msg.includes("unauthorized") || msg.includes("forbidden")
@@ -100,10 +105,13 @@ async function tryConnect(): Promise<void> {
       }
       stopGatewayConnection()
     })
+
+    await c.connect(url, { token: auth.token ?? undefined, password: auth.password ?? undefined })
+    client = c
   } catch (err) {
     log.warn(`[gateway] initial connection failed: ${(err as Error).message}`)
     setState({ status: "error", url, error: `连接失败: ${(err as Error).message}` })
-    connection = null
+    client = null
   }
 }
 

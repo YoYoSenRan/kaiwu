@@ -1,4 +1,5 @@
 import type { TFunction } from "i18next"
+
 import { Activity, Download, RefreshCw, Trash2, Zap } from "lucide-react"
 
 type Status = Awaited<ReturnType<typeof window.electron.openclaw.detect>>

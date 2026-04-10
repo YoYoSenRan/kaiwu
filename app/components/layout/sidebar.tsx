@@ -1,7 +1,8 @@
 import { Zap } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { NavLink } from "react-router"
 import { NAV_ITEMS } from "./nav-items"
-import { useTranslation } from "react-i18next"
+
 import { useSettingsStore } from "@/stores/settings"
 
 /**

@@ -7,8 +7,9 @@
  * 判断逻辑：store 里有 sessionKey → 注入；没有 → 跳过（对其他渠道零影响）。
  */
 
-import { getStageContext } from "./store.js"
 import type { PromptBuildContext, PromptBuildResult } from "./contract.js"
+
+import { getStageContext } from "./store.js"
 
 /**
  * 创建 prompt 注入 hook handler。

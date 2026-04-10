@@ -1,6 +1,6 @@
-import { isWin, isWin7 } from "./env"
 import { app, BrowserWindow } from "electron"
-import { createMainWindow, clearMainWindow } from "./window"
+import { isWin, isWin7 } from "./env"
+import { clearMainWindow, createMainWindow } from "./window"
 
 /**
  * 应用启动前的同步准备工作。

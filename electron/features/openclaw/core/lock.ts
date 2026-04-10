@@ -1,6 +1,6 @@
+import { promises as fs } from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { promises as fs } from "node:fs"
 
 /**
  * gateway lock 文件内容，镜像 openclaw/src/infra/gateway-lock.ts 的 LockPayload。

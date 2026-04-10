@@ -1,5 +1,7 @@
+import type { LaunchedApp } from "../../helpers/launch"
+
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
-import { launchApp, SHOULD_SKIP, type LaunchedApp } from "../../helpers/launch"
+import { launchApp, SHOULD_SKIP } from "../../helpers/launch"
 
 // 覆盖 window.electron.openclaw 的接口契约：方法齐全 + 事件订阅取消函数。
 

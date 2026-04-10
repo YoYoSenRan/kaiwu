@@ -1,10 +1,10 @@
 import { rmSync } from "node:fs"
 import path from "node:path"
-import { defineConfig } from "vite"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
-import electron from "vite-plugin-electron/simple"
 import AutoImport from "unplugin-auto-import/vite"
+import { defineConfig } from "vite"
+import electron from "vite-plugin-electron/simple"
 import pkg from "./package.json"
 
 // https://vitejs.dev/config/
@@ -16,17 +16,10 @@ export default defineConfig(({ command }) => {
   const sourcemap = isServe || !!process.env.VSCODE_DEBUG
 
   return {
-    resolve: {
-      alias: {
-        "@": path.join(__dirname, "app"),
-      },
-    },
+    resolve: { alias: { "@": path.join(__dirname, "app") } },
     plugins: [
       tailwindcss(),
-      AutoImport({
-        imports: ["react", "react-router"],
-        dts: "app/types/auto-imports.d.ts",
-      }),
+      AutoImport({ imports: ["react", "react-router"], dts: "app/types/auto-imports.d.ts" }),
       react(),
       electron({
         main: {
@@ -44,9 +37,7 @@ export default defineConfig(({ command }) => {
               sourcemap,
               minify: isBuild,
               outDir: "dist-electron/main",
-              rollupOptions: {
-                external: Object.keys("dependencies" in pkg ? pkg.dependencies : {}),
-              },
+              rollupOptions: { external: Object.keys("dependencies" in pkg ? pkg.dependencies : {}) },
             },
           },
         },
@@ -56,12 +47,10 @@ export default defineConfig(({ command }) => {
           input: "electron/preload.ts",
           vite: {
             build: {
-              sourcemap: sourcemap ? "inline" : undefined, // #332
               minify: isBuild,
               outDir: "dist-electron/preload",
-              rollupOptions: {
-                external: Object.keys("dependencies" in pkg ? pkg.dependencies : {}),
-              },
+              sourcemap: sourcemap ? "inline" : undefined, // #332
+              rollupOptions: { external: Object.keys("dependencies" in pkg ? pkg.dependencies : {}) },
             },
           },
         },
@@ -75,10 +64,7 @@ export default defineConfig(({ command }) => {
       process.env.VSCODE_DEBUG &&
       (() => {
         const url = new URL(pkg.debug.env.VITE_DEV_SERVER_URL)
-        return {
-          host: url.hostname,
-          port: +url.port,
-        }
+        return { host: url.hostname, port: +url.port }
       })(),
     clearScreen: false,
   }

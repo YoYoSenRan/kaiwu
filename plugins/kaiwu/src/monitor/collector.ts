@@ -6,6 +6,7 @@
  */
 
 import type { MonitorEvent, MonitorHookName } from "./contract.js"
+
 import { MONITOR_HOOKS } from "./contract.js"
 
 type HookRegisterFn = (event: string, handler: (event: unknown, ctx: unknown) => unknown) => void

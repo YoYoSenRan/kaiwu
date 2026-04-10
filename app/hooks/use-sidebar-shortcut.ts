@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+
 import { useSettingsStore } from "@/stores/settings"
 
 /** 判断事件 target 是否是可编辑元素，避免快捷键干扰输入 */

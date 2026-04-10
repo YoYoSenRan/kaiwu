@@ -10,9 +10,9 @@
  */
 
 import { app } from "electron"
-import { createHash, createPublicKey, generateKeyPairSync, sign } from "node:crypto"
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { createHash, createPublicKey, generateKeyPairSync, sign } from "node:crypto"
 
 let cachedKeyPair: { privateKeyPem: string; publicKeyPem: string } | null = null
 

@@ -1,6 +1,8 @@
-import log from "../../../core/logger"
 import type { BridgeEvent } from "../types"
-import { WebSocketServer, type WebSocket } from "ws"
+import type { WebSocket } from "ws"
+
+import { WebSocketServer } from "ws"
+import log from "../../../core/logger"
 import { extractTokenFromUrl, generateBridgeToken, verifyToken } from "./security"
 
 /** WS 路径：插件和 kaiwu 两端约定一致。 */

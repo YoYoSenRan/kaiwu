@@ -1,6 +1,8 @@
-import React, { ReactNode } from "react"
-import { createPortal } from "react-dom"
+import type { ReactNode } from "react"
+
 import "./modal.css"
+import React from "react"
+import { createPortal } from "react-dom"
 
 const ModalTemplate: React.FC<
   React.PropsWithChildren<{

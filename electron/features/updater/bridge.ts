@@ -1,7 +1,8 @@
+import type { UpdateAvailability, UpdaterBridge, UpdaterError } from "./types"
+import type { ProgressInfo } from "electron-updater"
+
 import { ipcRenderer } from "electron"
 import { updaterChannels } from "./channels"
-import type { ProgressInfo } from "electron-updater"
-import type { UpdateAvailability, UpdaterBridge, UpdaterError } from "./types"
 
 /**
  * 订阅一个 ipcRenderer 事件，返回取消订阅函数。

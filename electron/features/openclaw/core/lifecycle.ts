@@ -1,15 +1,17 @@
-import log from "../../../core/logger"
-import { isWin } from "../../../core/env"
-import { spawn } from "node:child_process"
-import { detectGateway } from "./gateway"
-import { checkCompatibility } from "./compat"
-import { pushBridgeEvent, pushStatusChanged } from "./push"
-import { dispatchMonitorEvent, isMonitorEvent } from "../hook/dispatcher"
-import { removeHandshake, writeHandshake } from "./handshake"
-import { startBridgeServer, type BridgeServer } from "./transport"
-import { startGatewayConnection, stopGatewayConnection } from "../service"
-import { detectPluginInstall, syncBridgePlugin, uninstallBridgePlugin } from "./plugin"
 import type { CompatResult, InvokeArgs, InvokeResult, OpenClawStatus } from "../types"
+import type { BridgeServer } from "./transport"
+
+import { spawn } from "node:child_process"
+import { isWin } from "../../../core/env"
+import log from "../../../core/logger"
+import { dispatchMonitorEvent, isMonitorEvent } from "../hook/dispatcher"
+import { stopGatewayConnection } from "../service"
+import { checkCompatibility } from "./compat"
+import { detectGateway } from "./gateway"
+import { removeHandshake, writeHandshake } from "./handshake"
+import { detectPluginInstall, syncBridgePlugin, uninstallBridgePlugin } from "./plugin"
+import { pushBridgeEvent, pushStatusChanged } from "./push"
+import { startBridgeServer } from "./transport"
 
 /** 调用 `openclaw gateway restart` 的超时（ms）。 */
 const RESTART_TIMEOUT_MS = 10_000
@@ -34,10 +36,6 @@ export async function startBridge(): Promise<BridgeServer | null> {
     })
     log.info(`[openclaw] bridge server up on 127.0.0.1:${bridgeServer.info.port}`)
     await refreshHandshakeIfInstalled()
-
-    // 同时启动 gateway WS RPC 连接（控制面），不阻塞 bridge 启动
-    void startGatewayConnection()
-
     return bridgeServer
   } catch (err) {
     log.error(`[openclaw] bridge server failed to start: ${(err as Error).message}`)

@@ -1,5 +1,7 @@
+import type { ElectronApplication, Page } from "playwright"
+
 import path from "node:path"
-import { _electron as electron, type ElectronApplication, type Page } from "playwright"
+import { _electron as electron } from "playwright"
 
 /** 项目根目录（helpers → test → repo-root）。 */
 const REPO_ROOT = path.join(__dirname, "../..")

@@ -1,6 +1,7 @@
+import type { LogBridge } from "./types"
+
 import { ipcRenderer } from "electron"
 import { logChannels } from "./channels"
-import type { LogBridge } from "./types"
 
 export const logBridge: LogBridge = {
   info: (...args) => ipcRenderer.send(logChannels.output.write, "info", ...args),

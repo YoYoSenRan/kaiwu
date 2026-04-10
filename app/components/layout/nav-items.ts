@@ -1,4 +1,5 @@
 import type { ComponentType } from "react"
+
 import { Bot, LayoutDashboard, Library, ListChecks, MessagesSquare, Plug, Settings } from "lucide-react"
 
 export interface NavItem {

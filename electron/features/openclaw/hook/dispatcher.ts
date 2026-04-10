@@ -6,9 +6,10 @@
  * renderer 不用从混杂的 bridgeEvent 里自己过滤。
  */
 
+import type { BridgeEvent } from "../types"
+
 import { getMainWindow } from "../../../core/window"
 import { openclawChannels } from "../channels"
-import type { BridgeEvent } from "../types"
 
 /** monitor 事件在 custom 通道中的 channel 标识，与插件侧 MONITOR_CHANNEL 一致。 */
 const MONITOR_CHANNEL = "monitor"
