@@ -1,4 +1,4 @@
-import type { BridgeEvent, GatewayConnectParams, GatewayEventFrame, GatewayState, InvokeArgs, MonitorEvent, OpenClawBridge, OpenClawStatus } from "./types"
+import type { GatewayConnectParams, GatewayEventFrame, GatewayState, InvokeArgs, MonitorEvent, OpenClawBridge, OpenClawStatus, PluginEvent } from "./types"
 
 import { ipcRenderer } from "electron"
 import { openclawChannels } from "./channels"
@@ -16,12 +16,12 @@ export const openclawBridge: OpenClawBridge = {
   install: () => ipcRenderer.invoke(openclawChannels.plugin.install),
   uninstall: () => ipcRenderer.invoke(openclawChannels.plugin.uninstall),
   restart: () => ipcRenderer.invoke(openclawChannels.lifecycle.restart),
-  invoke: (args: InvokeArgs) => ipcRenderer.invoke(openclawChannels.bridge.invoke, args),
+  invoke: (args: InvokeArgs) => ipcRenderer.invoke(openclawChannels.plugin.invoke, args),
 
   on: {
-    event: (listener) => subscribe<BridgeEvent>(openclawChannels.bridge.event, listener),
-    status: (listener) => subscribe<OpenClawStatus>(openclawChannels.bridge.status, listener),
-    monitor: (listener) => subscribe<MonitorEvent>(openclawChannels.bridge.monitor, listener),
+    event: (listener) => subscribe<PluginEvent>(openclawChannels.plugin.event, listener),
+    status: (listener) => subscribe<OpenClawStatus>(openclawChannels.plugin.status, listener),
+    monitor: (listener) => subscribe<MonitorEvent>(openclawChannels.plugin.monitor, listener),
   },
 
   gateway: {

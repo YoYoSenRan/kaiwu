@@ -67,8 +67,8 @@ export interface InvokeResult {
   error?: { message: string; code?: string }
 }
 
-/** 来自 kaiwu 插件的桥接事件（镜像 plugins/kaiwu/src/protocol.ts）。 */
-export interface BridgeEvent {
+/** 来自 kaiwu 插件的事件（镜像 plugins/kaiwu/src/protocol.ts）。 */
+export interface PluginEvent {
   type: string
   id?: string
   ts: number
@@ -103,7 +103,7 @@ export interface OpenClawBridge {
   /** 事件订阅。 */
   on: {
     /** 来自插件的桥接事件。 */
-    event: (listener: (event: BridgeEvent) => void) => () => void
+    event: (listener: (event: PluginEvent) => void) => () => void
     /** OpenClaw 状态变化。 */
     status: (listener: (status: OpenClawStatus) => void) => () => void
     /** 运行时监控事件（llm_input/output、tool_call 等）。 */

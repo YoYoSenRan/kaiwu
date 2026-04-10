@@ -1,8 +1,9 @@
 import { Zap } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { NavLink } from "react-router"
+import { NavLink, useNavigate } from "react-router"
 import { NAV_ITEMS } from "./nav-items"
 
+import { useGatewayStore } from "@/stores/gateway"
 import { useSettingsStore } from "@/stores/settings"
 
 /**
@@ -12,8 +13,11 @@ import { useSettingsStore } from "@/stores/settings"
  */
 export function Sidebar() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const collapsed = useSettingsStore((s) => s.sidebarCollapsed)
   const toggleSidebar = useSettingsStore((s) => s.toggleSidebar)
+  const gwStatus = useGatewayStore((s) => s.status)
+  const gwUrl = useGatewayStore((s) => s.url)
 
   return (
     <aside className={`flex flex-col border-r border-border bg-background transition-[width] duration-200 ${collapsed ? "w-16" : "w-56"}`}>
@@ -57,6 +61,30 @@ export function Sidebar() {
           )
         })}
       </nav>
+
+      {/* 底部连接状态指示器 */}
+      <button
+        onClick={() => navigate("/connect")}
+        title={gwStatus === "connected" ? gwUrl ?? "" : t(`connect.status.${gwStatus}`)}
+        className={`flex shrink-0 items-center gap-2.5 border-t border-border px-4 py-3 transition-colors hover:bg-accent/30 ${collapsed ? "justify-center px-0" : ""}`}
+      >
+        <span className={`size-2 shrink-0 rounded-full ${statusDotClass(gwStatus)}`} />
+        {!collapsed && <span className="truncate text-[10px] tracking-[0.15em] font-mono text-muted-foreground uppercase">{statusLabel(gwStatus, gwUrl, t)}</span>}
+      </button>
     </aside>
   )
+}
+
+/** 状态点颜色映射。 */
+function statusDotClass(status: string): string {
+  if (status === "connected") return "bg-emerald-500"
+  if (status === "connecting" || status === "detecting") return "bg-amber-400 deck-pulse"
+  if (status === "auth-error") return "bg-red-500"
+  return "bg-muted-foreground/40"
+}
+
+/** 展开模式的文字标签。 */
+function statusLabel(status: string, url: string | null, t: (key: string) => string): string {
+  if (status === "connected" && url) return url.replace("ws://", "").replace("/ws", "")
+  return t(`connect.status.${status}`)
 }

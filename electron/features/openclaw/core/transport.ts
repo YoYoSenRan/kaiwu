@@ -1,4 +1,4 @@
-import type { BridgeEvent } from "../types"
+import type { PluginEvent } from "../types"
 import type { WebSocket } from "ws"
 
 import { WebSocketServer } from "ws"
@@ -8,15 +8,15 @@ import { extractTokenFromUrl, generateBridgeToken, verifyToken } from "./securit
 /** WS 路径：插件和 kaiwu 两端约定一致。 */
 const WS_PATH = "/kaiwu"
 
-export interface BridgeServerInfo {
+export interface PluginServerInfo {
   port: number
   token: string
   pid: number
 }
 
-export interface BridgeServer {
-  info: BridgeServerInfo
-  onEvent: (listener: (event: BridgeEvent) => void) => () => void
+export interface PluginServer {
+  info: PluginServerInfo
+  onEvent: (listener: (event: PluginEvent) => void) => () => void
   /** 主动向插件发送消息（预留能力，当前 WS 以插件 → kaiwu 方向为主）。 */
   sendToPlugin: (payload: unknown) => boolean
   close: () => Promise<void>
@@ -27,7 +27,7 @@ export interface BridgeServer {
  * 在 127.0.0.1 上监听随机端口，写入 handshake 文件由插件读取。
  * 鉴权/token 逻辑下沉到 security.ts，本层只负责 transport。
  */
-export async function startBridgeServer(): Promise<BridgeServer> {
+export async function startPluginServer(): Promise<PluginServer> {
   const token = generateBridgeToken()
   const wss = new WebSocketServer({ host: "127.0.0.1", port: 0, path: WS_PATH })
 
@@ -42,7 +42,7 @@ export async function startBridgeServer(): Promise<BridgeServer> {
   }
   const port = address.port
 
-  const listeners = new Set<(event: BridgeEvent) => void>()
+  const listeners = new Set<(event: PluginEvent) => void>()
   let pluginSocket: WebSocket | null = null
 
   wss.on("connection", (socket, req) => {
@@ -58,7 +58,7 @@ export async function startBridgeServer(): Promise<BridgeServer> {
 
     socket.on("message", (raw) => {
       try {
-        const parsed = JSON.parse(raw.toString("utf-8")) as BridgeEvent
+        const parsed = JSON.parse(raw.toString("utf-8")) as PluginEvent
         if (typeof parsed?.type !== "string") return
         for (const fn of listeners) fn(parsed)
       } catch (err) {

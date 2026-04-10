@@ -173,7 +173,33 @@
   "connect": {
     "label": "CONNECT",
     "title": "连接",
-    "description": "外部数据源与 MCP 服务。"
+    "description": "管理与 OpenClaw gateway 的连接。",
+    "section": {
+      "status": "连接状态",
+      "manual": "手动连接"
+    },
+    "status": {
+      "idle": "未连接",
+      "detecting": "正在扫描…",
+      "connecting": "正在连接…",
+      "connected": "已连接",
+      "disconnected": "已断开",
+      "auth-error": "认证失败",
+      "error": "连接错误"
+    },
+    "mode": {
+      "scan": "自动扫描",
+      "manual": "手动连接"
+    },
+    "label": {
+      "url": "地址",
+      "mode": "模式"
+    },
+    "action": {
+      "connect": "连接",
+      "disconnect": "断开",
+      "scan": "扫描本机"
+    }
   },
   "settings": {
     "label": "SETTINGS",
