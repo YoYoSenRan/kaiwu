@@ -1,4 +1,4 @@
-import type { BridgeEvent, GatewayState, InvokeArgs, MonitorEvent, OpenClawBridge, OpenClawStatus } from "./types"
+import type { BridgeEvent, GatewayConnectParams, GatewayEventFrame, GatewayState, InvokeArgs, MonitorEvent, OpenClawBridge, OpenClawStatus } from "./types"
 
 import { ipcRenderer } from "electron"
 import { openclawChannels } from "./channels"
@@ -18,12 +18,31 @@ export const openclawBridge: OpenClawBridge = {
   restart: () => ipcRenderer.invoke(openclawChannels.lifecycle.restart),
   invoke: (args: InvokeArgs) => ipcRenderer.invoke(openclawChannels.bridge.invoke, args),
 
-  onEvent: (listener) => subscribe<BridgeEvent>(openclawChannels.bridge.event, listener),
-  onStatus: (listener) => subscribe<OpenClawStatus>(openclawChannels.bridge.status, listener),
-  onMonitor: (listener) => subscribe<MonitorEvent>(openclawChannels.bridge.monitor, listener),
+  on: {
+    event: (listener) => subscribe<BridgeEvent>(openclawChannels.bridge.event, listener),
+    status: (listener) => subscribe<OpenClawStatus>(openclawChannels.bridge.status, listener),
+    monitor: (listener) => subscribe<MonitorEvent>(openclawChannels.bridge.monitor, listener),
+  },
 
-  state: () => ipcRenderer.invoke(openclawChannels.gateway.state),
-  connect: () => ipcRenderer.invoke(openclawChannels.gateway.connect),
-  disconnect: () => ipcRenderer.invoke(openclawChannels.gateway.disconnect),
-  onGatewayStatus: (listener) => subscribe<GatewayState>(openclawChannels.gateway.status, listener),
+  gateway: {
+    state: () => ipcRenderer.invoke(openclawChannels.gateway.state),
+    connect: (params?: GatewayConnectParams) => ipcRenderer.invoke(openclawChannels.gateway.connect, params),
+    disconnect: () => ipcRenderer.invoke(openclawChannels.gateway.disconnect),
+    on: {
+      status: (listener) => subscribe<GatewayState>(openclawChannels.gateway.status, listener),
+      event: (listener) => subscribe<GatewayEventFrame>(openclawChannels.gateway.event, listener),
+    },
+  },
+
+  chat: {
+    send: (params) => ipcRenderer.invoke(openclawChannels.chat.send, params),
+    abort: (params) => ipcRenderer.invoke(openclawChannels.chat.abort, params),
+  },
+
+  session: {
+    create: (params) => ipcRenderer.invoke(openclawChannels.session.create, params),
+    list: (params) => ipcRenderer.invoke(openclawChannels.session.list, params),
+    patch: (params) => ipcRenderer.invoke(openclawChannels.session.patch, params),
+    delete: (params) => ipcRenderer.invoke(openclawChannels.session.delete, params),
+  },
 }

@@ -69,6 +69,7 @@ export interface ConnectParams {
   auth: {
     token?: string
     deviceToken?: string
+    bootstrapToken?: string
     password?: string
   }
   device?: {
@@ -78,6 +79,14 @@ export interface ConnectParams {
     signedAt: number
     nonce: string
   }
+  role?: string
+  scopes?: string[]
+  caps?: string[]
+  commands?: string[]
+  permissions?: Record<string, boolean>
+  pathEnv?: string
+  locale?: string
+  userAgent?: string
 }
 
 /** 服务器返回的 hello-ok 响应 payload。 */

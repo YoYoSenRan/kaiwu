@@ -1,5 +1,6 @@
-import type { BridgeEvent, OpenClawStatus } from "../types"
+import type { BridgeEvent, GatewayState, OpenClawStatus } from "../types"
 
+import log from "../../../core/logger"
 import { getMainWindow } from "../../../core/window"
 import { openclawChannels } from "../channels"
 
@@ -21,4 +22,25 @@ export function pushStatusChanged(status: OpenClawStatus): void {
   const win = getMainWindow()
   if (!win) return
   win.webContents.send(openclawChannels.bridge.status, status)
+}
+
+/**
+ * 向 renderer 推送 gateway 连接状态变化。
+ * @param state 最新连接状态快照
+ */
+export function pushGatewayState(state: GatewayState): void {
+  const win = getMainWindow()
+  if (!win) return
+  win.webContents.send(openclawChannels.gateway.status, state)
+}
+
+/**
+ * 向 renderer 推送 gateway event 帧。
+ * @param frame gateway 推送的事件帧
+ */
+export function pushGatewayEvent(frame: unknown): void {
+  log.debug(`[gateway] event: ${(frame as { event?: string }).event}`)
+  const win = getMainWindow()
+  if (!win) return
+  win.webContents.send(openclawChannels.gateway.event, frame)
 }

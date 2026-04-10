@@ -5,8 +5,8 @@
  * 连接时用私钥对 challenge nonce 签名，gateway 用已注册公钥验签。
  * gateway 返回 deviceToken 后缓存，后续连接可直接用 token 认证。
  *
- * 签名 payload 格式（v2）：
- * v2|{deviceId}|{clientId}|{clientMode}|{role}|{scopes}|{signedAtMs}|{token}|{nonce}
+ * 签名 payload 格式（v3）：
+ * v3|{deviceId}|{clientId}|{clientMode}|{role}|{scopes}|{signedAtMs}|{token}|{nonce}|{platform}|{deviceFamily}
  */
 
 import { app } from "electron"
@@ -95,7 +95,7 @@ export function getPublicKeyBase64(): string {
 }
 
 /**
- * 构建 v2 签名 payload 并用 Ed25519 私钥签名。
+ * 构建 v3 签名 payload 并用 Ed25519 私钥签名。
  * @param params 签名所需的各字段
  * @param params.deviceId 设备唯一标识
  * @param params.clientId 客户端 ID
@@ -105,6 +105,8 @@ export function getPublicKeyBase64(): string {
  * @param params.signedAtMs 签名时间戳（毫秒）
  * @param params.token 用于签名的认证 token，可为 null
  * @param params.nonce 服务器 challenge 下发的 nonce
+ * @param params.platform 平台标识
+ * @param params.deviceFamily 设备族标识
  * @returns base64url 编码的签名结果
  */
 export function signChallenge(params: {
@@ -116,10 +118,12 @@ export function signChallenge(params: {
   signedAtMs: number
   token: string | null
   nonce: string
+  platform?: string | null
+  deviceFamily?: string | null
 }): string {
   const { privateKeyPem } = ensureDeviceKeyPair()
   const payload = [
-    "v2",
+    "v3",
     params.deviceId,
     params.clientId,
     params.clientMode,
@@ -128,6 +132,8 @@ export function signChallenge(params: {
     String(params.signedAtMs),
     params.token ?? "",
     params.nonce,
+    params.platform ?? "",
+    params.deviceFamily ?? "",
   ].join("|")
   return toBase64Url(sign(null, Buffer.from(payload, "utf-8"), privateKeyPem))
 }

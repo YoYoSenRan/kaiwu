@@ -6,7 +6,7 @@ import { getCachedDeviceToken, getDeviceId, getPublicKeyBase64, signChallenge } 
 /** 向 gateway 自报的客户端身份常量。 */
 export const CLIENT_IDENTITY = {
   mode: "ui",
-  id: "kaiwu",
+  id: "gateway-client",
   displayName: "Kaiwu",
   version: app.getVersion(),
   platform: process.platform,
@@ -20,11 +20,17 @@ export const CLIENT_IDENTITY = {
  * @returns 符合 gateway 协议且包含设备签名的 connect 请求参数
  */
 export function buildConnectParams(challenge: ConnectChallenge, auth: { token?: string; password?: string }): ConnectParams {
+  const role = "operator"
+  const scopes = ["operator.admin"]
+  const signedAtMs = Date.now()
+
   const params: ConnectParams = {
     minProtocol: PROTOCOL_VERSION,
     maxProtocol: PROTOCOL_VERSION,
     client: { ...CLIENT_IDENTITY },
     auth: { token: auth.token, password: auth.password },
+    role,
+    scopes,
   }
 
   if (!auth.token) {
@@ -33,17 +39,18 @@ export function buildConnectParams(challenge: ConnectChallenge, auth: { token?: 
     params.auth.deviceToken = deviceToken ?? undefined
     params.device = {
       id: deviceId,
-      signedAt: Date.now(),
+      signedAt: signedAtMs,
       nonce: challenge.nonce,
       signature: signChallenge({
         deviceId,
         clientId: CLIENT_IDENTITY.id,
         clientMode: CLIENT_IDENTITY.mode,
-        role: "client",
-        scopes: ["gateway"],
-        signedAtMs: Date.now(),
+        role,
+        scopes,
+        signedAtMs,
         token: deviceToken,
         nonce: challenge.nonce,
+        platform: CLIENT_IDENTITY.platform,
       }),
       publicKey: getPublicKeyBase64(),
     }

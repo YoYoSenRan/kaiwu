@@ -8,7 +8,7 @@ const EVENT_LOG_MAX = 20
 
 type Status = Awaited<ReturnType<typeof window.electron.openclaw.detect>>
 type Compat = Awaited<ReturnType<typeof window.electron.openclaw.check>>
-type BridgeEvent = Parameters<Parameters<typeof window.electron.openclaw.onEvent>[0]>[0]
+type BridgeEvent = Parameters<Parameters<typeof window.electron.openclaw.on.event>[0]>[0]
 type BusyAction = null | "detect" | "sync" | "uninstall" | "restart"
 
 /** 设置页面的 OpenClaw 桥接状态卡片。负责数据拉取与动作分发，UI 由 card-parts 提供。 */
@@ -30,10 +30,10 @@ export function OpenClawCard() {
   useEffect(() => {
     mounted.current = true
     void refresh()
-    const offEvent = window.electron.openclaw.onEvent((ev) => {
+    const offEvent = window.electron.openclaw.on.event((ev) => {
       setEvents((prev) => [ev, ...prev].slice(0, EVENT_LOG_MAX))
     })
-    const offStatus = window.electron.openclaw.onStatus((s) => setStatus(s))
+    const offStatus = window.electron.openclaw.on.status((s) => setStatus(s))
     return () => {
       mounted.current = false
       offEvent()

@@ -4,7 +4,7 @@ import { Activity, Download, RefreshCw, Trash2, Zap } from "lucide-react"
 
 type Status = Awaited<ReturnType<typeof window.electron.openclaw.detect>>
 type Compat = Awaited<ReturnType<typeof window.electron.openclaw.check>>
-type BridgeEvent = Parameters<Parameters<typeof window.electron.openclaw.onEvent>[0]>[0]
+type BridgeEvent = Parameters<Parameters<typeof window.electron.openclaw.on.event>[0]>[0]
 type BusyAction = null | "detect" | "sync" | "uninstall" | "restart"
 
 /** 卡片顶部标题栏，带状态点 + i18n 标签。 */
