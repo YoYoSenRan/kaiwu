@@ -11,7 +11,6 @@ interface SettingsState {
   sidebarCollapsed: boolean
   setLang: (lang: Lang) => void
   setTheme: (theme: Theme) => void
-  toggleSidebar: () => void
   setSidebarCollapsed: (v: boolean) => void
 }
 
@@ -73,7 +72,6 @@ export const useSettingsStore = create<SettingsState>()(
         applyThemeClass(theme)
         set({ theme })
       },
-      toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
     }),
     {

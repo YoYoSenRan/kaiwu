@@ -1,82 +1,127 @@
 import { useCallback, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import { useGateway } from "@/hooks/use-gateway"
-import { gatewayStatusDot } from "@/lib/gateway-status"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { PluginCard } from "./components/plugin-card"
 
 type AuthMode = "token" | "password"
 
-/** 连接管理页。展示连接状态 + 手动连接表单。 */
+/** 连接管理页：
+ *  - 上半部分：网关连接（状态 + 手动连接）
+ *  - 下半部分：本地插件桥接（OpenClaw 插件诊断）
+ */
 export default function Connect() {
   const { t } = useTranslation()
   const gw = useGateway()
 
   return (
-    <div>
-      <h1 className="text-[120px] leading-[0.85] font-extralight tracking-[-0.05em]">{t("connect.title")}</h1>
-      <p className="mt-8 max-w-md text-sm text-muted-foreground">{t("connect.description")}</p>
-
-      <div className="mt-16 grid grid-cols-12 gap-12">
-        <div className="col-span-7">
-          <StatusSection status={gw.status} mode={gw.mode} url={gw.url} error={gw.error} onDisconnect={gw.disconnect} onScan={() => gw.connect()} />
-        </div>
-        <div className="col-span-5">
-          <ManualForm onConnect={gw.connect} disabled={gw.status === "connecting" || gw.status === "detecting"} />
-        </div>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("connect.title")}</h1>
+        <p className="text-muted-foreground mt-1 text-sm">{t("connect.description")}</p>
       </div>
+
+      {/* 网关连接 */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-medium">{t("connect.gateway.title")}</h2>
+          <p className="text-muted-foreground text-sm">{t("connect.gateway.description")}</p>
+        </div>
+        <StatusCard status={gw.status} mode={gw.mode} url={gw.url} error={gw.error} onDisconnect={gw.disconnect} onScan={() => gw.connect()} />
+        <ManualConnectCard onConnect={gw.connect} disabled={gw.status === "connecting" || gw.status === "detecting"} />
+      </section>
+
+      {/* 本地插件 */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-medium">{t("connect.plugin.title")}</h2>
+          <p className="text-muted-foreground text-sm">{t("connect.plugin.description")}</p>
+        </div>
+        <PluginCard />
+      </section>
     </div>
   )
 }
 
-/** 当前连接状态展示。 */
-function StatusSection({ status, mode, url, error, onDisconnect, onScan }: { status: string; mode: string | null; url: string | null; error: string | null; onDisconnect: () => Promise<void>; onScan: () => Promise<void> }) {
+interface StatusCardProps {
+  status: string
+  mode: string | null
+  url: string | null
+  error: string | null
+  onDisconnect: () => Promise<void>
+  onScan: () => Promise<void>
+}
+
+/** 当前网关连接状态。 */
+function StatusCard({ status, mode, url, error, onDisconnect, onScan }: StatusCardProps) {
   const { t } = useTranslation()
+  const busy = status === "connecting" || status === "detecting"
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-[10px] tracking-[0.3em] text-muted-foreground uppercase">{t("connect.section.status")}</span>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <span className={`size-2 shrink-0 rounded-full ${gatewayStatusDot(status)}`} />
-          <span className="text-sm">{t(`connect.status.${status}`)}</span>
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("connect.section.status")}</CardTitle>
+        <CardDescription>{t("connect.section.statusDescription")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge variant={statusVariant(status)} className="px-2.5 py-0.5 text-sm">
+            {t(`connect.status.${status}`)}
+          </Badge>
+          {url && <span className="text-muted-foreground font-mono text-sm break-all">{url}</span>}
         </div>
 
-        {url && (
-          <div className="flex items-baseline gap-2">
-            <span className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase">{t("connect.label.url")}</span>
-            <span className="text-xs font-mono">{url}</span>
-          </div>
-        )}
-
-        {mode && (
-          <div className="flex items-baseline gap-2">
-            <span className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase">{t("connect.label.mode")}</span>
-            <span className="text-xs font-mono">{t(`connect.mode.${mode}`)}</span>
-          </div>
-        )}
-
-        {error && <p className="text-xs deck-accent font-mono">{error}</p>}
-
-        <div className="flex gap-2 pt-2">
-          {status === "connected" ? (
-            <button onClick={onDisconnect} className="flex items-center gap-1.5 h-7 px-2.5 border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
-              <span className="text-[10px] tracking-[0.15em] font-mono uppercase">{t("connect.action.disconnect")}</span>
-            </button>
-          ) : (
-            <button onClick={onScan} disabled={status === "connecting" || status === "detecting"} className="flex items-center gap-1.5 h-7 px-2.5 border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-40">
-              <span className="text-[10px] tracking-[0.15em] font-mono uppercase">{t("connect.action.scan")}</span>
-            </button>
+        <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+          {mode && (
+            <div className="bg-muted rounded-md px-3 py-2">
+              <div className="text-muted-foreground text-xs">{t("connect.label.mode")}</div>
+              <div className="font-medium">{t(`connect.mode.${mode}`)}</div>
+            </div>
+          )}
+          {url && (
+            <div className="bg-muted rounded-md px-3 py-2">
+              <div className="text-muted-foreground text-xs">{t("connect.label.url")}</div>
+              <div className="truncate font-mono text-xs font-medium" title={url}>
+                {url}
+              </div>
+            </div>
+          )}
+          {error && (
+            <div className="bg-destructive/10 rounded-md px-3 py-2 sm:col-span-2 lg:col-span-1">
+              <div className="text-destructive/80 text-xs">{t("connect.label.error")}</div>
+              <div className="text-destructive text-xs font-medium">{error}</div>
+            </div>
           )}
         </div>
-      </div>
-    </div>
+
+        <div className="pt-1">
+          {status === "connected" ? (
+            <Button variant="outline" onClick={onDisconnect}>
+              {t("connect.action.disconnect")}
+            </Button>
+          ) : (
+            <Button onClick={onScan} disabled={busy}>
+              {t("connect.action.scan")}
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
-/** 手动连接表单。 */
-function ManualForm({ onConnect, disabled }: { onConnect: (params: { url: string; token?: string; password?: string }) => Promise<void>; disabled: boolean }) {
+interface ManualFormProps {
+  onConnect: (params: { url: string; token?: string; password?: string }) => Promise<void>
+  disabled: boolean
+}
+
+/** 手动连接网关表单。 */
+function ManualConnectCard({ onConnect, disabled }: ManualFormProps) {
   const { t } = useTranslation()
   const [url, setUrl] = useState("")
   const [credential, setCredential] = useState("")
@@ -85,33 +130,50 @@ function ManualForm({ onConnect, disabled }: { onConnect: (params: { url: string
   const submit = useCallback(() => {
     if (!url.trim()) return
     const params = authMode === "token" ? { url: url.trim(), token: credential || undefined } : { url: url.trim(), password: credential || undefined }
-    onConnect(params)
+    void onConnect(params)
   }, [url, credential, authMode, onConnect])
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-[10px] tracking-[0.3em] text-muted-foreground uppercase">{t("connect.section.manual")}</span>
-      </div>
-
-      <div className="space-y-3">
-        <div>
-          <label className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase">{t("connect.label.url")}</label>
-          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="ws://127.0.0.1:18789/ws" className="mt-1 w-full h-8 px-2.5 border border-border bg-background font-mono text-xs focus:outline-none focus:border-foreground/30 transition-colors" />
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("connect.section.manual")}</CardTitle>
+        <CardDescription>{t("connect.section.manualDescription")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="gw-url">{t("connect.label.url")}</Label>
+          <Input id="gw-url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="ws://127.0.0.1:18789/ws" className="font-mono text-xs" />
         </div>
 
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <button onClick={() => setAuthMode("token")} className={`text-[10px] tracking-[0.15em] font-mono uppercase ${authMode === "token" ? "text-foreground" : "text-muted-foreground"}`}>Token</button>
-            <button onClick={() => setAuthMode("password")} className={`text-[10px] tracking-[0.15em] font-mono uppercase ${authMode === "password" ? "text-foreground" : "text-muted-foreground"}`}>Password</button>
-          </div>
-          <input value={credential} onChange={(e) => setCredential(e.target.value)} type={authMode === "password" ? "password" : "text"} placeholder={authMode === "token" ? "Bearer token" : "Password"} className="w-full h-8 px-2.5 border border-border bg-background font-mono text-xs focus:outline-none focus:border-foreground/30 transition-colors" />
+        <div className="space-y-1.5">
+          <Label>{t("connect.label.auth")}</Label>
+          <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as AuthMode)}>
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="token">Token</TabsTrigger>
+              <TabsTrigger value="password">Password</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Input
+            type={authMode === "password" ? "password" : "text"}
+            value={credential}
+            onChange={(e) => setCredential(e.target.value)}
+            placeholder={authMode === "token" ? "Bearer token" : "Password"}
+            className="font-mono text-xs"
+          />
         </div>
 
-        <button onClick={submit} disabled={disabled || !url.trim()} className="flex items-center gap-1.5 h-7 px-2.5 border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-40">
-          <span className="text-[10px] tracking-[0.15em] font-mono uppercase">{t("connect.action.connect")}</span>
-        </button>
-      </div>
-    </div>
+        <Button onClick={submit} disabled={disabled || !url.trim()}>
+          {t("connect.action.connect")}
+        </Button>
+      </CardContent>
+    </Card>
   )
+}
+
+/** gateway 状态到 shadcn Badge variant 的映射。 */
+function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
+  if (status === "connected") return "default"
+  if (status === "auth-error" || status === "error") return "destructive"
+  if (status === "connecting" || status === "detecting") return "secondary"
+  return "outline"
 }

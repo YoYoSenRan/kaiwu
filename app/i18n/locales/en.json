@@ -5,7 +5,9 @@
     "save": "Save",
     "delete": "Delete",
     "edit": "Edit",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "noData": "No data",
+    "toggleThemeHint": "Press D to toggle theme"
   },
   "update": {
     "checkUpdate": "Check update",
@@ -15,59 +17,6 @@
     "updateProgress": "Update progress:",
     "installNow": "Install now",
     "later": "Later"
-  },
-  "deck": {
-    "subtitle": "OPERATIONS · WORKSPACE",
-    "hero": {
-      "label": "Active Threads",
-      "description": "Three threads opened this morning. Two pending review.",
-      "inspect": "Inspect queue →",
-      "new": "New",
-      "pending": "Pending",
-      "archived": "Archived",
-      "today": "Total Today"
-    },
-    "meta": {
-      "region": "Region",
-      "build": "Build",
-      "branch": "Branch",
-      "operator": "Operator",
-      "openConsole": "Open Console"
-    },
-    "metrics": {
-      "title": "System Metrics · last 24h",
-      "live": "live",
-      "uptime": "Uptime",
-      "requests": "Requests",
-      "latency": "Latency",
-      "errors": "Errors",
-      "vs7d": "vs 7d"
-    },
-    "activity": {
-      "title": "Recent Activity",
-      "viewAll": "View all",
-      "messages": {
-        "deploy": "Build #1247 promoted to production · us-west-2a",
-        "migrate": "Schema migration completed in 4.2s · 12 tables affected",
-        "alert": "CPU normalized after burst at 14:18 · peak 87%",
-        "index": "Search index rebuilt · 14,892 documents · 2.1 GB",
-        "auth": "Token rotation completed for region us-west · 432 keys",
-        "backup": "Daily snapshot · 184 GB · cold storage"
-      }
-    },
-    "services": {
-      "title": "Services",
-      "summary": "5/6 OK"
-    },
-    "footer": {
-      "name": "Meridian Operations Deck",
-      "hint": "Press D to toggle theme",
-      "build": "Build"
-    },
-    "controls": {
-      "theme": "Theme",
-      "language": "Language"
-    }
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -79,109 +28,57 @@
     "settings": "Settings"
   },
   "dashboard": {
-    "label": "DASHBOARD",
     "title": "Dashboard",
-    "description": "Runtime status and core metrics at a glance.",
-    "overview": "System Overview",
-    "inspect": "Inspect details",
-    "metricsTitle": "Core Metrics",
-    "activityTitle": "Recent Activity",
-    "modulesTitle": "Module Status",
-    "viewAll": "View all",
+    "description": "Runtime status and core metrics at a glance",
     "stats": {
       "agents": "Agents",
       "tasks": "Tasks",
       "chats": "Chats",
-      "uptime": "Uptime"
+      "knowledge": "Knowledge"
     },
-    "modules": {
-      "agent": "Agent",
-      "task": "Task",
-      "chat": "Chat",
-      "knowledge": "Knowledge",
-      "connect": "Connect"
-    }
+    "activityTitle": "Recent Activity",
+    "activityEmpty": "No activity yet"
   },
   "agent": {
-    "label": "AGENT",
     "title": "Agent",
-    "description": "Manage and orchestrate your agents.",
-    "overview": "Agent Overview",
-    "inspect": "Inspect details",
-    "metricsTitle": "Runtime Metrics",
-    "listTitle": "Agent List",
-    "detailTitle": "Agent Detail",
-    "createAgent": "Create",
-    "start": "Start",
-    "stop": "Stop",
-    "latestError": "Latest Error",
-    "errorCode": "Error Code",
-    "detailName": "Name",
-    "detailType": "Type",
-    "detailStatus": "Status",
-    "detailLoad": "Load",
-    "detailTasks": "Tasks Completed",
-    "stats": {
-      "total": "Total",
-      "running": "Running",
-      "idle": "Idle",
-      "errors": "Errors"
-    },
-    "types": {
-      "explorer": "Explorer",
-      "executor": "Executor",
-      "planner": "Planner",
-      "reviewer": "Reviewer"
-    }
+    "description": "Manage and orchestrate your agents",
+    "createAgent": "Create Agent",
+    "emptyTitle": "No agents yet",
+    "emptyDescription": "Create your first agent to start orchestrating tasks"
   },
   "task": {
-    "label": "TASK",
     "title": "Task",
-    "description": "Task queue and execution history.",
-    "overview": "Task Overview",
-    "inspect": "Inspect details",
-    "metricsTitle": "Execution Metrics",
-    "queueTitle": "Task Queue",
-    "detailTitle": "Task Detail",
-    "clearCompleted": "Clear completed",
-    "cancel": "Cancel",
-    "retry": "Retry",
-    "queueStatus": "Queue Status",
-    "avgDuration": "Avg Duration",
-    "detailName": "Name",
-    "detailStatus": "Status",
-    "detailProgress": "Progress",
-    "detailEta": "ETA",
-    "stats": {
-      "total": "Total",
-      "running": "Running",
-      "completed": "Completed",
-      "failed": "Failed",
-      "pending": "Pending"
-    }
+    "description": "Task queue and execution history",
+    "emptyTitle": "Task queue is empty",
+    "emptyDescription": "Created or dispatched tasks will appear here"
   },
   "chat": {
-    "label": "CHAT",
     "title": "Chat",
-    "description": "Conversation workspace for your agents."
+    "description": "Conversation workspace for your agents",
+    "emptyTitle": "Start a new conversation",
+    "emptyDescription": "Pick an agent or model to begin chatting",
+    "startConversation": "New Conversation"
   },
   "knowledge": {
-    "label": "KNOWLEDGE",
     "title": "Knowledge",
-    "description": "Vector indexes and document management."
+    "description": "Vector indexes and document management",
+    "upload": "Upload Document",
+    "emptyTitle": "Knowledge base is empty",
+    "emptyDescription": "Upload documents to build your private knowledge base"
   },
   "connect": {
-    "label": "CONNECT",
     "title": "Connect",
-    "description": "Manage the connection to OpenClaw gateway.",
+    "description": "Manage the connection to OpenClaw gateway",
     "section": {
       "status": "Connection Status",
-      "manual": "Manual Connect"
+      "statusDescription": "Current gateway runtime and connection state",
+      "manual": "Manual Connect",
+      "manualDescription": "Specify the gateway URL and credentials directly"
     },
     "status": {
       "idle": "Disconnected",
-      "detecting": "Scanning…",
-      "connecting": "Connecting…",
+      "detecting": "Scanning",
+      "connecting": "Connecting",
       "connected": "Connected",
       "disconnected": "Disconnected",
       "auth-error": "Auth Failed",
@@ -193,36 +90,21 @@
     },
     "label": {
       "url": "URL",
-      "mode": "Mode"
+      "mode": "Mode",
+      "auth": "Authentication",
+      "error": "Error"
     },
-    "action": {
-      "connect": "Connect",
-      "disconnect": "Disconnect",
-      "scan": "Scan Local"
-    }
-  },
-  "settings": {
-    "label": "SETTINGS",
-    "title": "Settings",
-    "description": "Preferences, appearance, and language.",
-    "overview": "System Settings",
-    "inspect": "Inspect details",
-    "appearanceTitle": "Appearance",
-    "languageTitle": "Language",
-    "layoutTitle": "Layout",
-    "aboutTitle": "About",
-    "themeLabel": "Theme",
-    "langLabel": "Language",
-    "sidebarLabel": "Sidebar",
-    "themeLight": "Light",
-    "themeDark": "Dark",
-    "themeSystem": "System",
-    "versionLabel": "Version",
-    "buildLabel": "Build",
-    "deviceId": "Device ID",
-    "viewLogs": "View logs",
-    "openclaw": {
-      "title": "OpenClaw Bridge",
+    "gateway": {
+      "title": "Gateway Connection",
+      "description": "Manage the WebSocket connection to OpenClaw Gateway"
+    },
+    "plugin": {
+      "title": "Local Plugin",
+      "description": "Manage the local kaiwu plugin for OpenClaw"
+    },
+    "plugin": {
+      "title": "Local Plugin",
+      "description": "Monitor and manage the sync state between local OpenClaw gateway and the kaiwu plugin",
       "statusInstalled": "Installed",
       "statusMissing": "Not found",
       "statusRunning": "Running",
@@ -232,14 +114,12 @@
       "bridgeStatus": "Plugin status",
       "bridgeInstalled": "Synced",
       "bridgeMissing": "Not synced",
-      "bridgeVersion": "Plugin version",
       "compat": "Compatibility",
       "compatOk": "Compatible",
       "compatFail": "Incompatible",
       "unknown": "—",
       "detectedBy": "Detected by",
       "configDir": "Config dir",
-      "actions": "Actions",
       "detect": "Re-detect",
       "sync": "Sync plugin",
       "uninstall": "Uninstall plugin",
@@ -251,6 +131,32 @@
       "uninstallOk": "Plugin uninstalled",
       "restartOk": "Gateway restarted",
       "restartFail": "Restart failed: {{message}}"
+    },
+    "action": {
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "scan": "Scan Local"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Preferences, appearance, and language",
+    "appearanceTitle": "Appearance",
+    "appearanceDescription": "Theme, language and layout preferences",
+    "themeLabel": "Theme",
+    "langLabel": "Language",
+    "sidebarLabel": "Collapse sidebar",
+    "sidebarHint": "Collapse the left navigation by default (toggle anytime with Cmd/Ctrl+B)",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "aboutTitle": "About",
+    "versionLabel": "Version",
+    "buildLabel": "Build",
+    "deviceId": "Device ID",
+    "openclaw": {
+      "title": "OpenClaw Bridge",
+      "description": "Monitor and manage the sync state between local OpenClaw gateway and the kaiwu plugin"
     }
   }
 }

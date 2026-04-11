@@ -1,24 +1,28 @@
 import { Moon, Sun } from "lucide-react"
+import { NAV_ITEMS } from "./nav-items"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router"
-import { NAV_ITEMS } from "./nav-items"
-
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useSettingsStore } from "@/stores/settings"
 
 /**
- * 全局头部：左侧当前页大号 uppercase label，右侧主题 + 语言切换。
- * 页面 label 通过路由匹配 NAV_ITEMS 得到，未在 NAV_ITEMS 的路由降级显示 REFERENCE。
+ * 全局头部：侧栏折叠按钮 + 分隔线 + 当前页标题 + 右侧主题/语言切换。
+ * 路由匹配 NAV_ITEMS 得到页面标题，未命中的路由降级显示 "Reference"。
  */
 export function Header() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const item = NAV_ITEMS.find((n) => n.path === pathname)
-  const label = item ? t(`${item.key}.label`) : "REFERENCE"
+  const title = item ? t(`${item.key}.title`) : "Reference"
 
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between border-b border-border px-10">
-      <p className="text-[10px] tracking-[0.35em] text-muted-foreground uppercase">{label}</p>
-      <div className="flex items-center gap-2">
+    <header className="border-border flex h-11 shrink-0 items-center gap-2 border-b px-2">
+      <SidebarTrigger />
+      <Separator orientation="vertical" className="h-4" />
+      <h1 className="text-sm font-medium">{title}</h1>
+      <div className="ml-auto flex items-center gap-2">
         <ThemeToggle />
         <LanguageToggle />
       </div>
@@ -33,13 +37,9 @@ function ThemeToggle() {
   const isDark = theme === "dark"
   const Icon = isDark ? Sun : Moon
   return (
-    <button
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label="toggle theme"
-      className="flex size-7 items-center justify-center border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-    >
-      <Icon className="size-3.5" strokeWidth={1.5} />
-    </button>
+    <Button variant="ghost" size="icon" aria-label="toggle theme" onClick={() => setTheme(isDark ? "light" : "dark")}>
+      <Icon className="size-4" />
+    </Button>
   )
 }
 
@@ -52,16 +52,17 @@ function LanguageToggle() {
   const nextLang = isZh ? "en" : "zh-CN"
   const badge = isZh ? "EN" : "中"
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="sm"
+      aria-label="toggle language"
       onClick={() => {
         // 同时更新运行时语言和持久化状态，缺一不可
         i18n.changeLanguage(nextLang)
         setLang(nextLang)
       }}
-      aria-label="toggle language"
-      className="flex h-7 min-w-7 items-center justify-center px-2 border border-border text-[10px] font-mono tracking-[0.1em] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
     >
       {badge}
-    </button>
+    </Button>
   )
 }
