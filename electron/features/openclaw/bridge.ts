@@ -10,17 +10,23 @@ function subscribe<T>(channel: string, listener: (payload: T) => void): () => vo
 }
 
 export const openclawBridge: OpenClawBridge = {
-  detect: () => ipcRenderer.invoke(openclawChannels.lifecycle.detect),
-  check: () => ipcRenderer.invoke(openclawChannels.lifecycle.check),
-  install: () => ipcRenderer.invoke(openclawChannels.plugin.install),
-  uninstall: () => ipcRenderer.invoke(openclawChannels.plugin.uninstall),
-  restart: () => ipcRenderer.invoke(openclawChannels.lifecycle.restart),
-  invoke: (args: InvokeArgs) => ipcRenderer.invoke(openclawChannels.plugin.invoke, args),
+  lifecycle: {
+    detect: () => ipcRenderer.invoke(openclawChannels.lifecycle.detect),
+    check: () => ipcRenderer.invoke(openclawChannels.lifecycle.check),
+    restart: () => ipcRenderer.invoke(openclawChannels.lifecycle.restart),
+    on: {
+      status: (listener) => subscribe<OpenClawStatus>(openclawChannels.plugin.status, listener),
+    },
+  },
 
-  on: {
-    event: (listener) => subscribe<PluginEvent>(openclawChannels.plugin.event, listener),
-    status: (listener) => subscribe<OpenClawStatus>(openclawChannels.plugin.status, listener),
-    monitor: (listener) => subscribe<MonitorEvent>(openclawChannels.plugin.monitor, listener),
+  plugin: {
+    install: () => ipcRenderer.invoke(openclawChannels.plugin.install),
+    uninstall: () => ipcRenderer.invoke(openclawChannels.plugin.uninstall),
+    invoke: (args: InvokeArgs) => ipcRenderer.invoke(openclawChannels.plugin.invoke, args),
+    on: {
+      event: (listener) => subscribe<PluginEvent>(openclawChannels.plugin.event, listener),
+      monitor: (listener) => subscribe<MonitorEvent>(openclawChannels.plugin.monitor, listener),
+    },
   },
 
   gateway: {

@@ -1,5 +1,7 @@
-import { Activity, ArrowUpRight, Bot, GitBranch, Layers, MessageSquare, Radio, Zap } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { DeckHero } from "@/components/deck/hero"
+import { StatCard } from "@/components/deck/stat-card"
+import { Activity, ArrowUpRight, Bot, GitBranch, Layers, MessageSquare, Radio, Zap } from "lucide-react"
 
 const STATS = [
   { key: "agents", value: "03", suffix: "online", icon: Bot },
@@ -22,23 +24,6 @@ const MODULES = [
   { name: "knowledge", status: "OK", load: 18 },
   { name: "connect", status: "DEGRADED", load: 89 },
 ] as const
-
-function StatCard({ stat, index }: { stat: (typeof STATS)[number]; index: number }) {
-  const { t } = useTranslation()
-  const Icon = stat.icon
-  return (
-    <div className="group bg-background p-6 deck-rise transition-colors" style={{ animationDelay: `${280 + index * 70}ms` }}>
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] tracking-[0.3em] text-muted-foreground uppercase">{t(`dashboard.stats.${stat.key}`)}</span>
-        <Icon className="size-3.5 text-muted-foreground transition-colors group-hover:deck-accent" strokeWidth={1.5} />
-      </div>
-      <div className="mt-5 flex items-baseline gap-1.5 tabular">
-        <span className="text-4xl font-light tracking-tight">{stat.value}</span>
-        <span className="text-sm text-muted-foreground font-mono">{stat.suffix}</span>
-      </div>
-    </div>
-  )
-}
 
 function ActivityRow({ activity, index }: { activity: (typeof ACTIVITIES)[number]; index: number }) {
   return (
@@ -72,30 +57,17 @@ export default function Dashboard() {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="grid grid-cols-12 gap-12 items-end pb-12 border-b border-border">
-        <div className="col-span-7 deck-rise">
-          <p className="text-[10px] tracking-[0.35em] text-muted-foreground uppercase">{t("dashboard.overview")}</p>
-          <h1 className="mt-4 text-[120px] leading-[0.85] font-extralight tracking-[-0.05em] tabular">{t("dashboard.title")}</h1>
-          <p className="mt-6 text-sm text-muted-foreground max-w-md leading-relaxed">{t("dashboard.description")}</p>
-          <div className="mt-8 flex gap-8 text-sm">
-            <div>
-              <p className="text-xs text-muted-foreground tracking-[0.2em] uppercase">{t("dashboard.stats.agents")}</p>
-              <p className="font-mono mt-1.5 text-base tabular">03</p>
-            </div>
-            <div className="border-l border-border pl-8">
-              <p className="text-xs text-muted-foreground tracking-[0.2em] uppercase">{t("dashboard.stats.tasks")}</p>
-              <p className="font-mono mt-1.5 text-base tabular deck-accent">12</p>
-            </div>
-            <div className="border-l border-border pl-8">
-              <p className="text-xs text-muted-foreground tracking-[0.2em] uppercase">{t("dashboard.stats.chats")}</p>
-              <p className="font-mono mt-1.5 text-base tabular">48</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-span-5 deck-rise" style={{ animationDelay: "120ms" }}>
-          <div className="border-l-2 deck-accent-border pl-6 space-y-4">
+      <DeckHero
+        overview={t("dashboard.overview")}
+        title={t("dashboard.title")}
+        description={t("dashboard.description")}
+        stats={[
+          { label: t("dashboard.stats.agents"), value: "03" },
+          { label: t("dashboard.stats.tasks"), value: "12", highlight: true },
+          { label: t("dashboard.stats.chats"), value: "48" },
+        ]}
+        aside={
+          <>
             <div className="flex items-baseline justify-between gap-4 border-b border-border/50 pb-3">
               <span className="text-xs text-muted-foreground tracking-[0.2em] uppercase shrink-0">Version</span>
               <span className="text-sm font-mono text-foreground">v0.1.0</span>
@@ -117,9 +89,9 @@ export default function Dashboard() {
                 <ArrowUpRight className="size-3" strokeWidth={2} />
               </button>
             </div>
-          </div>
-        </div>
-      </section>
+          </>
+        }
+      />
 
       {/* Stats grid */}
       <section className="mt-12">
@@ -132,7 +104,7 @@ export default function Dashboard() {
         </div>
         <div className="grid grid-cols-4 gap-px border border-border">
           {STATS.map((stat, i) => (
-            <StatCard key={stat.key} stat={stat} index={i} />
+            <StatCard key={stat.key} label={t(`dashboard.stats.${stat.key}`)} value={stat.value} suffix={stat.suffix} icon={stat.icon} index={i} />
           ))}
         </div>
       </section>

@@ -63,8 +63,18 @@ export async function startGatewayConnection(params?: GatewayConnectParams): Pro
   }
 }
 
-/** 停止 gateway 连接与轮询。 */
+/** 停止 gateway 连接与轮询，状态回到 idle。 */
 export function stopGatewayConnection(): void {
+  clearConnection()
+  setState({ status: "idle", mode: null, url: null, error: null })
+}
+
+/**
+ * 清理 client / pollTimer / connecting 标记，但**不动 state**。
+ * 供 onConnectError 等需要保留错误态的路径使用——直接调 stopGatewayConnection 会把
+ * 刚 setState 的 error / auth-error 立刻被 idle 覆盖，renderer 看不到失败原因。
+ */
+function clearConnection(): void {
   connecting = false
   if (pollTimer) {
     clearInterval(pollTimer)
@@ -72,7 +82,6 @@ export function stopGatewayConnection(): void {
   }
   client?.disconnect()
   client = null
-  setState({ status: "idle", mode: null, url: null, error: null })
 }
 
 // ---------- 内部连接逻辑 ----------
@@ -135,6 +144,8 @@ function createClient(url: string): GatewayClient {
     const msg = err.message.toLowerCase()
     const isAuth = msg.includes("auth") || msg.includes("token") || msg.includes("password") || msg.includes("mismatch") || msg.includes("unauthorized") || msg.includes("forbidden")
 
+    // 先释放资源再 setState，避免 stopGatewayConnection 的 setState(idle) 覆盖失败原因
+    clearConnection()
     if (isAuth) {
       log.warn(`[gateway] auth failed: ${err.message}`)
       setState({ status: "auth-error", error: `认证失败: ${err.message}` })
@@ -142,7 +153,6 @@ function createClient(url: string): GatewayClient {
       log.warn(`[gateway] connect error: ${err.message}`)
       setState({ status: "error", error: `连接错误: ${err.message}` })
     }
-    stopGatewayConnection()
   })
 
   // 所有 gateway event 帧直接推给 renderer

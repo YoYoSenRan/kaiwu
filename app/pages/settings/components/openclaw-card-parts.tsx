@@ -1,14 +1,11 @@
 import type { TFunction } from "i18next"
-
 import { Activity, Download, RefreshCw, Trash2, Zap } from "lucide-react"
+import type { CompatResult, OpenClawStatus, PluginEvent } from "../../../../electron/preload"
 
-type Status = Awaited<ReturnType<typeof window.electron.openclaw.detect>>
-type Compat = Awaited<ReturnType<typeof window.electron.openclaw.check>>
-type PluginEvent = Parameters<Parameters<typeof window.electron.openclaw.on.event>[0]>[0]
 type BusyAction = null | "detect" | "sync" | "uninstall" | "restart"
 
 /** 卡片顶部标题栏，带状态点 + i18n 标签。 */
-export function CardHeader({ t, status }: { t: TFunction; status: Status | null }) {
+export function CardHeader({ t, status }: { t: TFunction; status: OpenClawStatus | null }) {
   const live = !!status?.installed && !!status.running
   return (
     <div className="flex items-center justify-between border-b border-border/50 pb-3">
@@ -22,7 +19,7 @@ export function CardHeader({ t, status }: { t: TFunction; status: Status | null 
 }
 
 /** 状态信息列：逐行展示 host version / port / 兼容性等。 */
-export function StatusColumn({ t, status, compat }: { t: TFunction; status: Status | null; compat: Compat | null }) {
+export function StatusColumn({ t, status, compat }: { t: TFunction; status: OpenClawStatus | null; compat: CompatResult | null }) {
   const dash = t("settings.openclaw.unknown")
   const running = status?.running ? t("settings.openclaw.statusRunning") : t("settings.openclaw.statusStopped")
   const bridgeValue = status?.bridgeInstalled ? (status.installedBridgeVersion ?? t("settings.openclaw.bridgeInstalled")) : t("settings.openclaw.bridgeMissing")

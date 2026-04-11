@@ -91,23 +91,30 @@ export interface GatewayEventFrame {
   seq?: number
 }
 
-/** renderer ↔ main 的 openclaw feature 桥接接口。 */
+/** renderer ↔ main 的 openclaw feature 桥接接口。5 个能力域对齐 channels.ts。 */
 export interface OpenClawBridge {
-  detect: () => Promise<OpenClawStatus>
-  check: () => Promise<CompatResult>
-  install: () => Promise<OpenClawStatus>
-  uninstall: () => Promise<OpenClawStatus>
-  restart: () => Promise<{ ok: boolean; error?: string }>
-  invoke: (args: InvokeArgs) => Promise<InvokeResult>
+  /** 生命周期：探测安装 / 兼容性检查 / 重启 gateway。 */
+  lifecycle: {
+    detect: () => Promise<OpenClawStatus>
+    check: () => Promise<CompatResult>
+    restart: () => Promise<{ ok: boolean; error?: string }>
+    on: {
+      /** OpenClaw 安装 / 运行状态变化。 */
+      status: (listener: (status: OpenClawStatus) => void) => () => void
+    }
+  }
 
-  /** 事件订阅。 */
-  on: {
-    /** 来自插件的桥接事件。 */
-    event: (listener: (event: PluginEvent) => void) => () => void
-    /** OpenClaw 状态变化。 */
-    status: (listener: (status: OpenClawStatus) => void) => () => void
-    /** 运行时监控事件（llm_input/output、tool_call 等）。 */
-    monitor: (listener: (event: MonitorEvent) => void) => () => void
+  /** 插件：kaiwu bridge plugin 的同步 / 卸载 / 远程调用。 */
+  plugin: {
+    install: () => Promise<OpenClawStatus>
+    uninstall: () => Promise<OpenClawStatus>
+    invoke: (args: InvokeArgs) => Promise<InvokeResult>
+    on: {
+      /** 来自插件的桥接事件。 */
+      event: (listener: (event: PluginEvent) => void) => () => void
+      /** 运行时监控事件（llm_input/output、tool_call 等）。 */
+      monitor: (listener: (event: MonitorEvent) => void) => () => void
+    }
   }
 
   /** gateway 连接管理。 */
