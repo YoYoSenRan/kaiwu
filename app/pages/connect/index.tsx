@@ -7,25 +7,43 @@ import { Button } from "@/components/ui/button"
 import { useGateway } from "@/hooks/use-gateway"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { PluginCard } from "./components/plugin-card"
 
 type AuthMode = "token" | "password"
 
-/** 连接管理页：左侧展示当前连接状态，右侧手动连接表单。 */
+/** 连接管理页：
+ *  - 上半部分：网关连接（状态 + 手动连接）
+ *  - 下半部分：本地插件桥接（OpenClaw 插件诊断）
+ */
 export default function Connect() {
   const { t } = useTranslation()
   const gw = useGateway()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{t("connect.title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("connect.description")}</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* 网关连接 */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-medium">{t("connect.gateway.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("connect.gateway.description")}</p>
+        </div>
         <StatusCard status={gw.status} mode={gw.mode} url={gw.url} error={gw.error} onDisconnect={gw.disconnect} onScan={() => gw.connect()} />
         <ManualConnectCard onConnect={gw.connect} disabled={gw.status === "connecting" || gw.status === "detecting"} />
-      </div>
+      </section>
+
+      {/* 本地插件 */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-medium">{t("connect.plugin.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("connect.plugin.description")}</p>
+        </div>
+        <PluginCard />
+      </section>
     </div>
   )
 }
@@ -39,7 +57,7 @@ interface StatusCardProps {
   onScan: () => Promise<void>
 }
 
-/** 当前连接状态卡片。 */
+/** 当前网关连接状态。 */
 function StatusCard({ status, mode, url, error, onDisconnect, onScan }: StatusCardProps) {
   const { t } = useTranslation()
   const busy = status === "connecting" || status === "detecting"
@@ -51,33 +69,43 @@ function StatusCard({ status, mode, url, error, onDisconnect, onScan }: StatusCa
         <CardDescription>{t("connect.section.statusDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Badge variant={statusVariant(status)}>{t(`connect.status.${status}`)}</Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge variant={statusVariant(status)} className="text-sm px-2.5 py-0.5">
+            {t(`connect.status.${status}`)}
+          </Badge>
+          {url && <span className="font-mono text-sm text-muted-foreground break-all">{url}</span>}
         </div>
 
-        {url && (
-          <div className="grid grid-cols-[80px_1fr] items-baseline gap-2 text-sm">
-            <span className="text-muted-foreground">{t("connect.label.url")}</span>
-            <span className="font-mono text-xs break-all">{url}</span>
-          </div>
-        )}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm">
+          {mode && (
+            <div className="rounded-md bg-muted px-3 py-2">
+              <div className="text-xs text-muted-foreground">{t("connect.label.mode")}</div>
+              <div className="font-medium">{t(`connect.mode.${mode}`)}</div>
+            </div>
+          )}
+          {url && (
+            <div className="rounded-md bg-muted px-3 py-2">
+              <div className="text-xs text-muted-foreground">{t("connect.label.url")}</div>
+              <div className="font-medium font-mono text-xs truncate" title={url}>
+                {url}
+              </div>
+            </div>
+          )}
+          {error && (
+            <div className="rounded-md bg-destructive/10 px-3 py-2 sm:col-span-2 lg:col-span-1">
+              <div className="text-xs text-destructive/80">{t("connect.label.error")}</div>
+              <div className="font-medium text-destructive text-xs">{error}</div>
+            </div>
+          )}
+        </div>
 
-        {mode && (
-          <div className="grid grid-cols-[80px_1fr] items-baseline gap-2 text-sm">
-            <span className="text-muted-foreground">{t("connect.label.mode")}</span>
-            <span className="font-mono text-xs">{t(`connect.mode.${mode}`)}</span>
-          </div>
-        )}
-
-        {error && <p className="text-xs text-destructive font-mono">{error}</p>}
-
-        <div className="pt-2">
+        <div className="pt-1">
           {status === "connected" ? (
-            <Button variant="outline" size="sm" onClick={onDisconnect}>
+            <Button variant="outline" onClick={onDisconnect}>
               {t("connect.action.disconnect")}
             </Button>
           ) : (
-            <Button size="sm" onClick={onScan} disabled={busy}>
+            <Button onClick={onScan} disabled={busy}>
               {t("connect.action.scan")}
             </Button>
           )}
@@ -92,7 +120,7 @@ interface ManualFormProps {
   disabled: boolean
 }
 
-/** 手动连接表单卡片。 */
+/** 手动连接网关表单。 */
 function ManualConnectCard({ onConnect, disabled }: ManualFormProps) {
   const { t } = useTranslation()
   const [url, setUrl] = useState("")
@@ -134,7 +162,7 @@ function ManualConnectCard({ onConnect, disabled }: ManualFormProps) {
           />
         </div>
 
-        <Button size="sm" onClick={submit} disabled={disabled || !url.trim()}>
+        <Button onClick={submit} disabled={disabled || !url.trim()}>
           {t("connect.action.connect")}
         </Button>
       </CardContent>

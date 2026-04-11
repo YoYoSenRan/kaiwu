@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { OpenClawCard } from "./components/openclaw-card"
 import { Separator } from "@/components/ui/separator"
 import { useSettingsStore } from "@/stores/settings"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,7 +25,6 @@ export default function Settings() {
       </div>
 
       <AppearanceCard />
-      <OpenClawCard />
       <AboutCard />
     </div>
   )

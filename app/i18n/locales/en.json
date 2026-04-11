@@ -91,32 +91,19 @@
     "label": {
       "url": "URL",
       "mode": "Mode",
-      "auth": "Authentication"
+      "auth": "Authentication",
+      "error": "Error"
     },
-    "action": {
-      "connect": "Connect",
-      "disconnect": "Disconnect",
-      "scan": "Scan Local"
-    }
-  },
-  "settings": {
-    "title": "Settings",
-    "description": "Preferences, appearance, and language",
-    "appearanceTitle": "Appearance",
-    "appearanceDescription": "Theme, language and layout preferences",
-    "themeLabel": "Theme",
-    "langLabel": "Language",
-    "sidebarLabel": "Collapse sidebar",
-    "sidebarHint": "Collapse the left navigation by default (toggle anytime with Cmd/Ctrl+B)",
-    "themeLight": "Light",
-    "themeDark": "Dark",
-    "themeSystem": "System",
-    "aboutTitle": "About",
-    "versionLabel": "Version",
-    "buildLabel": "Build",
-    "deviceId": "Device ID",
-    "openclaw": {
-      "title": "OpenClaw Bridge",
+    "gateway": {
+      "title": "Gateway Connection",
+      "description": "Manage the WebSocket connection to OpenClaw Gateway"
+    },
+    "plugin": {
+      "title": "Local Plugin",
+      "description": "Manage the local kaiwu plugin for OpenClaw"
+    },
+    "plugin": {
+      "title": "Local Plugin",
       "description": "Monitor and manage the sync state between local OpenClaw gateway and the kaiwu plugin",
       "statusInstalled": "Installed",
       "statusMissing": "Not found",
@@ -144,6 +131,32 @@
       "uninstallOk": "Plugin uninstalled",
       "restartOk": "Gateway restarted",
       "restartFail": "Restart failed: {{message}}"
+    },
+    "action": {
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "scan": "Scan Local"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Preferences, appearance, and language",
+    "appearanceTitle": "Appearance",
+    "appearanceDescription": "Theme, language and layout preferences",
+    "themeLabel": "Theme",
+    "langLabel": "Language",
+    "sidebarLabel": "Collapse sidebar",
+    "sidebarHint": "Collapse the left navigation by default (toggle anytime with Cmd/Ctrl+B)",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "aboutTitle": "About",
+    "versionLabel": "Version",
+    "buildLabel": "Build",
+    "deviceId": "Device ID",
+    "openclaw": {
+      "title": "OpenClaw Bridge",
+      "description": "Monitor and manage the sync state between local OpenClaw gateway and the kaiwu plugin"
     }
   }
 }

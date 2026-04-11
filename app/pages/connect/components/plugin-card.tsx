@@ -14,8 +14,8 @@ const EVENT_LOG_MAX = 20
 
 type BusyAction = null | "detect" | "sync" | "uninstall" | "restart"
 
-/** 设置页面的 OpenClaw 桥接状态卡片。负责数据拉取与动作分发 + 状态/动作/事件日志展示。 */
-export function OpenClawCard() {
+/** 连接页面的 OpenClaw 桥接卡片：状态监控、动作控制与事件日志。 */
+export function PluginCard() {
   const { t } = useTranslation()
   const [status, setStatus] = useState<OpenClawStatus | null>(null)
   const [compat, setCompat] = useState<CompatResult | null>(null)
@@ -59,9 +59,9 @@ export function OpenClawCard() {
         try {
           const next = await window.electron.openclaw.plugin.install()
           if (mounted.current) setStatus(next)
-          toast.success(t("settings.openclaw.syncOk"))
+          toast.success(t("connect.plugin.syncOk"))
         } catch (err) {
-          toast.error(t("settings.openclaw.syncFail", { message: (err as Error).message }))
+          toast.error(t("connect.plugin.syncFail", { message: (err as Error).message }))
         }
       }),
     [t, wrap],
@@ -72,7 +72,7 @@ export function OpenClawCard() {
       wrap("uninstall", async () => {
         const next = await window.electron.openclaw.plugin.uninstall()
         if (mounted.current) setStatus(next)
-        toast.success(t("settings.openclaw.uninstallOk"))
+        toast.success(t("connect.plugin.uninstallOk"))
       }),
     [t, wrap],
   )
@@ -81,8 +81,8 @@ export function OpenClawCard() {
     () =>
       wrap("restart", async () => {
         const r = await window.electron.openclaw.lifecycle.restart()
-        if (r.ok) toast.success(t("settings.openclaw.restartOk"))
-        else toast.error(t("settings.openclaw.restartFail", { message: r.error ?? "unknown" }))
+        if (r.ok) toast.success(t("connect.plugin.restartOk"))
+        else toast.error(t("connect.plugin.restartFail", { message: r.error ?? "unknown" }))
       }),
     [t, wrap],
   )
@@ -93,14 +93,14 @@ export function OpenClawCard() {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between">
         <div>
-          <CardTitle>{t("settings.openclaw.title")}</CardTitle>
-          <CardDescription>{t("settings.openclaw.description")}</CardDescription>
+          <CardTitle>{t("connect.plugin.title")}</CardTitle>
+          <CardDescription>{t("connect.plugin.description")}</CardDescription>
         </div>
-        <Badge variant={live ? "default" : "outline"}>{live ? t("settings.openclaw.statusRunning") : t("settings.openclaw.statusStopped")}</Badge>
+        <Badge variant={live ? "default" : "outline"}>{live ? t("connect.plugin.statusRunning") : t("connect.plugin.statusStopped")}</Badge>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <StatusRows status={status} compat={compat} />
+        <StatusGrid status={status} compat={compat} />
         <Separator />
         <ActionsRow
           busy={busy}
@@ -117,37 +117,38 @@ export function OpenClawCard() {
   )
 }
 
-interface StatusRowsProps {
+interface StatusGridProps {
   status: OpenClawStatus | null
   compat: CompatResult | null
 }
 
-/** 状态信息：逐行展示 host version / port / 兼容性 / 插件安装状态。 */
-function StatusRows({ status, compat }: StatusRowsProps) {
+/** 紧凑三列网格展示桥接状态。 */
+function StatusGrid({ status, compat }: StatusGridProps) {
   const { t } = useTranslation()
-  const dash = t("settings.openclaw.unknown")
-  const bridgeValue = status?.bridgeInstalled ? (status.installedBridgeVersion ?? t("settings.openclaw.bridgeInstalled")) : t("settings.openclaw.bridgeMissing")
-  const compatValue = compat ? (compat.compatible ? t("settings.openclaw.compatOk") : (compat.reason ?? t("settings.openclaw.compatFail"))) : dash
-  const rows: [string, string][] = [
-    [t("settings.openclaw.hostVersion"), status?.version ?? dash],
-    [t("settings.openclaw.gatewayPort"), status?.gatewayPort ? `:${status.gatewayPort}` : dash],
-    [t("settings.openclaw.bridgeStatus"), bridgeValue],
-    [t("settings.openclaw.compat"), compatValue],
-    [t("settings.openclaw.detectedBy"), status?.detectedBy ?? dash],
-    [t("settings.openclaw.configDir"), status?.configDir ?? dash],
+  const dash = t("connect.plugin.unknown")
+  const bridgeValue = status?.bridgeInstalled ? (status.installedBridgeVersion ?? t("connect.plugin.bridgeInstalled")) : t("connect.plugin.bridgeMissing")
+  const compatValue = compat ? (compat.compatible ? t("connect.plugin.compatOk") : (compat.reason ?? t("connect.plugin.compatFail"))) : dash
+
+  const items = [
+    { label: t("connect.plugin.hostVersion"), value: status?.version ?? dash },
+    { label: t("connect.plugin.gatewayPort"), value: status?.gatewayPort ? `:${status.gatewayPort}` : dash },
+    { label: t("connect.plugin.bridgeStatus"), value: bridgeValue },
+    { label: t("connect.plugin.compat"), value: compatValue },
+    { label: t("connect.plugin.detectedBy"), value: status?.detectedBy ?? dash },
+    { label: t("connect.plugin.configDir"), value: status?.configDir ?? dash },
   ]
 
   return (
-    <dl className="grid grid-cols-[140px_1fr] gap-y-2 text-sm">
-      {rows.map(([label, value]) => (
-        <div key={label} className="contents">
-          <dt className="text-muted-foreground">{label}</dt>
-          <dd className="font-mono text-xs truncate" title={value}>
+    <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm lg:grid-cols-3">
+      {items.map(({ label, value }) => (
+        <div key={label} className="min-w-0">
+          <div className="text-muted-foreground text-xs">{label}</div>
+          <div className="truncate font-mono text-xs" title={value}>
             {value}
-          </dd>
+          </div>
         </div>
       ))}
-    </dl>
+    </div>
   )
 }
 
@@ -167,19 +168,19 @@ function ActionsRow({ busy, onDetect, onSync, onUninstall, onRestart, canUninsta
     <div className="flex flex-wrap gap-2">
       <Button variant="outline" size="sm" onClick={onDetect} disabled={busy === "detect"}>
         <RefreshCw className={`mr-1.5 size-3.5 ${busy === "detect" ? "animate-spin" : ""}`} />
-        {t("settings.openclaw.detect")}
+        {t("connect.plugin.detect")}
       </Button>
       <Button variant="outline" size="sm" onClick={onSync} disabled={busy === "sync"}>
         <Download className={`mr-1.5 size-3.5 ${busy === "sync" ? "animate-spin" : ""}`} />
-        {t("settings.openclaw.sync")}
+        {t("connect.plugin.sync")}
       </Button>
       <Button variant="outline" size="sm" onClick={onUninstall} disabled={!canUninstall || busy === "uninstall"}>
         <Trash2 className={`mr-1.5 size-3.5 ${busy === "uninstall" ? "animate-spin" : ""}`} />
-        {t("settings.openclaw.uninstall")}
+        {t("connect.plugin.uninstall")}
       </Button>
       <Button variant="outline" size="sm" onClick={onRestart} disabled={busy === "restart"}>
         <Zap className={`mr-1.5 size-3.5 ${busy === "restart" ? "animate-spin" : ""}`} />
-        {t("settings.openclaw.restart")}
+        {t("connect.plugin.restart")}
       </Button>
     </div>
   )
@@ -196,10 +197,10 @@ function EventsList({ events }: { events: PluginEvent[] }) {
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium">{t("settings.openclaw.events")}</p>
-      <ScrollArea className="h-40 rounded-md border">
+      <p className="text-sm font-medium">{t("connect.plugin.events")}</p>
+      <ScrollArea className="h-32 rounded-md border">
         {filtered.length === 0 ? (
-          <p className="p-3 text-xs text-muted-foreground">{t("settings.openclaw.noEvents")}</p>
+          <p className="p-3 text-xs text-muted-foreground">{t("connect.plugin.noEvents")}</p>
         ) : (
           <div className="divide-y">
             {filtered.map((ev, i) => (

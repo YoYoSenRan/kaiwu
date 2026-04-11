@@ -91,32 +91,19 @@
     "label": {
       "url": "地址",
       "mode": "模式",
-      "auth": "认证方式"
+      "auth": "认证方式",
+      "error": "错误信息"
     },
-    "action": {
-      "connect": "连接",
-      "disconnect": "断开",
-      "scan": "扫描本机"
-    }
-  },
-  "settings": {
-    "title": "设置",
-    "description": "偏好、外观、语言",
-    "appearanceTitle": "外观",
-    "appearanceDescription": "主题、语言和布局偏好",
-    "themeLabel": "主题",
-    "langLabel": "语言",
-    "sidebarLabel": "折叠侧边栏",
-    "sidebarHint": "默认折叠左侧导航（可随时按 Cmd/Ctrl+B 切换）",
-    "themeLight": "浅色",
-    "themeDark": "深色",
-    "themeSystem": "跟随系统",
-    "aboutTitle": "关于",
-    "versionLabel": "版本",
-    "buildLabel": "构建",
-    "deviceId": "设备 ID",
-    "openclaw": {
-      "title": "OpenClaw 桥接",
+    "gateway": {
+      "title": "网关连接",
+      "description": "管理与 OpenClaw Gateway 的 WebSocket 连接"
+    },
+    "plugin": {
+      "title": "本地插件",
+      "description": "管理本机 OpenClaw 的 kaiwu 插件"
+    },
+    "plugin": {
+      "title": "本地插件",
       "description": "监控并管理本机 OpenClaw gateway 与 kaiwu 插件的同步状态",
       "statusInstalled": "已安装",
       "statusMissing": "未检测到",
@@ -144,6 +131,32 @@
       "uninstallOk": "插件已卸载",
       "restartOk": "网关已重启",
       "restartFail": "重启失败：{{message}}"
+    },
+    "action": {
+      "connect": "连接",
+      "disconnect": "断开",
+      "scan": "扫描本机"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "description": "偏好、外观、语言",
+    "appearanceTitle": "外观",
+    "appearanceDescription": "主题、语言和布局偏好",
+    "themeLabel": "主题",
+    "langLabel": "语言",
+    "sidebarLabel": "折叠侧边栏",
+    "sidebarHint": "默认折叠左侧导航（可随时按 Cmd/Ctrl+B 切换）",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "themeSystem": "跟随系统",
+    "aboutTitle": "关于",
+    "versionLabel": "版本",
+    "buildLabel": "构建",
+    "deviceId": "设备 ID",
+    "openclaw": {
+      "title": "OpenClaw 桥接",
+      "description": "监控并管理本机 OpenClaw gateway 与 kaiwu 插件的同步状态"
     }
   }
 }
