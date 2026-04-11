@@ -110,7 +110,15 @@
       "modelLabel": "Model",
       "modelDefault": "Follow main config",
       "save": "Save",
-      "saving": "Saving"
+      "saving": "Saving",
+      "idle": "Idle",
+      "startChat": "Chat",
+      "metaTitle": "Info",
+      "actionsTitle": "Actions",
+      "editTitle": "Edit",
+      "syncedLabel": "Last synced",
+      "createdLabel": "Created",
+      "never": "Never"
     },
     "workspace": {
       "empty": "No files",

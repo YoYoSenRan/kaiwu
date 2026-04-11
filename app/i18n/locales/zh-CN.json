@@ -110,7 +110,15 @@
       "modelLabel": "模型",
       "modelDefault": "跟随主配置",
       "save": "保存",
-      "saving": "保存中"
+      "saving": "保存中",
+      "idle": "空闲",
+      "startChat": "开始对话",
+      "metaTitle": "基本信息",
+      "actionsTitle": "快捷操作",
+      "editTitle": "编辑",
+      "syncedLabel": "上次同步",
+      "createdLabel": "创建时间",
+      "never": "从未"
     },
     "workspace": {
       "empty": "没有文件",
