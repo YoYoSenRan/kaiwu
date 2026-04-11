@@ -7,6 +7,8 @@
     "edit": "编辑",
     "loading": "加载中...",
     "noData": "暂无数据",
+    "detail": "详情",
+    "unknownPage": "未知页面",
     "toggleThemeHint": "按 D 切换主题"
   },
   "footer": {

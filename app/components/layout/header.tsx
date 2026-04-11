@@ -1,4 +1,4 @@
-import { NAV_ITEMS } from "./nav-items"
+import { NAV_ITEMS } from "@/config/nav"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Monitor, Moon, Sun } from "lucide-react"
@@ -6,22 +6,71 @@ import { useSettingsStore } from "@/stores/settings"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
+
+interface Crumb {
+  label: string
+  path?: string
+}
 
 /**
- * 全局头部：侧栏折叠按钮 + 分隔线 + 当前页标题 + 右侧主题/语言切换。
- * 路由匹配 NAV_ITEMS 得到页面标题，未命中的路由降级显示 "Reference"。
+ * 根据当前路径生成面包屑层级。
+ * 目前只处理 /agent/:id 这种两层结构，其他路由直接映射 NAV_ITEMS。
  */
-export function Header() {
+function useBreadcrumbs(): Crumb[] {
   const { t } = useTranslation()
   const { pathname } = useLocation()
+
+  if (pathname.startsWith("/agent/")) {
+    return [
+      { label: t("nav.agent"), path: "/agent" },
+      { label: t("common.detail") },
+    ]
+  }
+
   const item = NAV_ITEMS.find((n) => n.path === pathname)
-  const title = item ? t(`${item.key}.title`) : "Reference"
+  if (item) {
+    return [{ label: t(`${item.key}.title`) }]
+  }
+
+  return [{ label: t("common.unknownPage") }]
+}
+
+/**
+ * 全局头部：侧栏折叠按钮 + 分隔线 + 面包屑导航 + 右侧主题/语言切换。
+ * 面包屑支持多级可点击返回，当前页仅展示不可点击。
+ */
+export function Header() {
+  const navigate = useNavigate()
+  const crumbs = useBreadcrumbs()
 
   return (
     <header className="border-border flex h-11 shrink-0 items-center gap-2 border-b px-2">
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-4" />
-      <h1 className="text-sm font-medium">{title}</h1>
+      <Breadcrumb>
+        <BreadcrumbList>
+          {crumbs.map((crumb, idx) => {
+            const isLast = idx === crumbs.length - 1
+            return (
+              <Fragment key={idx}>
+                <BreadcrumbItem>
+                  {isLast ? (
+                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <button type="button" onClick={() => crumb.path && navigate(crumb.path)} className="cursor-pointer">
+                        {crumb.label}
+                      </button>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+                {!isLast && <BreadcrumbSeparator />}
+              </Fragment>
+            )
+          })}
+        </BreadcrumbList>
+      </Breadcrumb>
       <div className="ml-auto flex items-center gap-2">
         <ThemeToggle />
         <LanguageToggle />

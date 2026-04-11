@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { OverviewTab } from "./components/overview-tab"
-import { ArrowLeft, Trash2 } from "lucide-react"
+import { Trash2 } from "lucide-react"
 import { SessionsTab } from "./components/sessions-tab"
 import { WorkspaceTab } from "./components/workspace-tab"
 import { useAgentDetail } from "./hooks/use-agent-detail"
@@ -33,13 +33,7 @@ export default function AgentDetail() {
 
   if (error || !data) {
     return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate("/agent")}>
-          <ArrowLeft className="size-4" />
-          {t("agent.detail.back")}
-        </Button>
-        <div className="bg-destructive/10 text-destructive rounded-md px-4 py-3 text-sm">{error ?? t("agent.detail.notFound")}</div>
-      </div>
+      <div className="bg-destructive/10 text-destructive rounded-md px-4 py-3 text-sm">{error ?? t("agent.detail.notFound")}</div>
     )
   }
 
@@ -48,18 +42,12 @@ export default function AgentDetail() {
   return (
     <div className="flex h-full flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => navigate("/agent")}>
-            <ArrowLeft className="size-4" />
-            {t("agent.detail.back")}
-          </Button>
-          <div className="min-w-0 flex-1">
-            <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-              <span className="text-xl">{row.emoji || "🤖"}</span>
-              <span className="truncate">{row.name}</span>
-            </h1>
-            <p className="text-muted-foreground mt-1 font-mono text-xs">{row.agent}</p>
-          </div>
+        <div className="min-w-0 flex-1">
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            <span className="text-xl">{row.emoji || "🤖"}</span>
+            <span className="truncate">{row.name}</span>
+          </h1>
+          <p className="text-muted-foreground mt-1 font-mono text-xs">{row.agent}</p>
         </div>
         <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive shrink-0 gap-2" onClick={() => setConfirmDelete(true)}>
           <Trash2 className="size-4" />

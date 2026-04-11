@@ -7,6 +7,8 @@
     "edit": "Edit",
     "loading": "Loading...",
     "noData": "No data",
+    "detail": "Detail",
+    "unknownPage": "Unknown page",
     "toggleThemeHint": "Press D to toggle theme"
   },
   "footer": {
