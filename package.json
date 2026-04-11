@@ -23,9 +23,11 @@
     "format": "prettier --write .",
     "plugin:dev": "node scripts/plugin-dev.mjs",
     "plugin:sync": "node scripts/plugin-dev.mjs --once",
-    "plugin:check": "node scripts/plugin-dev.mjs --check"
+    "plugin:check": "node scripts/plugin-dev.mjs --check",
+    "postinstall": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {
+    "better-sqlite3": "^12.8.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron-log": "^5.4.3",
@@ -34,10 +36,12 @@
     "i18next": "^26.0.3",
     "lucide-react": "^1.7.0",
     "motion": "^12.38.0",
+    "nanoid": "^5.1.7",
     "radix-ui": "^1.4.3",
     "react-force-graph-2d": "^1.29.1",
     "react-force-graph-3d": "^1.29.1",
     "react-i18next": "^17.0.2",
+    "react-markdown": "^10.1.0",
     "react-router": "^7.14.0",
     "semver": "^7.6.3",
     "sonner": "^2.0.7",
@@ -48,9 +52,11 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.3",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.59.1",
     "@tailwindcss/vite": "^4.2.2",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/semver": "^7.5.8",
