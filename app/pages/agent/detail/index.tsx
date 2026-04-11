@@ -57,13 +57,13 @@ export default function AgentDetail() {
                 {t("agent.card.busy")}
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-muted-foreground/20 bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-muted-foreground/60" />
+              <span className="border-muted-foreground/20 bg-muted text-muted-foreground inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium">
+                <span className="bg-muted-foreground/60 size-1.5 rounded-full" />
                 {t("agent.overview.idle")}
               </span>
             )}
             {row.sync_state === "orphan-local" && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs text-destructive">
+              <span className="border-destructive/30 bg-destructive/10 text-destructive inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs">
                 {t("agent.card.orphan")}
               </span>
             )}

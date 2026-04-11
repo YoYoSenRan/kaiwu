@@ -74,17 +74,13 @@ export function OverviewTab({ row, onChanged }: Props) {
 
   return (
     <div className="space-y-4 text-sm">
-      {error && (
-        <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-xs">
-          {t(`agent.error.${errorCodeToKey(error)}`, { message: error })}
-        </div>
-      )}
+      {error && <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-xs">{t(`agent.error.${errorCodeToKey(error)}`, { message: error })}</div>}
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* 左栏 — 信息卡片 + 快捷操作 */}
         <div className="space-y-4">
           <div className="border-border rounded-lg border p-4">
-            <h4 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("agent.overview.metaTitle")}</h4>
+            <h4 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">{t("agent.overview.metaTitle")}</h4>
             <div className="space-y-2">
               <Meta label={t("agent.overview.idLabel")} value={row.agent} mono>
                 <Button variant="ghost" size="icon" className="size-5" onClick={copyId}>
@@ -99,7 +95,7 @@ export function OverviewTab({ row, onChanged }: Props) {
           </div>
 
           <div className="border-border flex flex-col gap-2 rounded-lg border p-4">
-            <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("agent.overview.actionsTitle")}</h4>
+            <h4 className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">{t("agent.overview.actionsTitle")}</h4>
             <Button variant="outline" size="sm" className="w-full justify-start gap-2" onClick={startChat}>
               <MessageSquare className="size-4" />
               {t("agent.overview.startChat")}
@@ -109,7 +105,7 @@ export function OverviewTab({ row, onChanged }: Props) {
 
         {/* 右栏 — 编辑表单 */}
         <div className="border-border rounded-lg border p-4">
-          <h4 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("agent.overview.editTitle")}</h4>
+          <h4 className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">{t("agent.overview.editTitle")}</h4>
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label className="text-xs">{t("agent.form.name")}</Label>
@@ -152,19 +148,7 @@ export function OverviewTab({ row, onChanged }: Props) {
   )
 }
 
-function Meta({
-  label,
-  value,
-  mono,
-  breakAll,
-  children,
-}: {
-  label: string
-  value: string
-  mono?: boolean
-  breakAll?: boolean
-  children?: React.ReactNode
-}) {
+function Meta({ label, value, mono, breakAll, children }: { label: string; value: string; mono?: boolean; breakAll?: boolean; children?: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-2">
       <span className="text-muted-foreground shrink-0 text-xs">{label}</span>

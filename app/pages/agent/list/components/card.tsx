@@ -23,10 +23,7 @@ export function AgentCard({ row, onClick }: Props) {
 
   return (
     <motion.div whileHover={{ y: -2 }} whileTap={{ y: 0 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-      <Card
-        className="hover:shadow-md hover:border-primary/30 cursor-pointer transition-all duration-200"
-        onClick={() => onClick(row.id)}
-      >
+      <Card className="hover:border-primary/30 cursor-pointer transition-all duration-200 hover:shadow-md" onClick={() => onClick(row.id)}>
         <CardContent className="flex items-start gap-3 p-4">
           <div className="relative shrink-0">
             <Avatar className="size-10">
@@ -34,19 +31,19 @@ export function AgentCard({ row, onClick }: Props) {
               <AvatarFallback className="bg-muted text-base">{row.emoji || <Bot className="size-5 opacity-60" />}</AvatarFallback>
             </Avatar>
             {busy && (
-              <span className="absolute -right-0.5 -bottom-0.5 flex size-3 items-center justify-center rounded-full border-2 border-background bg-emerald-500">
+              <span className="border-background absolute -right-0.5 -bottom-0.5 flex size-3 items-center justify-center rounded-full border-2 bg-emerald-500">
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60" />
               </span>
             )}
           </div>
 
           <div className="min-w-0 flex-1 space-y-0.5">
-            <div className="truncate text-base font-semibold leading-tight">{row.name}</div>
+            <div className="truncate text-base leading-tight font-semibold">{row.name}</div>
             <div className="text-muted-foreground/60 truncate font-mono text-[11px]">{row.agent}</div>
           </div>
         </CardContent>
 
-        <div className="border-t border-border/50 flex h-9 items-center px-4">
+        <div className="border-border/50 flex h-9 items-center border-t px-4">
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge variant="outline" className="text-[10px] font-normal">
               {row.model ?? t("agent.card.noModel")}

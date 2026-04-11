@@ -14,9 +14,7 @@ const STANDARD_ORDER = ["SOUL.md", "IDENTITY.md", "USER.md", "HEARTBEAT.md", "TO
  */
 export async function listWorkspaceFiles(workspace: string): Promise<string[]> {
   const entries = await fs.readdir(workspace, { withFileTypes: true })
-  const files = entries
-    .filter((e) => e.isFile() && !EXCLUDED_PREFIXES.some((p) => e.name === p || e.name.startsWith(`${p}.`)))
-    .map((e) => e.name)
+  const files = entries.filter((e) => e.isFile() && !EXCLUDED_PREFIXES.some((p) => e.name === p || e.name.startsWith(`${p}.`))).map((e) => e.name)
 
   const standard = STANDARD_ORDER.filter((n) => files.includes(n))
   const rest = files.filter((n) => !STANDARD_ORDER.includes(n)).sort()
