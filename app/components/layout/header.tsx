@@ -18,7 +18,7 @@ export function Header() {
   const title = item ? t(`${item.key}.title`) : "Reference"
 
   return (
-    <header className="border-border flex h-14 shrink-0 items-center gap-2 border-b px-2">
+    <header className="border-border flex h-11 shrink-0 items-center gap-2 border-b px-2">
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-4" />
       <h1 className="text-sm font-medium">{title}</h1>
