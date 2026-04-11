@@ -7,6 +7,8 @@
     "edit": "编辑",
     "loading": "加载中...",
     "noData": "暂无数据",
+    "detail": "详情",
+    "unknownPage": "未知页面",
     "toggleThemeHint": "按 D 切换主题"
   },
   "footer": {
@@ -57,7 +59,7 @@
   "agent": {
     "title": "智能体",
     "description": "管理与编排你的智能体",
-    "createAgent": "新建智能体",
+    "createAgent": "新建",
     "emptyTitle": "还没有智能体",
     "emptyDescription": "创建第一个智能体开始编排任务",
     "card": {
@@ -108,7 +110,15 @@
       "modelLabel": "模型",
       "modelDefault": "跟随主配置",
       "save": "保存",
-      "saving": "保存中"
+      "saving": "保存中",
+      "idle": "空闲",
+      "startChat": "开始对话",
+      "metaTitle": "基本信息",
+      "actionsTitle": "快捷操作",
+      "editTitle": "编辑",
+      "syncedLabel": "上次同步",
+      "createdLabel": "创建时间",
+      "never": "从未"
     },
     "workspace": {
       "empty": "没有文件",

@@ -1,12 +1,13 @@
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { OverviewTab } from "./components/overview-tab"
-import { ArrowLeft, Trash2 } from "lucide-react"
+import { MessageSquare, Trash2 } from "lucide-react"
 import { SessionsTab } from "./components/sessions-tab"
 import { WorkspaceTab } from "./components/workspace-tab"
 import { useAgentDetail } from "./hooks/use-agent-detail"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DeleteAgentDialog } from "../components/delete-dialog"
+import { useAgentsStore } from "@/stores/agents"
 
 /**
  * 智能体详情页（路由 /agent/:id）。
@@ -32,39 +33,58 @@ export default function AgentDetail() {
   }
 
   if (error || !data) {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate("/agent")}>
-          <ArrowLeft className="size-4" />
-          {t("agent.detail.back")}
-        </Button>
-        <div className="bg-destructive/10 text-destructive rounded-md px-4 py-3 text-sm">{error ?? t("agent.detail.notFound")}</div>
-      </div>
-    )
+    return <div className="bg-destructive/10 text-destructive rounded-md px-4 py-3 text-sm">{error ?? t("agent.detail.notFound")}</div>
   }
 
   const row = data.row
+  const live = useAgentsStore.getState().live[row.agent]
+  const busy = live?.busy ?? false
+
+  const startChat = () => navigate(`/chat?agentId=${row.agent}`)
 
   return (
     <div className="flex h-full flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => navigate("/agent")}>
-            <ArrowLeft className="size-4" />
-            {t("agent.detail.back")}
-          </Button>
-          <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
               <span className="text-xl">{row.emoji || "🤖"}</span>
               <span className="truncate">{row.name}</span>
             </h1>
-            <p className="text-muted-foreground mt-1 font-mono text-xs">{row.agent}</p>
+            {busy ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-500">
+                <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
+                {t("agent.card.busy")}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-muted-foreground/20 bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                <span className="size-1.5 rounded-full bg-muted-foreground/60" />
+                {t("agent.overview.idle")}
+              </span>
+            )}
+            {row.sync_state === "orphan-local" && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs text-destructive">
+                {t("agent.card.orphan")}
+              </span>
+            )}
+            {row.sync_state === "workspace-missing" && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-500">
+                {t("agent.card.workspaceMissing")}
+              </span>
+            )}
           </div>
+          <p className="text-muted-foreground mt-1 font-mono text-xs">{row.agent}</p>
         </div>
-        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive shrink-0 gap-2" onClick={() => setConfirmDelete(true)}>
-          <Trash2 className="size-4" />
-          {t("agent.delete.confirm")}
-        </Button>
+        <div className="flex shrink-0 gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={startChat}>
+            <MessageSquare className="size-4" />
+            {t("agent.overview.startChat")}
+          </Button>
+          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive shrink-0 gap-2" onClick={() => setConfirmDelete(true)}>
+            <Trash2 className="size-4" />
+            {t("agent.delete.confirm")}
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col">

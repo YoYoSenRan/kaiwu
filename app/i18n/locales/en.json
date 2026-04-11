@@ -7,6 +7,8 @@
     "edit": "Edit",
     "loading": "Loading...",
     "noData": "No data",
+    "detail": "Detail",
+    "unknownPage": "Unknown page",
     "toggleThemeHint": "Press D to toggle theme"
   },
   "footer": {
@@ -57,7 +59,7 @@
   "agent": {
     "title": "Agent",
     "description": "Manage and orchestrate your agents",
-    "createAgent": "Create Agent",
+    "createAgent": "Create",
     "emptyTitle": "No agents yet",
     "emptyDescription": "Create your first agent to start orchestrating tasks",
     "card": {
@@ -108,7 +110,15 @@
       "modelLabel": "Model",
       "modelDefault": "Follow main config",
       "save": "Save",
-      "saving": "Saving"
+      "saving": "Saving",
+      "idle": "Idle",
+      "startChat": "Chat",
+      "metaTitle": "Info",
+      "actionsTitle": "Actions",
+      "editTitle": "Edit",
+      "syncedLabel": "Last synced",
+      "createdLabel": "Created",
+      "never": "Never"
     },
     "workspace": {
       "empty": "No files",

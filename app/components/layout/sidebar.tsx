@@ -1,5 +1,5 @@
 import { Zap } from "lucide-react"
-import { NAV_ITEMS } from "./nav-items"
+import { NAV_ITEMS } from "@/config/nav"
 import { useTranslation } from "react-i18next"
 import { gatewayDotColor } from "@/lib/gateway"
 import { NavLink, useLocation, useNavigate } from "react-router"
