@@ -142,7 +142,8 @@ function createClient(url: string): GatewayClient {
 
   c.onConnectError((err) => {
     const msg = err.message.toLowerCase()
-    const isAuth = msg.includes("auth") || msg.includes("token") || msg.includes("password") || msg.includes("mismatch") || msg.includes("unauthorized") || msg.includes("forbidden")
+    const isAuth =
+      msg.includes("auth") || msg.includes("token") || msg.includes("password") || msg.includes("mismatch") || msg.includes("unauthorized") || msg.includes("forbidden")
 
     // 先释放资源再 setState，避免 stopGatewayConnection 的 setState(idle) 覆盖失败原因
     clearConnection()

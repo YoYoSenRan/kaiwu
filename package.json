@@ -26,7 +26,6 @@
     "plugin:check": "node scripts/plugin-dev.mjs --check"
   },
   "dependencies": {
-    "@fontsource-variable/roboto": "^5.2.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron-log": "^5.4.3",

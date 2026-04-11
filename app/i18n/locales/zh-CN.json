@@ -5,7 +5,9 @@
     "save": "保存",
     "delete": "删除",
     "edit": "编辑",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "noData": "暂无数据",
+    "toggleThemeHint": "按 D 切换主题"
   },
   "update": {
     "checkUpdate": "检查更新",
@@ -15,59 +17,6 @@
     "updateProgress": "更新进度:",
     "installNow": "立即安装",
     "later": "稍后"
-  },
-  "deck": {
-    "subtitle": "运营 · 工作区",
-    "hero": {
-      "label": "活跃线程",
-      "description": "今晨新增 3 条线程，2 条待审核。",
-      "inspect": "查看队列 →",
-      "new": "新增",
-      "pending": "待处理",
-      "archived": "已归档",
-      "today": "今日总计"
-    },
-    "meta": {
-      "region": "区域",
-      "build": "构建",
-      "branch": "分支",
-      "operator": "操作者",
-      "openConsole": "打开控制台"
-    },
-    "metrics": {
-      "title": "系统指标 · 近 24 小时",
-      "live": "实时",
-      "uptime": "运行时间",
-      "requests": "请求量",
-      "latency": "延迟",
-      "errors": "错误率",
-      "vs7d": "对比 7 日"
-    },
-    "activity": {
-      "title": "最近活动",
-      "viewAll": "查看全部",
-      "messages": {
-        "deploy": "构建 #1247 已发布至生产 · us-west-2a",
-        "migrate": "Schema 迁移完成，耗时 4.2 秒 · 影响 12 张表",
-        "alert": "CPU 在 14:18 峰值后已恢复正常 · 峰值 87%",
-        "index": "搜索索引已重建 · 14,892 篇文档 · 2.1 GB",
-        "auth": "us-west 区域 Token 轮换完成 · 432 个密钥",
-        "backup": "每日快照 · 184 GB · 冷存储"
-      }
-    },
-    "services": {
-      "title": "服务",
-      "summary": "5/6 正常"
-    },
-    "footer": {
-      "name": "Meridian 运营控制台",
-      "hint": "按 D 切换主题",
-      "build": "构建"
-    },
-    "controls": {
-      "theme": "主题",
-      "language": "语言"
-    }
   },
   "nav": {
     "dashboard": "仪表台",
@@ -79,109 +28,57 @@
     "settings": "设置"
   },
   "dashboard": {
-    "label": "DASHBOARD",
     "title": "仪表台",
-    "description": "运行状态与核心指标一览。",
-    "overview": "系统概览",
-    "inspect": "查看详情",
-    "metricsTitle": "核心指标",
-    "activityTitle": "最近活动",
-    "modulesTitle": "模块状态",
-    "viewAll": "查看全部",
+    "description": "运行状态与核心指标一览",
     "stats": {
       "agents": "智能体",
       "tasks": "任务",
       "chats": "对话",
-      "uptime": "可用性"
+      "knowledge": "知识库"
     },
-    "modules": {
-      "agent": "Agent",
-      "task": "Task",
-      "chat": "Chat",
-      "knowledge": "Knowledge",
-      "connect": "Connect"
-    }
+    "activityTitle": "最近活动",
+    "activityEmpty": "暂无活动记录"
   },
   "agent": {
-    "label": "AGENT",
     "title": "智能体",
-    "description": "管理与编排你的智能体。",
-    "overview": "智能体概览",
-    "inspect": "查看详情",
-    "metricsTitle": "运行指标",
-    "listTitle": "智能体列表",
-    "detailTitle": "智能体详情",
-    "createAgent": "新建",
-    "start": "启动",
-    "stop": "停止",
-    "latestError": "最近异常",
-    "errorCode": "错误代码",
-    "detailName": "名称",
-    "detailType": "类型",
-    "detailStatus": "状态",
-    "detailLoad": "负载",
-    "detailTasks": "已完成任务",
-    "stats": {
-      "total": "总计",
-      "running": "运行中",
-      "idle": "空闲",
-      "errors": "异常"
-    },
-    "types": {
-      "explorer": "探索型",
-      "executor": "执行型",
-      "planner": "规划型",
-      "reviewer": "审查型"
-    }
+    "description": "管理与编排你的智能体",
+    "createAgent": "新建智能体",
+    "emptyTitle": "还没有智能体",
+    "emptyDescription": "创建第一个智能体开始编排任务"
   },
   "task": {
-    "label": "TASK",
     "title": "任务",
-    "description": "任务队列与执行记录。",
-    "overview": "任务概览",
-    "inspect": "查看详情",
-    "metricsTitle": "执行指标",
-    "queueTitle": "任务队列",
-    "detailTitle": "任务详情",
-    "clearCompleted": "清理已完成",
-    "cancel": "取消",
-    "retry": "重试",
-    "queueStatus": "队列状态",
-    "avgDuration": "平均耗时",
-    "detailName": "名称",
-    "detailStatus": "状态",
-    "detailProgress": "进度",
-    "detailEta": "预计完成",
-    "stats": {
-      "total": "总计",
-      "running": "运行中",
-      "completed": "已完成",
-      "failed": "失败",
-      "pending": "待处理"
-    }
+    "description": "任务队列与执行记录",
+    "emptyTitle": "任务队列为空",
+    "emptyDescription": "创建或派发任务后将在这里展示"
   },
   "chat": {
-    "label": "CHAT",
     "title": "对话",
-    "description": "与智能体的会话空间。"
+    "description": "与智能体的会话空间",
+    "emptyTitle": "开始一段新对话",
+    "emptyDescription": "选择一个智能体或模型开始交流",
+    "startConversation": "新建对话"
   },
   "knowledge": {
-    "label": "KNOWLEDGE",
     "title": "知识库",
-    "description": "向量索引与文档管理。"
+    "description": "向量索引与文档管理",
+    "upload": "上传文档",
+    "emptyTitle": "知识库为空",
+    "emptyDescription": "上传文档构建你的私有知识库"
   },
   "connect": {
-    "label": "CONNECT",
     "title": "连接",
-    "description": "管理与 OpenClaw gateway 的连接。",
+    "description": "管理与 OpenClaw gateway 的连接",
     "section": {
       "status": "连接状态",
-      "manual": "手动连接"
+      "statusDescription": "当前 gateway 的运行与连接情况",
+      "manual": "手动连接",
+      "manualDescription": "直接指定 gateway 地址与凭据"
     },
     "status": {
       "idle": "未连接",
-      "detecting": "正在扫描…",
-      "connecting": "正在连接…",
+      "detecting": "正在扫描",
+      "connecting": "正在连接",
       "connected": "已连接",
       "disconnected": "已断开",
       "auth-error": "认证失败",
@@ -193,7 +90,8 @@
     },
     "label": {
       "url": "地址",
-      "mode": "模式"
+      "mode": "模式",
+      "auth": "认证方式"
     },
     "action": {
       "connect": "连接",
@@ -202,27 +100,24 @@
     }
   },
   "settings": {
-    "label": "SETTINGS",
     "title": "设置",
-    "description": "偏好、外观、语言。",
-    "overview": "系统设置",
-    "inspect": "查看详情",
+    "description": "偏好、外观、语言",
     "appearanceTitle": "外观",
-    "languageTitle": "语言",
-    "layoutTitle": "布局",
-    "aboutTitle": "关于",
-    "themeLabel": "当前主题",
-    "langLabel": "当前语言",
-    "sidebarLabel": "侧边栏折叠",
+    "appearanceDescription": "主题、语言和布局偏好",
+    "themeLabel": "主题",
+    "langLabel": "语言",
+    "sidebarLabel": "折叠侧边栏",
+    "sidebarHint": "默认折叠左侧导航（可随时按 Cmd/Ctrl+B 切换）",
     "themeLight": "浅色",
     "themeDark": "深色",
     "themeSystem": "跟随系统",
+    "aboutTitle": "关于",
     "versionLabel": "版本",
     "buildLabel": "构建",
-    "deviceId": "设备ID",
-    "viewLogs": "查看日志",
+    "deviceId": "设备 ID",
     "openclaw": {
       "title": "OpenClaw 桥接",
+      "description": "监控并管理本机 OpenClaw gateway 与 kaiwu 插件的同步状态",
       "statusInstalled": "已安装",
       "statusMissing": "未检测到",
       "statusRunning": "运行中",
@@ -232,14 +127,12 @@
       "bridgeStatus": "插件状态",
       "bridgeInstalled": "已同步",
       "bridgeMissing": "未同步",
-      "bridgeVersion": "插件版本",
       "compat": "兼容性",
       "compatOk": "兼容",
       "compatFail": "不兼容",
       "unknown": "—",
       "detectedBy": "侦测来源",
       "configDir": "配置目录",
-      "actions": "操作",
       "detect": "重新探测",
       "sync": "同步插件",
       "uninstall": "卸载插件",
