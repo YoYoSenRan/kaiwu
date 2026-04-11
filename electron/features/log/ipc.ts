@@ -1,8 +1,7 @@
-import type { LogLevel } from "./channels"
-
 import { ipcMain } from "electron"
 import log from "../../core/logger"
 import { logChannels } from "./channels"
+import type { LogLevel } from "./channels"
 
 // 允许渲染进程调用的日志级别白名单，防止 API 误用
 const ALLOWED_LEVELS: readonly LogLevel[] = ["info", "warn", "error", "debug"]

@@ -1,11 +1,10 @@
-import type { CheckResult, UpdateAvailability, UpdaterError } from "./types"
-import type { ProgressInfo, UpdateInfo } from "electron-updater"
-
-import { createRequire } from "node:module"
 import { app } from "electron"
 import log from "../../core/logger"
-import { getMainWindow } from "../../core/window"
+import { createRequire } from "node:module"
 import { updaterChannels } from "./channels"
+import { getMainWindow } from "../../core/window"
+import type { ProgressInfo, UpdateInfo } from "electron-updater"
+import type { CheckResult, UpdateAvailability, UpdaterError } from "./types"
 
 // electron-updater 是 CJS 包，在 ESM 主进程中需要通过 createRequire 加载
 const require = createRequire(import.meta.url)

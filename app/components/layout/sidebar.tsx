@@ -1,10 +1,10 @@
 import { Zap } from "lucide-react"
-import { useTranslation } from "react-i18next"
-import { NavLink, useNavigate } from "react-router"
 import { NAV_ITEMS } from "./nav-items"
-
+import { useTranslation } from "react-i18next"
 import { useGatewayStore } from "@/stores/gateway"
+import { NavLink, useNavigate } from "react-router"
 import { useSettingsStore } from "@/stores/settings"
+import { gatewayStatusDot } from "@/lib/gateway-status"
 
 /**
  * 左侧导航栏：顶部 Logo 条（点击切换折叠）+ 菜单列表。
@@ -68,19 +68,11 @@ export function Sidebar() {
         title={gwStatus === "connected" ? gwUrl ?? "" : t(`connect.status.${gwStatus}`)}
         className={`flex shrink-0 items-center gap-2.5 border-t border-border px-4 py-3 transition-colors hover:bg-accent/30 ${collapsed ? "justify-center px-0" : ""}`}
       >
-        <span className={`size-2 shrink-0 rounded-full ${statusDotClass(gwStatus)}`} />
+        <span className={`size-2 shrink-0 rounded-full ${gatewayStatusDot(gwStatus)}`} />
         {!collapsed && <span className="truncate text-[10px] tracking-[0.15em] font-mono text-muted-foreground uppercase">{statusLabel(gwStatus, gwUrl, t)}</span>}
       </button>
     </aside>
   )
-}
-
-/** 状态点颜色映射。 */
-function statusDotClass(status: string): string {
-  if (status === "connected") return "bg-emerald-500"
-  if (status === "connecting" || status === "detecting") return "bg-amber-400 deck-pulse"
-  if (status === "auth-error") return "bg-red-500"
-  return "bg-muted-foreground/40"
 }
 
 /** 展开模式的文字标签。 */

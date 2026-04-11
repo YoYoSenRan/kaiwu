@@ -1,7 +1,7 @@
+import { chromeChannels } from "./channels"
+import { getMainWindow } from "../../core/window"
 import { BrowserWindow, ipcMain } from "electron"
 import { INDEX_HTML, PRELOAD_PATH, VITE_DEV_SERVER_URL } from "../../core/paths"
-import { getMainWindow } from "../../core/window"
-import { chromeChannels } from "./channels"
 
 /**
  * 注册 chrome feature 的所有 IPC handler 和主窗口事件。

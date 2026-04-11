@@ -1,9 +1,9 @@
 import { contextBridge } from "electron"
-import { chromeBridge } from "./features/chrome/bridge"
-import { deeplinkBridge } from "./features/deeplink/bridge"
 import { logBridge } from "./features/log/bridge"
-import { openclawBridge } from "./features/openclaw/bridge"
+import { chromeBridge } from "./features/chrome/bridge"
 import { updaterBridge } from "./features/updater/bridge"
+import { deeplinkBridge } from "./features/deeplink/bridge"
+import { openclawBridge } from "./features/openclaw/bridge"
 
 /** Electron API 类型，供 renderer 端通过 global.d.ts 引用 */
 export type ElectronAPI = typeof api

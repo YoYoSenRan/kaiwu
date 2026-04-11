@@ -1,9 +1,8 @@
-import type { DeepLinkPayload } from "./types"
-import type { BrowserWindow } from "electron"
-
 import path from "node:path"
 import { app } from "electron"
 import log from "../../core/logger"
+import type { BrowserWindow } from "electron"
+import type { DeepLinkPayload } from "./types"
 import { getMainWindow } from "../../core/window"
 import { deeplinkChannels, PROTOCOL } from "./channels"
 

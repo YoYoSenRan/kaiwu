@@ -1,7 +1,6 @@
-import type { DeeplinkBridge, DeepLinkPayload } from "./types"
-
 import { ipcRenderer } from "electron"
 import { deeplinkChannels } from "./channels"
+import type { DeeplinkBridge, DeepLinkPayload } from "./types"
 
 export const deeplinkBridge: DeeplinkBridge = {
   onReceived(listener) {
