@@ -12,7 +12,7 @@ const POLL_INTERVAL_MS = 10_000
 let client: GatewayClient | null = null
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let connecting = false
-let state: GatewayState = { status: "idle", mode: null, url: null, error: null }
+let state: GatewayState = { status: "idle", mode: null, url: null, error: null, pingLatencyMs: null, nextRetryAt: null }
 
 function setState(patch: Partial<GatewayState>): void {
   state = { ...state, ...patch }
@@ -66,7 +66,7 @@ export async function startGatewayConnection(params?: GatewayConnectParams): Pro
 /** 停止 gateway 连接与轮询，状态回到 idle。 */
 export function stopGatewayConnection(): void {
   clearConnection()
-  setState({ status: "idle", mode: null, url: null, error: null })
+  setState({ status: "idle", mode: null, url: null, error: null, pingLatencyMs: null, nextRetryAt: null })
 }
 
 /**
@@ -134,10 +134,18 @@ function createClient(url: string): GatewayClient {
 
   c.onConnectionChange((connected) => {
     if (connected && state.status !== "connected") {
-      setState({ status: "connected", url, error: null })
+      // 连上后清零重连倒计时，pingLatencyMs 由 metrics 订阅首次 pong 往返后填充
+      setState({ status: "connected", url, error: null, nextRetryAt: null })
     } else if (!connected && state.status === "connected") {
-      setState({ status: "disconnected" })
+      // 断开瞬间立刻清 ping 延迟；nextRetryAt 会由 client 的 scheduleReconnect emit 进来
+      setState({ status: "disconnected", pingLatencyMs: null })
     }
+  })
+
+  c.onMetrics((metrics) => {
+    // metrics 是 partial，Object.fromEntries 过滤 undefined 避免把已知字段清成 undefined
+    const patch = Object.fromEntries(Object.entries(metrics).filter(([, v]) => v !== undefined))
+    if (Object.keys(patch).length > 0) setState(patch)
   })
 
   c.onConnectError((err) => {
@@ -147,12 +155,14 @@ function createClient(url: string): GatewayClient {
 
     // 先释放资源再 setState，避免 stopGatewayConnection 的 setState(idle) 覆盖失败原因
     clearConnection()
+    // error / auth-error 终态不会自动重连，清零倒计时和延迟避免 UI 显示老数据
+    const failurePatch = { pingLatencyMs: null, nextRetryAt: null }
     if (isAuth) {
       log.warn(`[gateway] auth failed: ${err.message}`)
-      setState({ status: "auth-error", error: `认证失败: ${err.message}` })
+      setState({ status: "auth-error", error: `认证失败: ${err.message}`, ...failurePatch })
     } else {
       log.warn(`[gateway] connect error: ${err.message}`)
-      setState({ status: "error", error: `连接错误: ${err.message}` })
+      setState({ status: "error", error: `连接错误: ${err.message}`, ...failurePatch })
     }
   })
 

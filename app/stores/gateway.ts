@@ -1,13 +1,17 @@
 import { create } from "zustand"
 
-type GatewayStatus = "idle" | "detecting" | "connecting" | "connected" | "disconnected" | "auth-error" | "error"
-type GatewayMode = "scan" | "manual" | null
+export type GatewayStatus = "idle" | "detecting" | "connecting" | "connected" | "disconnected" | "auth-error" | "error"
+export type GatewayMode = "scan" | "manual" | null
 
 interface GatewayState {
   status: GatewayStatus
   mode: GatewayMode
   url: string | null
   error: string | null
+  /** 最近一次 ping/pong 往返延迟（ms）。null 表示尚未完成首次心跳测量。 */
+  pingLatencyMs: number | null
+  /** 下次重连的绝对时间戳（ms since epoch）。null 表示当前没有排期的重连。 */
+  nextRetryAt: number | null
 }
 
 interface GatewayStore extends GatewayState {
@@ -21,5 +25,7 @@ export const useGatewayStore = create<GatewayStore>()((set) => ({
   mode: null,
   url: null,
   error: null,
+  pingLatencyMs: null,
+  nextRetryAt: null,
   set: (state) => set(state),
 }))

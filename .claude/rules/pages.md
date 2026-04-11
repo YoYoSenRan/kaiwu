@@ -64,6 +64,43 @@ pages/
         └── services.tsx
 ```
 
+### 业务领域多路由（list + detail 模式）
+
+当**同一业务领域**有多个强关联路由（如 agent 的列表和详情），允许 `pages/<domain>/` 作为**父级业务目录**，下面再分子路由目录。父目录本身不是路由（没有自己的 `index.tsx`）：
+
+```
+pages/
+└── agent/
+    ├── list/                    # /agent 路由
+    │   ├── index.tsx            # default export
+    │   └── components/          # list 私有
+    │       ├── card.tsx
+    │       └── grid.tsx
+    ├── detail/                  # /agent/:id 路由
+    │   ├── index.tsx            # default export
+    │   ├── hooks/               # detail 私有
+    │   │   └── use-agent-detail.ts
+    │   └── components/          # detail 私有
+    │       ├── overview-tab.tsx
+    │       ├── workspace-tab.tsx
+    │       └── sessions-tab.tsx
+    ├── components/              # list / detail 共享
+    │   ├── create-dialog.tsx
+    │   └── delete-dialog.tsx
+    ├── hooks/                   # list / detail 共享
+    │   └── use-agents.ts
+    └── data.ts                  # 共享常量
+```
+
+**约束**：
+
+1. **子路由之间不得互相 import**（`list/` ↮ `detail/`）——它们是独立路由，只能通过父目录的 `components/` `hooks/` `data.ts` 共享层通信
+2. **共享层组件不算"上浮"**：放在 `pages/<domain>/components/` 仍然是领域私有的，不要上浮到 `app/components/` 除非真的被**其他领域**页面用到
+3. **父目录不能有自己的 `index.tsx`**——否则两个子路由 + 一个父入口会冲突。父目录纯粹是命名空间
+4. **适用门槛**：同业务至少 2 个独立路由才启用这种结构，单路由仍然用平铺目录。ipc 层面也应该配套提供独立入口（如 `agent.detail(id)`），避免 detail 页依赖 list 页的 store 状态，支持 deep link
+
+和 `ipc.md` 里"大型 feature 的子目录例外"是同一个思路：领域边界优于严格的扁平规则。
+
 ### 路由注册
 
 `App.tsx` 里只 import 页面入口，不 import 页面内部文件：

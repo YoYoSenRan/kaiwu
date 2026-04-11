@@ -1,3 +1,14 @@
+import type {
+  ModelsListResult,
+  AgentsListResult,
+  AgentsCreateParams,
+  AgentsCreateResult,
+  AgentsDeleteParams,
+  AgentsDeleteResult,
+  AgentsUpdateParams,
+  AgentsUpdateResult,
+} from "./agent/contract"
+
 /** OpenClaw 本机侦测状态。 */
 export interface OpenClawStatus {
   /** 是否检测到 OpenClaw 安装（目录存在 / CLI 可用 / lock 文件 / 端口监听）。 */
@@ -45,6 +56,10 @@ export interface GatewayState {
   mode: GatewayMode | null
   url: string | null
   error: string | null
+  /** 最近一次 ping/pong 往返延迟（ms）。null 表示尚未完成首次心跳测量。 */
+  pingLatencyMs: number | null
+  /** 下次重连的绝对时间戳（ms since epoch）。null 表示当前没有排期的重连。 */
+  nextRetryAt: number | null
 }
 
 /** 手动连接参数。无参数时走本机扫描模式。 */
@@ -91,7 +106,7 @@ export interface GatewayEventFrame {
   seq?: number
 }
 
-/** renderer ↔ main 的 openclaw feature 桥接接口。5 个能力域对齐 channels.ts。 */
+/** renderer ↔ main 的 openclaw feature 桥接接口。7 个能力域对齐 channels.ts。 */
 export interface OpenClawBridge {
   /** 生命周期：探测安装 / 兼容性检查 / 重启 gateway。 */
   lifecycle: {
@@ -142,5 +157,18 @@ export interface OpenClawBridge {
     list: (params?: { limit?: number; agentId?: string; search?: string }) => Promise<unknown>
     patch: (params: { key: string; label?: string | null; model?: string | null }) => Promise<unknown>
     delete: (params: { key: string }) => Promise<unknown>
+  }
+
+  /** Agent 管理（agents.* RPC 的类型化包装）。 */
+  agents: {
+    list: () => Promise<AgentsListResult>
+    create: (params: AgentsCreateParams) => Promise<AgentsCreateResult>
+    update: (params: AgentsUpdateParams) => Promise<AgentsUpdateResult>
+    delete: (params: AgentsDeleteParams) => Promise<AgentsDeleteResult>
+  }
+
+  /** 可用模型清单。 */
+  models: {
+    list: () => Promise<ModelsListResult>
   }
 }

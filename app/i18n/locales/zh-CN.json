@@ -9,6 +9,21 @@
     "noData": "暂无数据",
     "toggleThemeHint": "按 D 切换主题"
   },
+  "footer": {
+    "ping": "{{ms}}ms",
+    "retryIn": "{{seconds}}s 后重试",
+    "tooltip": {
+      "mode": "模式",
+      "modeScan": "自动扫描",
+      "modeManual": "手动连接",
+      "address": "地址",
+      "latency": "延迟",
+      "error": "错误",
+      "retryHint": "{{seconds}}s 后自动重试",
+      "noRetry": "认证失败需手动处理",
+      "clickToOpen": "点击查看连接详情"
+    }
+  },
   "update": {
     "checkUpdate": "检查更新",
     "checking": "检查中...",
@@ -44,7 +59,87 @@
     "description": "管理与编排你的智能体",
     "createAgent": "新建智能体",
     "emptyTitle": "还没有智能体",
-    "emptyDescription": "创建第一个智能体开始编排任务"
+    "emptyDescription": "创建第一个智能体开始编排任务",
+    "card": {
+      "busy": "运行中",
+      "orphan": "配置丢失",
+      "workspaceMissing": "工作区缺失",
+      "noModel": "默认模型"
+    },
+    "sync": {
+      "button": "刷新",
+      "syncing": "对齐中",
+      "cleanOrphans": "清理丢失项（{{count}}）",
+      "syncFailed": "对齐失败：{{message}}"
+    },
+    "form": {
+      "hint": "创建后无法修改 ID，工作区目录名按 workspace-<ID> 规则生成",
+      "id": "ID",
+      "idHint": "唯一标识，小写字母/数字/-/_，max 64 字符",
+      "idPlaceholder": "my-agent",
+      "name": "名称",
+      "namePlaceholder": "智能体显示名称",
+      "emoji": "Emoji",
+      "emojiPlaceholder": "🤖",
+      "avatar": "头像",
+      "avatarFile": "本地文件",
+      "avatarUrl": "图片 URL",
+      "avatarPick": "选择文件",
+      "avatarUrlPlaceholder": "https://example.com/avatar.png",
+      "files": "工作区文件",
+      "filesHint": "可选。留空则使用 OpenClaw 默认 bootstrap 模板",
+      "filePlaceholder": "{{file}} 的初始内容（可留空）",
+      "submit": "创建",
+      "submitting": "创建中",
+      "cancel": "取消"
+    },
+    "tab": {
+      "overview": "概览",
+      "workspace": "工作区文件",
+      "sessions": "会话"
+    },
+    "detail": {
+      "back": "返回",
+      "notFound": "智能体不存在或已被删除"
+    },
+    "overview": {
+      "idLabel": "Agent ID",
+      "workspaceLabel": "工作区目录",
+      "modelLabel": "模型",
+      "modelDefault": "跟随主配置",
+      "save": "保存",
+      "saving": "保存中"
+    },
+    "workspace": {
+      "empty": "没有文件",
+      "previewHint": "点击文本进入编辑",
+      "save": "保存",
+      "cancel": "取消"
+    },
+    "sessions": {
+      "loading": "加载中",
+      "empty": "暂无会话"
+    },
+    "delete": {
+      "title": "删除智能体",
+      "message": "确定要删除智能体 \"{{name}}\" 吗？此操作不可撤销。",
+      "removeWorkspace": "同时删除 workspace 文件",
+      "confirm": "删除",
+      "cancel": "取消",
+      "deleting": "删除中",
+      "failed": "删除失败：{{message}}"
+    },
+    "error": {
+      "idEmpty": "ID 不能为空",
+      "nameEmpty": "名称不能为空",
+      "idInvalid": "ID 格式非法（只允许小写字母、数字、下划线、短横线）",
+      "idReserved": "\"main\" 是保留名，不能使用",
+      "idTooLong": "ID 最长 64 个字符",
+      "idExists": "ID 已存在",
+      "workspaceExists": "workspace 目录已存在，请换一个 ID",
+      "notFound": "智能体不存在",
+      "unknown": "错误：{{message}}"
+    }
   },
   "task": {
     "title": "任务",
@@ -149,7 +244,9 @@
     "sidebarHint": "默认折叠左侧导航（可随时按 Cmd/Ctrl+B 切换）",
     "themeLight": "浅色",
     "themeDark": "深色",
-    "themeSystem": "跟随系统",
+    "themeSystem": "系统",
+    "languageZh": "简体中文",
+    "languageEn": "English",
     "aboutTitle": "关于",
     "versionLabel": "版本",
     "buildLabel": "构建",

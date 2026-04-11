@@ -1,5 +1,6 @@
 import { contextBridge } from "electron"
 import { logBridge } from "./features/log/bridge"
+import { agentBridge } from "./features/agent/bridge"
 import { chromeBridge } from "./features/chrome/bridge"
 import { updaterBridge } from "./features/updater/bridge"
 import { deeplinkBridge } from "./features/deeplink/bridge"
@@ -17,6 +18,7 @@ export type { OpenClawStatus, CompatResult, PluginEvent, MonitorEvent, GatewaySt
  */
 const api = {
   log: logBridge,
+  agent: agentBridge,
   chrome: chromeBridge,
   updater: updaterBridge,
   deeplink: deeplinkBridge,

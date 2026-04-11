@@ -12,6 +12,17 @@ body,
   * {
     @apply border-border outline-ring/50;
   }
+  /* 修 Radix + Chromium focus-visible 误判：弹出型触发器（DropdownMenu / Select / Dialog / Sheet /
+     Popover / ContextMenu 等）关闭时 Radix 会把 focus 送回 trigger，Chromium 若用户最近有过
+     键盘动作会把这次 programmatic focus 判为 focus-visible，导致鼠标点完后按钮残留 ring。
+     统一对所有带 aria-haspopup 的元素在 focus-visible 时抹掉 outline / ring / border 变色。
+     !important 的理由：Tailwind 的 focus-visible:ring-* 和本选择器 specificity 相同，
+     utilities 层在 base 后加载，不加 !important 盖不住。 */
+  [aria-haspopup]:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+  }
   body {
     @apply bg-background text-foreground;
     margin: 0;

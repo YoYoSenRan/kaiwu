@@ -3,6 +3,8 @@ import { app } from "electron"
 import { setupAppMenu } from "./core/menu"
 import { setupCSP } from "./core/security"
 import { setupLog } from "./features/log/ipc"
+import { setupAgent } from "./features/agent/ipc"
+import { closeDb } from "./features/agent/core/db"
 import { createMainWindow } from "./core/window"
 import { setupChrome } from "./features/chrome/ipc"
 import { setupUpdater } from "./features/updater/ipc"
@@ -51,12 +53,14 @@ app.whenReady().then(() => {
   setupUpdater()
   setupLog()
   setupOpenclaw()
+  setupAgent()
 
   // 处理 macOS 冷启动时暂存的深度链接
   flushPendingDeepLink()
 })
 
-// 退出前关闭本地 bridge server，释放端口
+// 退出前关闭本地 bridge server 释放端口 + 关闭 sqlite 以 checkpoint WAL
 app.on("before-quit", () => {
   void stopPlugin()
+  closeDb()
 })
