@@ -9,6 +9,21 @@
     "noData": "No data",
     "toggleThemeHint": "Press D to toggle theme"
   },
+  "footer": {
+    "ping": "{{ms}}ms",
+    "retryIn": "Retry in {{seconds}}s",
+    "tooltip": {
+      "mode": "Mode",
+      "modeScan": "Auto scan",
+      "modeManual": "Manual",
+      "address": "Address",
+      "latency": "Latency",
+      "error": "Error",
+      "retryHint": "Auto retry in {{seconds}}s",
+      "noRetry": "Auth failed — manual fix required",
+      "clickToOpen": "Click for connection details"
+    }
+  },
   "update": {
     "checkUpdate": "Check update",
     "checking": "Checking...",
@@ -44,7 +59,87 @@
     "description": "Manage and orchestrate your agents",
     "createAgent": "Create Agent",
     "emptyTitle": "No agents yet",
-    "emptyDescription": "Create your first agent to start orchestrating tasks"
+    "emptyDescription": "Create your first agent to start orchestrating tasks",
+    "card": {
+      "busy": "Busy",
+      "orphan": "Missing in gateway",
+      "workspaceMissing": "Workspace missing",
+      "noModel": "Default model"
+    },
+    "sync": {
+      "button": "Refresh",
+      "syncing": "Syncing",
+      "cleanOrphans": "Clean missing ({{count}})",
+      "syncFailed": "Sync failed: {{message}}"
+    },
+    "form": {
+      "hint": "ID cannot be changed after creation. Workspace dir is named workspace-<ID>",
+      "id": "ID",
+      "idHint": "Unique identifier, lowercase alphanumeric / - / _, max 64 chars",
+      "idPlaceholder": "my-agent",
+      "name": "Name",
+      "namePlaceholder": "Display name",
+      "emoji": "Emoji",
+      "emojiPlaceholder": "🤖",
+      "avatar": "Avatar",
+      "avatarFile": "Local file",
+      "avatarUrl": "Image URL",
+      "avatarPick": "Choose file",
+      "avatarUrlPlaceholder": "https://example.com/avatar.png",
+      "files": "Workspace files",
+      "filesHint": "Optional. Leaves OpenClaw default bootstrap templates if empty",
+      "filePlaceholder": "Initial content for {{file}} (optional)",
+      "submit": "Create",
+      "submitting": "Creating",
+      "cancel": "Cancel"
+    },
+    "tab": {
+      "overview": "Overview",
+      "workspace": "Workspace",
+      "sessions": "Sessions"
+    },
+    "detail": {
+      "back": "Back",
+      "notFound": "Agent not found or has been deleted"
+    },
+    "overview": {
+      "idLabel": "Agent ID",
+      "workspaceLabel": "Workspace",
+      "modelLabel": "Model",
+      "modelDefault": "Follow main config",
+      "save": "Save",
+      "saving": "Saving"
+    },
+    "workspace": {
+      "empty": "No files",
+      "previewHint": "Click text to edit",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "sessions": {
+      "loading": "Loading",
+      "empty": "No sessions yet"
+    },
+    "delete": {
+      "title": "Delete agent",
+      "message": "Are you sure you want to delete \"{{name}}\"? This cannot be undone.",
+      "removeWorkspace": "Also delete workspace files",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "deleting": "Deleting",
+      "failed": "Delete failed: {{message}}"
+    },
+    "error": {
+      "idEmpty": "ID cannot be empty",
+      "nameEmpty": "Name cannot be empty",
+      "idInvalid": "Invalid ID format (lowercase alphanumeric / - / _ only)",
+      "idReserved": "\"main\" is reserved",
+      "idTooLong": "ID max length is 64 chars",
+      "idExists": "ID already exists",
+      "workspaceExists": "Workspace directory already exists, please pick another ID",
+      "notFound": "Agent not found",
+      "unknown": "Error: {{message}}"
+    }
   },
   "task": {
     "title": "Task",
@@ -150,6 +245,8 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System",
+    "languageZh": "简体中文",
+    "languageEn": "English",
     "aboutTitle": "About",
     "versionLabel": "Version",
     "buildLabel": "Build",

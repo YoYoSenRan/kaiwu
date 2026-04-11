@@ -1,6 +1,7 @@
 import { Zap } from "lucide-react"
 import { NAV_ITEMS } from "./nav-items"
 import { useTranslation } from "react-i18next"
+import { gatewayDotColor } from "@/lib/gateway"
 import { NavLink, useLocation, useNavigate } from "react-router"
 import { useGatewayStore } from "@/stores/gateway"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
@@ -55,7 +56,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="border-sidebar-border h-8 rounded-none border-t px-4"
+              className="border-sidebar-border h-10 rounded-none border-t px-4"
               onClick={() => navigate("/connect")}
               tooltip={gwStatus === "connected" && gwUrl ? gwUrl : t(`connect.status.${gwStatus}`)}
             >
@@ -67,12 +68,4 @@ export function AppSidebar() {
       </SidebarFooter>
     </Sidebar>
   )
-}
-
-/** gateway 状态点颜色映射，和页面内的状态 Badge 保持一致。 */
-function gatewayDotColor(status: string): string {
-  if (status === "connected") return "bg-primary"
-  if (status === "auth-error" || status === "error") return "bg-destructive"
-  if (status === "connecting" || status === "detecting") return "bg-muted-foreground animate-pulse"
-  return "bg-muted-foreground/40"
 }
