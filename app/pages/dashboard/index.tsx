@@ -10,7 +10,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{t("dashboard.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.description")}</p>
+        <p className="text-muted-foreground mt-1 text-sm">{t("dashboard.description")}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -25,7 +25,7 @@ export default function Dashboard() {
           <CardTitle>{t("dashboard.activityTitle")}</CardTitle>
           <CardDescription>{t("dashboard.activityEmpty")}</CardDescription>
         </CardHeader>
-        <CardContent className="flex h-40 items-center justify-center text-sm text-muted-foreground">{t("common.noData")}</CardContent>
+        <CardContent className="text-muted-foreground flex h-40 items-center justify-center text-sm">{t("common.noData")}</CardContent>
       </Card>
     </div>
   )
@@ -42,11 +42,11 @@ function StatCard({ icon: Icon, title }: StatCardProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="size-4 text-muted-foreground" />
+        <Icon className="text-muted-foreground size-4" />
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">—</div>
-        <p className="text-xs text-muted-foreground">—</p>
+        <p className="text-muted-foreground text-xs">—</p>
       </CardContent>
     </Card>
   )

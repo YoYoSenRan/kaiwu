@@ -21,7 +21,7 @@ export default function Settings() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{t("settings.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("settings.description")}</p>
+        <p className="text-muted-foreground mt-1 text-sm">{t("settings.description")}</p>
       </div>
 
       <AppearanceCard />
@@ -83,7 +83,7 @@ function AppearanceCard() {
         <div className="flex items-center justify-between">
           <div>
             <Label htmlFor="sidebar-collapse">{t("settings.sidebarLabel")}</Label>
-            <p className="mt-0.5 text-xs text-muted-foreground">{t("settings.sidebarHint")}</p>
+            <p className="text-muted-foreground mt-0.5 text-xs">{t("settings.sidebarHint")}</p>
           </div>
           <Switch id="sidebar-collapse" checked={collapsed} onCheckedChange={setSidebarCollapsed} />
         </div>

@@ -11,17 +11,17 @@ export default function Chat() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{t("chat.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("chat.description")}</p>
+        <p className="text-muted-foreground mt-1 text-sm">{t("chat.description")}</p>
       </div>
 
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <MessagesSquare className="size-6 text-muted-foreground" />
+          <div className="bg-muted flex size-12 items-center justify-center rounded-full">
+            <MessagesSquare className="text-muted-foreground size-6" />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium">{t("chat.emptyTitle")}</p>
-            <p className="text-xs text-muted-foreground">{t("chat.emptyDescription")}</p>
+            <p className="text-muted-foreground text-xs">{t("chat.emptyDescription")}</p>
           </div>
           <Button variant="outline" size="sm">
             {t("chat.startConversation")}

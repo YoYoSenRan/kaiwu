@@ -21,10 +21,10 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1.5">
-          <Zap className="size-5 shrink-0 text-primary" strokeWidth={2} />
+          <Zap className="text-primary size-5 shrink-0" strokeWidth={2} />
           <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
             <span className="text-sm font-semibold">Kaiwu</span>
-            <span className="text-[11px] text-muted-foreground">开物</span>
+            <span className="text-muted-foreground text-[11px]">开物</span>
           </div>
         </div>
       </SidebarHeader>
@@ -55,7 +55,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="h-8 rounded-none border-t border-sidebar-border px-4"
+              className="border-sidebar-border h-8 rounded-none border-t px-4"
               onClick={() => navigate("/connect")}
               tooltip={gwStatus === "connected" && gwUrl ? gwUrl : t(`connect.status.${gwStatus}`)}
             >

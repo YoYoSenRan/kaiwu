@@ -23,14 +23,14 @@ export default function Connect() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{t("connect.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("connect.description")}</p>
+        <p className="text-muted-foreground mt-1 text-sm">{t("connect.description")}</p>
       </div>
 
       {/* 网关连接 */}
       <section className="space-y-4">
         <div>
           <h2 className="text-lg font-medium">{t("connect.gateway.title")}</h2>
-          <p className="text-sm text-muted-foreground">{t("connect.gateway.description")}</p>
+          <p className="text-muted-foreground text-sm">{t("connect.gateway.description")}</p>
         </div>
         <StatusCard status={gw.status} mode={gw.mode} url={gw.url} error={gw.error} onDisconnect={gw.disconnect} onScan={() => gw.connect()} />
         <ManualConnectCard onConnect={gw.connect} disabled={gw.status === "connecting" || gw.status === "detecting"} />
@@ -40,7 +40,7 @@ export default function Connect() {
       <section className="space-y-4">
         <div>
           <h2 className="text-lg font-medium">{t("connect.plugin.title")}</h2>
-          <p className="text-sm text-muted-foreground">{t("connect.plugin.description")}</p>
+          <p className="text-muted-foreground text-sm">{t("connect.plugin.description")}</p>
         </div>
         <PluginCard />
       </section>
@@ -70,31 +70,31 @@ function StatusCard({ status, mode, url, error, onDisconnect, onScan }: StatusCa
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
-          <Badge variant={statusVariant(status)} className="text-sm px-2.5 py-0.5">
+          <Badge variant={statusVariant(status)} className="px-2.5 py-0.5 text-sm">
             {t(`connect.status.${status}`)}
           </Badge>
-          {url && <span className="font-mono text-sm text-muted-foreground break-all">{url}</span>}
+          {url && <span className="text-muted-foreground font-mono text-sm break-all">{url}</span>}
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm">
+        <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
           {mode && (
-            <div className="rounded-md bg-muted px-3 py-2">
-              <div className="text-xs text-muted-foreground">{t("connect.label.mode")}</div>
+            <div className="bg-muted rounded-md px-3 py-2">
+              <div className="text-muted-foreground text-xs">{t("connect.label.mode")}</div>
               <div className="font-medium">{t(`connect.mode.${mode}`)}</div>
             </div>
           )}
           {url && (
-            <div className="rounded-md bg-muted px-3 py-2">
-              <div className="text-xs text-muted-foreground">{t("connect.label.url")}</div>
-              <div className="font-medium font-mono text-xs truncate" title={url}>
+            <div className="bg-muted rounded-md px-3 py-2">
+              <div className="text-muted-foreground text-xs">{t("connect.label.url")}</div>
+              <div className="truncate font-mono text-xs font-medium" title={url}>
                 {url}
               </div>
             </div>
           )}
           {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 sm:col-span-2 lg:col-span-1">
-              <div className="text-xs text-destructive/80">{t("connect.label.error")}</div>
-              <div className="font-medium text-destructive text-xs">{error}</div>
+            <div className="bg-destructive/10 rounded-md px-3 py-2 sm:col-span-2 lg:col-span-1">
+              <div className="text-destructive/80 text-xs">{t("connect.label.error")}</div>
+              <div className="text-destructive text-xs font-medium">{error}</div>
             </div>
           )}
         </div>

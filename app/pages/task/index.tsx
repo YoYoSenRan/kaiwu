@@ -10,17 +10,17 @@ export default function Task() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{t("task.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("task.description")}</p>
+        <p className="text-muted-foreground mt-1 text-sm">{t("task.description")}</p>
       </div>
 
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <ListChecks className="size-6 text-muted-foreground" />
+          <div className="bg-muted flex size-12 items-center justify-center rounded-full">
+            <ListChecks className="text-muted-foreground size-6" />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium">{t("task.emptyTitle")}</p>
-            <p className="text-xs text-muted-foreground">{t("task.emptyDescription")}</p>
+            <p className="text-muted-foreground text-xs">{t("task.emptyDescription")}</p>
           </div>
         </CardContent>
       </Card>

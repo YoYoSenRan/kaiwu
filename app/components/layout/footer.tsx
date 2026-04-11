@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next"
 export function Footer() {
   const { t } = useTranslation()
   return (
-    <footer className="flex h-8 shrink-0 items-center justify-between border-t border-border px-4 text-xs text-muted-foreground">
+    <footer className="border-border text-muted-foreground flex h-8 shrink-0 items-center justify-between border-t px-4 text-xs">
       <div className="flex items-center gap-2">
         <span className="font-mono">v0.1.0</span>
         <span>·</span>

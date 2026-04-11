@@ -200,11 +200,11 @@ function EventsList({ events }: { events: PluginEvent[] }) {
       <p className="text-sm font-medium">{t("connect.plugin.events")}</p>
       <ScrollArea className="h-32 rounded-md border">
         {filtered.length === 0 ? (
-          <p className="p-3 text-xs text-muted-foreground">{t("connect.plugin.noEvents")}</p>
+          <p className="text-muted-foreground p-3 text-xs">{t("connect.plugin.noEvents")}</p>
         ) : (
           <div className="divide-y">
             {filtered.map((ev, i) => (
-              <div key={`${ev.ts}-${i}`} className="flex items-baseline gap-2 px-3 py-1.5 text-xs font-mono">
+              <div key={`${ev.ts}-${i}`} className="flex items-baseline gap-2 px-3 py-1.5 font-mono text-xs">
                 <span className="text-muted-foreground shrink-0">{new Date(ev.ts).toLocaleTimeString()}</span>
                 <span className="text-primary shrink-0">{ev.type}</span>
                 <span className="text-muted-foreground truncate">{JSON.stringify(ev.payload)}</span>
