@@ -60,10 +60,10 @@ export function SessionsTab({ row }: Props) {
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">
               <MessageSquare className="text-muted-foreground size-4" />
-              <span className="font-medium text-sm">{s.label || s.key}</span>
+              <span className="text-sm font-medium">{s.label || s.key}</span>
             </div>
-            <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-              {s.model && <span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px]">{s.model}</span>}
+            <div className="text-muted-foreground flex shrink-0 items-center gap-2 text-xs">
+              {s.model && <span className="bg-muted rounded-sm px-1.5 py-0.5 font-mono text-[10px]">{s.model}</span>}
               {s.updatedAt && <span>{formatTime(s.updatedAt)}</span>}
             </div>
           </div>

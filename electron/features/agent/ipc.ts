@@ -1,19 +1,6 @@
 import { safeHandle } from "../../core/ipc"
 import { agentChannels } from "./channels"
-import {
-  create,
-  getDetail,
-  listFiles,
-  listLocal,
-  patchMeta,
-  pickAvatar,
-  readFile,
-  remove,
-  sync,
-  update,
-  writeFile,
-  cleanupOrphans,
-} from "./service"
+import { create, getDetail, listFiles, listLocal, patchMeta, pickAvatar, readFile, remove, sync, update, writeFile, cleanupOrphans } from "./service"
 import type { AgentCreateInput, AgentPatchInput, AgentUpdateInput } from "./types"
 
 /**

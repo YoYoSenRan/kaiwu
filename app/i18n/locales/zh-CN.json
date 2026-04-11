@@ -76,6 +76,8 @@
     },
     "form": {
       "hint": "创建后无法修改 ID，工作区目录名按 workspace-<ID> 规则生成",
+      "basicInfo": "基本信息",
+      "appearance": "外观",
       "id": "ID",
       "idHint": "唯一标识，小写字母/数字/-/_，max 64 字符",
       "idPlaceholder": "my-agent",

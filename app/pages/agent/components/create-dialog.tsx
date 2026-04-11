@@ -89,78 +89,111 @@ export function CreateAgentDialog({ open, onOpenChange, onCreated }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle>{t("agent.createAgent")}</DialogTitle>
           <DialogDescription>{t("agent.form.hint")}</DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+        <div className="max-h-[60vh] space-y-4 overflow-y-auto px-6 py-2">
           {error && <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-xs">{t(`agent.error.${errorCodeToKey(error)}`, { message: error })}</div>}
 
-          <div className="grid gap-2 sm:grid-cols-[1fr_2fr]">
-            <FormField label={t("agent.form.id")} hint={t("agent.form.idHint")}>
-              <Input value={agentId} onChange={(e) => setAgentId(e.target.value.toLowerCase())} placeholder={t("agent.form.idPlaceholder")} disabled={submitting} />
-            </FormField>
-            <FormField label={t("agent.form.name")}>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("agent.form.namePlaceholder")} disabled={submitting} />
-            </FormField>
+          {/* 基本信息 */}
+          <div className="space-y-3 rounded-lg border p-4">
+            <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{t("agent.form.basicInfo")}</h4>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField label={t("agent.form.id")} hint={t("agent.form.idHint")}>
+                <Input
+                  value={agentId}
+                  onChange={(e) => setAgentId(e.target.value.toLowerCase())}
+                  placeholder={t("agent.form.idPlaceholder")}
+                  disabled={submitting}
+                  className="font-mono text-xs"
+                />
+              </FormField>
+              <FormField label={t("agent.form.name")}>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("agent.form.namePlaceholder")} disabled={submitting} />
+              </FormField>
+            </div>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-[auto_1fr]">
-            <FormField label={t("agent.form.emoji")}>
-              <Input value={emoji} onChange={(e) => setEmoji(e.target.value)} placeholder={t("agent.form.emojiPlaceholder")} disabled={submitting} className="w-20 text-center" />
-            </FormField>
-            <FormField label={t("agent.form.avatar")}>
-              <Tabs value={avatarTab} onValueChange={(v) => setAvatarTab(v as AvatarTab)}>
-                <TabsList className="grid w-fit grid-cols-2">
-                  <TabsTrigger value="file" className="gap-1">
-                    <FolderOpen className="size-3.5" />
-                    {t("agent.form.avatarFile")}
-                  </TabsTrigger>
-                  <TabsTrigger value="url" className="gap-1">
-                    <LinkIcon className="size-3.5" />
-                    {t("agent.form.avatarUrl")}
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="file" className="mt-2 flex items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={pickAvatar} disabled={submitting}>
-                    {t("agent.form.avatarPick")}
-                  </Button>
-                  {avatarPath && <span className="text-muted-foreground truncate font-mono text-xs">{avatarPath}</span>}
-                </TabsContent>
-                <TabsContent value="url" className="mt-2">
-                  <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder={t("agent.form.avatarUrlPlaceholder")} disabled={submitting} className="font-mono text-xs" />
-                </TabsContent>
-              </Tabs>
-            </FormField>
+          {/* 外观 */}
+          <div className="space-y-3 rounded-lg border p-4">
+            <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{t("agent.form.appearance")}</h4>
+            <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
+              <FormField label={t("agent.form.emoji")}>
+                <Input
+                  value={emoji}
+                  onChange={(e) => setEmoji(e.target.value)}
+                  placeholder={t("agent.form.emojiPlaceholder")}
+                  disabled={submitting}
+                  className="w-16 text-center text-base"
+                />
+              </FormField>
+              <FormField label={t("agent.form.avatar")}>
+                <Tabs value={avatarTab} onValueChange={(v) => setAvatarTab(v as AvatarTab)}>
+                  <TabsList className="grid w-fit grid-cols-2">
+                    <TabsTrigger value="file" className="gap-1 text-xs">
+                      <FolderOpen className="size-3.5" />
+                      {t("agent.form.avatarFile")}
+                    </TabsTrigger>
+                    <TabsTrigger value="url" className="gap-1 text-xs">
+                      <LinkIcon className="size-3.5" />
+                      {t("agent.form.avatarUrl")}
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="file" className="mt-2 flex items-center gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={pickAvatar} disabled={submitting}>
+                      {t("agent.form.avatarPick")}
+                    </Button>
+                    {avatarPath && <span className="text-muted-foreground truncate font-mono text-xs">{avatarPath}</span>}
+                  </TabsContent>
+                  <TabsContent value="url" className="mt-2">
+                    <Input
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder={t("agent.form.avatarUrlPlaceholder")}
+                      disabled={submitting}
+                      className="font-mono text-xs"
+                    />
+                  </TabsContent>
+                </Tabs>
+              </FormField>
+            </div>
           </div>
 
-          <FormField label={t("agent.form.files")} hint={t("agent.form.filesHint")}>
-            <Tabs value={currentFile} onValueChange={setCurrentFile}>
-              <TabsList className="grid grid-cols-5">
+          {/* 工作区文件 */}
+          <div className="space-y-3 rounded-lg border p-4">
+            <div>
+              <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{t("agent.form.files")}</h4>
+              <p className="text-muted-foreground mt-0.5 text-[11px]">{t("agent.form.filesHint")}</p>
+            </div>
+            <Tabs value={currentFile} onValueChange={setCurrentFile} orientation="vertical" className="flex gap-3">
+              <TabsList className="h-fit w-24 shrink-0 flex-col gap-1 rounded-lg p-[3px]">
                 {EDITABLE_BOOTSTRAP_FILES.map((f) => (
-                  <TabsTrigger key={f} value={f} className="text-[11px]">
+                  <TabsTrigger key={f} value={f} className="h-7 flex-none justify-start px-2 py-1 text-[11px]">
                     {f.replace(".md", "")}
                   </TabsTrigger>
                 ))}
               </TabsList>
-              {EDITABLE_BOOTSTRAP_FILES.map((f) => (
-                <TabsContent key={f} value={f} className="mt-2">
-                  <Textarea
-                    value={files[f] ?? ""}
-                    onChange={(e) => setFiles({ ...files, [f]: e.target.value })}
-                    placeholder={t("agent.form.filePlaceholder", { file: f })}
-                    disabled={submitting}
-                    className="min-h-[140px] font-mono text-xs"
-                  />
-                </TabsContent>
-              ))}
+              <div className="min-w-0 flex-1">
+                {EDITABLE_BOOTSTRAP_FILES.map((f) => (
+                  <TabsContent key={f} value={f} className="mt-0">
+                    <Textarea
+                      value={files[f] ?? ""}
+                      onChange={(e) => setFiles({ ...files, [f]: e.target.value })}
+                      placeholder={t("agent.form.filePlaceholder", { file: f })}
+                      disabled={submitting}
+                      className="min-h-[160px] font-mono text-xs"
+                    />
+                  </TabsContent>
+                ))}
+              </div>
             </Tabs>
-          </FormField>
+          </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="px-6 pt-2 pb-6">
           <Button variant="outline" onClick={() => handleClose(false)} disabled={submitting}>
             {t("agent.form.cancel")}
           </Button>

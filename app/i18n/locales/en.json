@@ -76,6 +76,8 @@
     },
     "form": {
       "hint": "ID cannot be changed after creation. Workspace dir is named workspace-<ID>",
+      "basicInfo": "Basic info",
+      "appearance": "Appearance",
       "id": "ID",
       "idHint": "Unique identifier, lowercase alphanumeric / - / _, max 64 chars",
       "idPlaceholder": "my-agent",

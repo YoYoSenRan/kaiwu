@@ -39,7 +39,5 @@ async function cleanupOldAvatars(avatarDir: string): Promise<void> {
   } catch {
     return
   }
-  await Promise.all(
-    entries.filter((e) => e.isFile() && e.name.startsWith("avatar.")).map((e) => fs.unlink(path.join(avatarDir, e.name))),
-  )
+  await Promise.all(entries.filter((e) => e.isFile() && e.name.startsWith("avatar.")).map((e) => fs.unlink(path.join(avatarDir, e.name))))
 }

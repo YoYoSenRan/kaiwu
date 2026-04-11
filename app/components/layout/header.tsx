@@ -22,10 +22,7 @@ function useBreadcrumbs(): Crumb[] {
   const { pathname } = useLocation()
 
   if (pathname.startsWith("/agent/")) {
-    return [
-      { label: t("nav.agent"), path: "/agent" },
-      { label: t("common.detail") },
-    ]
+    return [{ label: t("nav.agent"), path: "/agent" }, { label: t("common.detail") }]
   }
 
   const item = NAV_ITEMS.find((n) => n.path === pathname)
