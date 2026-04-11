@@ -1,27 +1,25 @@
-import { useCallback, useEffect, useRef, useState } from "react"
-import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
+import { useTranslation } from "react-i18next"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { ActionsColumn, CardHeader, EventsList, StatusColumn } from "./openclaw-card-parts"
+import type { CompatResult, OpenClawStatus, PluginEvent } from "../../../../electron/preload"
 
 /** 最近事件缓冲上限。超过自动丢弃旧的，避免长时间运行内存膨胀。 */
 const EVENT_LOG_MAX = 20
 
-type Status = Awaited<ReturnType<typeof window.electron.openclaw.detect>>
-type Compat = Awaited<ReturnType<typeof window.electron.openclaw.check>>
-type PluginEvent = Parameters<Parameters<typeof window.electron.openclaw.on.event>[0]>[0]
 type BusyAction = null | "detect" | "sync" | "uninstall" | "restart"
 
 /** 设置页面的 OpenClaw 桥接状态卡片。负责数据拉取与动作分发，UI 由 card-parts 提供。 */
 export function OpenClawCard() {
   const { t } = useTranslation()
-  const [status, setStatus] = useState<Status | null>(null)
-  const [compat, setCompat] = useState<Compat | null>(null)
+  const [status, setStatus] = useState<OpenClawStatus | null>(null)
+  const [compat, setCompat] = useState<CompatResult | null>(null)
   const [busy, setBusy] = useState<BusyAction>(null)
   const [events, setEvents] = useState<PluginEvent[]>([])
   const mounted = useRef(true)
 
   const refresh = useCallback(async () => {
-    const [s, c] = await Promise.all([window.electron.openclaw.detect(), window.electron.openclaw.check()])
+    const [s, c] = await Promise.all([window.electron.openclaw.lifecycle.detect(), window.electron.openclaw.lifecycle.check()])
     if (!mounted.current) return
     setStatus(s)
     setCompat(c)
@@ -30,10 +28,10 @@ export function OpenClawCard() {
   useEffect(() => {
     mounted.current = true
     void refresh()
-    const offEvent = window.electron.openclaw.on.event((ev) => {
+    const offEvent = window.electron.openclaw.plugin.on.event((ev) => {
       setEvents((prev) => [ev, ...prev].slice(0, EVENT_LOG_MAX))
     })
-    const offStatus = window.electron.openclaw.on.status((s) => setStatus(s))
+    const offStatus = window.electron.openclaw.lifecycle.on.status((s) => setStatus(s))
     return () => {
       mounted.current = false
       offEvent()
@@ -54,7 +52,7 @@ export function OpenClawCard() {
     () =>
       wrap("sync", async () => {
         try {
-          const next = await window.electron.openclaw.install()
+          const next = await window.electron.openclaw.plugin.install()
           if (mounted.current) setStatus(next)
           toast.success(t("settings.openclaw.syncOk"))
         } catch (err) {
@@ -67,7 +65,7 @@ export function OpenClawCard() {
   const handleUninstall = useCallback(
     () =>
       wrap("uninstall", async () => {
-        const next = await window.electron.openclaw.uninstall()
+        const next = await window.electron.openclaw.plugin.uninstall()
         if (mounted.current) setStatus(next)
         toast.success(t("settings.openclaw.uninstallOk"))
       }),
@@ -77,7 +75,7 @@ export function OpenClawCard() {
   const handleRestart = useCallback(
     () =>
       wrap("restart", async () => {
-        const r = await window.electron.openclaw.restart()
+        const r = await window.electron.openclaw.lifecycle.restart()
         if (r.ok) toast.success(t("settings.openclaw.restartOk"))
         else toast.error(t("settings.openclaw.restartFail", { message: r.error ?? "unknown" }))
       }),

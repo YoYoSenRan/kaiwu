@@ -1,11 +1,11 @@
 import { useEffect } from "react"
-
 import { useGatewayStore } from "@/stores/gateway"
 
 /**
- * gateway 连接生命周期 hook。
- * 在 App 顶层调用一次：订阅主进程状态推送、同步当前状态、自动扫描本机。
- * 返回连接状态 + connect/disconnect 操作。
+ * gateway 连接状态订阅 hook。
+ * 订阅主进程推送的连接状态变化 + 挂载时同步当前状态快照。
+ * **不触发连接动作**——bootstrap 扫描由 App 顶层显式调用 connect()。
+ * 返回状态字段 + connect/disconnect 操作供业务组件使用。
  */
 export function useGateway() {
   const status = useGatewayStore((s) => s.status)
@@ -15,17 +15,9 @@ export function useGateway() {
   const set = useGatewayStore((s) => s.set)
 
   useEffect(() => {
-    // 订阅主进程推送的连接状态变化
     const off = window.electron.openclaw.gateway.on.status(set)
-
-    // 同步一次当前状态（hook 挂载前可能已连上）
+    // 订阅后立即同步一次：hook 挂载前主进程可能已推送过状态
     window.electron.openclaw.gateway.state().then(set)
-
-    // 空闲时自动扫描本机 gateway
-    if (useGatewayStore.getState().status === "idle") {
-      window.electron.openclaw.gateway.connect()
-    }
-
     return off
   }, [set])
 

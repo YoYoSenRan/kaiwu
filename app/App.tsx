@@ -1,20 +1,19 @@
-import { AnimatePresence, motion } from "motion/react"
-import { Route, Routes, useLocation } from "react-router"
-
-import { Footer } from "@/components/layout/footer"
+import Chat from "@/pages/chat"
+import Task from "@/pages/task"
+import Agent from "@/pages/agent"
+import Connect from "@/pages/connect"
+import Settings from "@/pages/settings"
+import Dashboard from "@/pages/dashboard"
+import Knowledge from "@/pages/knowledge"
 import { Header } from "@/components/layout/header"
+import { Footer } from "@/components/layout/footer"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TitleBar } from "@/components/layout/titlebar"
 import { useGateway } from "@/hooks/use-gateway"
-import { useSidebarShortcut } from "@/hooks/use-sidebar-shortcut"
+import { AnimatePresence, motion } from "motion/react"
+import { Route, Routes, useLocation } from "react-router"
 import { useThemeEffect } from "@/hooks/use-theme-effect"
-import Agent from "@/pages/agent"
-import Chat from "@/pages/chat"
-import Connect from "@/pages/connect"
-import Dashboard from "@/pages/dashboard"
-import Knowledge from "@/pages/knowledge"
-import Settings from "@/pages/settings"
-import Task from "@/pages/task"
+import { useSidebarShortcut } from "@/hooks/use-sidebar-shortcut"
 
 function App() {
   useThemeEffect()
@@ -22,6 +21,12 @@ function App() {
   useGateway()
   // 路由切换时用 location.pathname 当 key，让 AnimatePresence 触发新旧节点的进退场
   const location = useLocation()
+
+  // bootstrap: 应用启动后自动扫描本机 gateway。主进程 startGatewayConnection 自身幂等，
+  // 这里不需检查状态；放在 App 而非 use-gateway 内部是为了保持 hook 纯订阅、副作用透明。
+  useEffect(() => {
+    void window.electron.openclaw.gateway.connect()
+  }, [])
 
   return (
     <>
