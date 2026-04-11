@@ -50,4 +50,15 @@ export const openclawBridge: OpenClawBridge = {
     patch: (params) => ipcRenderer.invoke(openclawChannels.session.patch, params),
     delete: (params) => ipcRenderer.invoke(openclawChannels.session.delete, params),
   },
+
+  agents: {
+    list: () => ipcRenderer.invoke(openclawChannels.agents.list),
+    create: (params) => ipcRenderer.invoke(openclawChannels.agents.create, params),
+    update: (params) => ipcRenderer.invoke(openclawChannels.agents.update, params),
+    delete: (params) => ipcRenderer.invoke(openclawChannels.agents.delete, params),
+  },
+
+  models: {
+    list: () => ipcRenderer.invoke(openclawChannels.models.list),
+  },
 }

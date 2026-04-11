@@ -1,8 +1,10 @@
 import { safeHandle } from "../../core/ipc"
 import { openclawChannels } from "./channels"
 import type { GatewayConnectParams, InvokeArgs } from "./types"
+import { agentsCreate, agentsDelete, agentsList, agentsUpdate, modelsList } from "./agent/methods"
 import { getGatewayState, requireClient, startGatewayConnection, stopGatewayConnection } from "./core/connection"
 import { checkCompat, detect, installPlugin, invokePlugin, restartOpenclaw, startPlugin, uninstallPlugin } from "./core/lifecycle"
+import type { AgentsCreateParams, AgentsDeleteParams, AgentsUpdateParams } from "./agent/contract"
 import type { ChatAbortParams, ChatSendParams, SessionCreateParams, SessionDeleteParams, SessionListParams, SessionPatchParams } from "./gateway/contract"
 
 /**
@@ -36,4 +38,13 @@ export function setupOpenclaw(): void {
   safeHandle(openclawChannels.session.list, (params) => requireClient().sessionList(params as SessionListParams))
   safeHandle(openclawChannels.session.patch, (params) => requireClient().sessionPatch(params as SessionPatchParams))
   safeHandle(openclawChannels.session.delete, (params) => requireClient().sessionDelete(params as SessionDeleteParams))
+
+  // --- agents ---
+  safeHandle(openclawChannels.agents.list, () => agentsList(requireClient()))
+  safeHandle(openclawChannels.agents.create, (params) => agentsCreate(requireClient(), params as AgentsCreateParams))
+  safeHandle(openclawChannels.agents.update, (params) => agentsUpdate(requireClient(), params as AgentsUpdateParams))
+  safeHandle(openclawChannels.agents.delete, (params) => agentsDelete(requireClient(), params as AgentsDeleteParams))
+
+  // --- models ---
+  safeHandle(openclawChannels.models.list, () => modelsList(requireClient()))
 }

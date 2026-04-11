@@ -1,5 +1,12 @@
 /** openclaw feature 的 IPC 通道常量 */
 export const openclawChannels = {
+  /** Agent 管理（agents.* RPC） */
+  agents: {
+    list: "openclaw:agents:list",
+    create: "openclaw:agents:create",
+    update: "openclaw:agents:update",
+    delete: "openclaw:agents:delete",
+  },
   /** 聊天 */
   chat: {
     send: "openclaw:chat:send",
@@ -20,6 +27,10 @@ export const openclawChannels = {
     check: "openclaw:lifecycle:check",
     detect: "openclaw:lifecycle:detect",
     restart: "openclaw:lifecycle:restart",
+  },
+  /** 可用模型清单（models.list RPC） */
+  models: {
+    list: "openclaw:models:list",
   },
   /** 插件管理与通信 */
   plugin: {

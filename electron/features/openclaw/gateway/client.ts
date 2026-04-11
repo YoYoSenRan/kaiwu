@@ -35,12 +35,23 @@ const REQUEST_TIMEOUT_MS = 15_000
 /** 重连参数。 */
 const RECONNECT_BASE_MS = 1_000
 const RECONNECT_MAX_MS = 15_000
+/** 心跳 ping 间隔（ms）。间隔过短会产生无谓流量，过长则感知死连接变慢。 */
+const PING_INTERVAL_MS = 15_000
+/** 连续没收到 pong 的容忍时长（ms）。超过即判定连接已死，强制重连。3 × ping 间隔容忍单次丢包。 */
+const PONG_TIMEOUT_MS = 45_000
 
 type ConnectionListener = (connected: boolean) => void
 type ConnectErrorListener = (err: Error) => void
 type EventListener = (frame: EventFrame) => void
 type ChatEventListener = (event: ChatEvent) => void
 type PendingReq = { resolve: (v: unknown) => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> }
+
+/** 心跳与重连时的客户端指标。字段为 null 表示"本次采样无数据"，调用方应保留上一次已知值。 */
+export interface GatewayClientMetrics {
+  pingLatencyMs?: number | null
+  nextRetryAt?: number | null
+}
+type MetricsListener = (metrics: GatewayClientMetrics) => void
 
 /**
  * Gateway WS RPC 客户端。
@@ -55,11 +66,15 @@ export class GatewayClient {
   private currentAuth: { token?: string; password?: string } = {}
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private reconnectAttempt = 0
+  private pingTimer: ReturnType<typeof setInterval> | null = null
+  private lastPongAt = 0
+  private lastPingSentAt = 0
 
   private readonly pending = new Map<string, PendingReq>()
   private readonly eventListeners = new Set<EventListener>()
   private readonly connectionListeners = new Set<ConnectionListener>()
   private readonly connectErrorListeners = new Set<ConnectErrorListener>()
+  private readonly metricsListeners = new Set<MetricsListener>()
   private challengeResolver: ((c: ConnectChallenge) => void) | null = null
 
   // ChatEvent 按 session 分发
@@ -91,6 +106,7 @@ export class GatewayClient {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
     }
+    this.stopHeartbeat()
     this.rejectAllPending("disconnected")
     try {
       this.ws?.close(1000)
@@ -215,6 +231,17 @@ export class GatewayClient {
   }
 
   /**
+   * 订阅心跳延迟和重连时间等客户端指标变化。
+   * 每次 pong 成功或 scheduleReconnect 排期时会触发一次。
+   * @param listener 指标回调，只携带变化的字段
+   * @returns 取消订阅函数
+   */
+  onMetrics(listener: MetricsListener): () => void {
+    this.metricsListeners.add(listener)
+    return () => this.metricsListeners.delete(listener)
+  }
+
+  /**
    * 订阅指定 session 的 ChatEvent。
    * @param sessionKey 目标会话
    * @param listener 事件回调
@@ -327,6 +354,7 @@ export class GatewayClient {
 
     this.connected = true
     this.reconnectAttempt = 0
+    this.startHeartbeat()
     for (const fn of this.connectionListeners) fn(true)
     log.info(`[gateway] connected, protocol=${helloOk.protocol}`)
 
@@ -350,6 +378,7 @@ export class GatewayClient {
   }
 
   private onClose(code: number): void {
+    this.stopHeartbeat()
     this.ws = null
     const wasConnected = this.connected
     this.connected = false
@@ -370,12 +399,58 @@ export class GatewayClient {
     this.pending.clear()
   }
 
+  /**
+   * 启动 WS 协议层 ping/pong 心跳。
+   * 定时发 ping 帧，ws 规范要求服务端自动回 pong（无需 gateway 侧改动）。
+   * 连续 PONG_TIMEOUT_MS 没收到 pong 就 terminate 连接，走 onClose 流程触发重连。
+   */
+  private startHeartbeat(): void {
+    if (!this.ws) return
+    this.stopHeartbeat()
+    const now = Date.now()
+    this.lastPongAt = now
+    this.lastPingSentAt = 0
+    this.ws.on("pong", () => {
+      this.lastPongAt = Date.now()
+      // 首次 pong 之前 lastPingSentAt=0，延迟无意义；从第一次成功 ping 往返后才上报
+      if (this.lastPingSentAt > 0) {
+        this.emitMetrics({ pingLatencyMs: this.lastPongAt - this.lastPingSentAt })
+      }
+    })
+    this.pingTimer = setInterval(() => {
+      if (this.ws?.readyState !== WebSocket.OPEN) return
+      if (Date.now() - this.lastPongAt > PONG_TIMEOUT_MS) {
+        // terminate 立即销毁底层 socket，不走 WS 关闭握手——对方已死时 close 会挂住 30s 等对方回 close frame。
+        log.warn(`[gateway] pong timeout after ${PONG_TIMEOUT_MS}ms, force reconnect`)
+        this.ws.terminate()
+        return
+      }
+      this.lastPingSentAt = Date.now()
+      this.ws.ping()
+    }, PING_INTERVAL_MS)
+  }
+
+  /** 停止心跳 interval。pong 监听随 ws 实例 GC 自动清理。 */
+  private stopHeartbeat(): void {
+    if (this.pingTimer) {
+      clearInterval(this.pingTimer)
+      this.pingTimer = null
+    }
+  }
+
+  /** 通知所有 metrics 订阅者。listener 可能只关心部分字段，保持 partial 语义。 */
+  private emitMetrics(metrics: GatewayClientMetrics): void {
+    for (const fn of this.metricsListeners) fn(metrics)
+  }
+
   private scheduleReconnect(): void {
     if (this.stopped || this.reconnectTimer) return
     const delay = Math.min(RECONNECT_BASE_MS * Math.pow(1.7, this.reconnectAttempt), RECONNECT_MAX_MS)
     const jitter = Math.random() * delay * 0.3
+    const totalDelay = delay + jitter
     this.reconnectAttempt++
-    log.info(`[gateway] reconnect in ${Math.round(delay + jitter)}ms (attempt ${this.reconnectAttempt})`)
+    log.info(`[gateway] reconnect in ${Math.round(totalDelay)}ms (attempt ${this.reconnectAttempt})`)
+    this.emitMetrics({ nextRetryAt: Date.now() + totalDelay, pingLatencyMs: null })
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
       this.doConnect(this.currentUrl, this.currentAuth).catch((err) => {
