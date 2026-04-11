@@ -32,9 +32,7 @@ export default function AgentDetail() {
   }
 
   if (error || !data) {
-    return (
-      <div className="bg-destructive/10 text-destructive rounded-md px-4 py-3 text-sm">{error ?? t("agent.detail.notFound")}</div>
-    )
+    return <div className="bg-destructive/10 text-destructive rounded-md px-4 py-3 text-sm">{error ?? t("agent.detail.notFound")}</div>
   }
 
   const row = data.row

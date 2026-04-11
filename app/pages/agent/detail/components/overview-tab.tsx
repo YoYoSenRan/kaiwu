@@ -56,7 +56,7 @@ export function OverviewTab({ row, onChanged }: Props) {
   }
 
   return (
-    <div className="space-y-4 p-4 text-sm">
+    <div className="space-y-4 text-sm">
       {error && <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-xs">{t(`agent.error.${errorCodeToKey(error)}`, { message: error })}</div>}
 
       <Readonly label={t("agent.overview.idLabel")} value={row.agent} mono />
@@ -76,7 +76,9 @@ export function OverviewTab({ row, onChanged }: Props) {
         <Label className="text-xs">{t("agent.overview.modelLabel")}</Label>
         <Select value={model || "__default__"} onValueChange={(v) => setModel(v === "__default__" ? "" : v)} disabled={saving}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder={t("agent.overview.modelDefault")}>
+              {model ? (models.find((m) => m.id === model)?.name ?? model) : t("agent.overview.modelDefault")}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="__default__">{t("agent.overview.modelDefault")}</SelectItem>

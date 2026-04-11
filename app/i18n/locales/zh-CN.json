@@ -59,7 +59,7 @@
   "agent": {
     "title": "智能体",
     "description": "管理与编排你的智能体",
-    "createAgent": "新建智能体",
+    "createAgent": "新建",
     "emptyTitle": "还没有智能体",
     "emptyDescription": "创建第一个智能体开始编排任务",
     "card": {

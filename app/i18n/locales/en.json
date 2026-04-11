@@ -59,7 +59,7 @@
   "agent": {
     "title": "Agent",
     "description": "Manage and orchestrate your agents",
-    "createAgent": "Create Agent",
+    "createAgent": "Create",
     "emptyTitle": "No agents yet",
     "emptyDescription": "Create your first agent to start orchestrating tasks",
     "card": {

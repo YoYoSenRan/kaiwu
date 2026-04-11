@@ -1,3 +1,4 @@
+import { motion } from "motion/react"
 import { Bot, CircleAlert, FolderX } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/ui/badge"
@@ -12,8 +13,8 @@ interface Props {
 }
 
 /**
- * 单个 agent 的卡片。点击展开详情 Drawer。
- * avatar 优先用 avatar_url（gateway resolve 好的），失败 fallback 到 emoji，再 fallback 到 Bot 图标。
+ * 单个 agent 的卡片。点击跳转到详情页。
+ * avatar 优先用 avatar_url，失败 fallback 到 emoji，再 fallback 到 Bot 图标。
  */
 export function AgentCard({ row, onClick }: Props) {
   const { t } = useTranslation()
@@ -21,25 +22,32 @@ export function AgentCard({ row, onClick }: Props) {
   const busy = live?.busy ?? false
 
   return (
-    <Card className="hover:border-primary/40 cursor-pointer transition-colors" onClick={() => onClick(row.id)}>
-      <CardContent className="flex items-start gap-3 p-4">
-        <Avatar className="size-10 shrink-0">
-          <AvatarImage src={row.avatar_url ?? undefined} alt={row.name} />
-          <AvatarFallback className="bg-muted text-base">{row.emoji || <Bot className="size-5 opacity-60" />}</AvatarFallback>
-        </Avatar>
-
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex items-center justify-between gap-2">
-            <div className="truncate text-sm font-medium">{row.name}</div>
-            {busy ? (
-              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-500">
-                <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
-                {t("agent.card.busy")}
+    <motion.div whileHover={{ y: -2 }} whileTap={{ y: 0 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+      <Card
+        className="hover:shadow-md hover:border-primary/30 cursor-pointer transition-all duration-200"
+        onClick={() => onClick(row.id)}
+      >
+        <CardContent className="flex items-start gap-3 p-4">
+          <div className="relative shrink-0">
+            <Avatar className="size-10">
+              <AvatarImage src={row.avatar_url ?? undefined} alt={row.name} />
+              <AvatarFallback className="bg-muted text-base">{row.emoji || <Bot className="size-5 opacity-60" />}</AvatarFallback>
+            </Avatar>
+            {busy && (
+              <span className="absolute -right-0.5 -bottom-0.5 flex size-3 items-center justify-center rounded-full border-2 border-background bg-emerald-500">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60" />
               </span>
-            ) : null}
+            )}
           </div>
-          <div className="text-muted-foreground truncate font-mono text-xs">{row.agent}</div>
-          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+
+          <div className="min-w-0 flex-1 space-y-0.5">
+            <div className="truncate text-base font-semibold leading-tight">{row.name}</div>
+            <div className="text-muted-foreground/60 truncate font-mono text-[11px]">{row.agent}</div>
+          </div>
+        </CardContent>
+
+        <div className="border-t border-border/50 flex h-9 items-center px-4">
+          <div className="flex flex-wrap items-center gap-1.5">
             <Badge variant="outline" className="text-[10px] font-normal">
               {row.model ?? t("agent.card.noModel")}
             </Badge>
@@ -57,7 +65,7 @@ export function AgentCard({ row, onClick }: Props) {
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </Card>
+    </motion.div>
   )
 }
