@@ -1,10 +1,11 @@
 import Chat from "@/pages/chat"
 import Task from "@/pages/task"
-import Agent from "@/pages/agent"
 import Connect from "@/pages/connect"
 import Settings from "@/pages/settings"
 import Dashboard from "@/pages/dashboard"
 import Knowledge from "@/pages/knowledge"
+import AgentList from "@/pages/agent/list"
+import AgentDetail from "@/pages/agent/detail"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { TitleBar } from "@/components/layout/titlebar"
@@ -43,7 +44,8 @@ function App() {
                   <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15, ease: "easeOut" }}>
                     <Routes location={location}>
                       <Route path="/" element={<Dashboard />} />
-                      <Route path="/agent" element={<Agent />} />
+                      <Route path="/agent" element={<AgentList />} />
+                      <Route path="/agent/:id" element={<AgentDetail />} />
                       <Route path="/task" element={<Task />} />
                       <Route path="/chat" element={<Chat />} />
                       <Route path="/knowledge" element={<Knowledge />} />
