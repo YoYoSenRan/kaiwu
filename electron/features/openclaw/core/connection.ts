@@ -50,11 +50,11 @@ export async function startGatewayConnection(params?: GatewayConnectParams): Pro
       await connectDirect(params)
     } else {
       await connectByDetection()
-      // 扫描模式：未连上时轮询等待上线
+      // 扫描模式 pollTimer 只守"gateway 进程尚未启动"的等待期：
+      // 一旦 client 创建（无论当前连上没），WS 层的断线重连完全交给 GatewayClient.scheduleReconnect
+      // 指数退避处理，避免和 client 自身重连机制互掐（见 principles.md#9）。
       pollTimer = setInterval(() => {
-        if (client?.isConnected()) return
-        client?.disconnect()
-        client = null
+        if (client) return
         void connectByDetection()
       }, POLL_INTERVAL_MS)
     }

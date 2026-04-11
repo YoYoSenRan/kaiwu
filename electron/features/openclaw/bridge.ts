@@ -1,7 +1,6 @@
-import type { GatewayConnectParams, GatewayEventFrame, GatewayState, InvokeArgs, MonitorEvent, OpenClawBridge, OpenClawStatus, PluginEvent } from "./types"
-
 import { ipcRenderer } from "electron"
 import { openclawChannels } from "./channels"
+import type { GatewayConnectParams, GatewayEventFrame, GatewayState, InvokeArgs, MonitorEvent, OpenClawBridge, OpenClawStatus, PluginEvent } from "./types"
 
 /** 订阅一个 ipcRenderer 事件，返回取消订阅函数。 */
 function subscribe<T>(channel: string, listener: (payload: T) => void): () => void {

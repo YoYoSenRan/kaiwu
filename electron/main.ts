@@ -1,16 +1,16 @@
 import "./core/logger"
 import { app } from "electron"
-import { prepareApp, requestSingleInstance, setupAppLifecycle } from "./core/app"
 import { setupAppMenu } from "./core/menu"
 import { setupCSP } from "./core/security"
+import { setupLog } from "./features/log/ipc"
 import { createMainWindow } from "./core/window"
 import { setupChrome } from "./features/chrome/ipc"
-import { setupDeeplinkListeners } from "./features/deeplink/ipc"
-import { flushPendingDeepLink, setupProtocol } from "./features/deeplink/service"
-import { setupLog } from "./features/log/ipc"
-import { stopPlugin } from "./features/openclaw/core/lifecycle"
-import { setupOpenclaw } from "./features/openclaw/ipc"
 import { setupUpdater } from "./features/updater/ipc"
+import { setupOpenclaw } from "./features/openclaw/ipc"
+import { stopPlugin } from "./features/openclaw/core/lifecycle"
+import { setupDeeplinkListeners } from "./features/deeplink/ipc"
+import { prepareApp, requestSingleInstance, setupAppLifecycle } from "./core/app"
+import { flushPendingDeepLink, setupProtocol } from "./features/deeplink/service"
 
 // ===== 启动前同步准备 =====
 

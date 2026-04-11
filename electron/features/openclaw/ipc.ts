@@ -1,10 +1,9 @@
-import type { GatewayConnectParams, InvokeArgs } from "./types"
-import type { ChatAbortParams, ChatSendParams, SessionCreateParams, SessionDeleteParams, SessionListParams, SessionPatchParams } from "./gateway/contract"
-
 import { safeHandle } from "../../core/ipc"
 import { openclawChannels } from "./channels"
+import type { GatewayConnectParams, InvokeArgs } from "./types"
 import { getGatewayState, requireClient, startGatewayConnection, stopGatewayConnection } from "./core/connection"
 import { checkCompat, detect, installPlugin, invokePlugin, restartOpenclaw, startPlugin, uninstallPlugin } from "./core/lifecycle"
+import type { ChatAbortParams, ChatSendParams, SessionCreateParams, SessionDeleteParams, SessionListParams, SessionPatchParams } from "./gateway/contract"
 
 /**
  * 注册 openclaw feature 的所有 IPC handler，并启动本地 bridge server。

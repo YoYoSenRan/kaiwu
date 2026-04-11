@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react"
 import { useTranslation } from "react-i18next"
-
 import { useGateway } from "@/hooks/use-gateway"
+import { gatewayStatusDot } from "@/lib/gateway-status"
 
 type AuthMode = "token" | "password"
 
@@ -39,7 +39,7 @@ function StatusSection({ status, mode, url, error, onDisconnect, onScan }: { sta
 
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <span className={`size-2 shrink-0 rounded-full ${status === "connected" ? "bg-emerald-500" : status === "auth-error" ? "bg-red-500" : status === "connecting" || status === "detecting" ? "bg-amber-400 deck-pulse" : "bg-muted-foreground/40"}`} />
+          <span className={`size-2 shrink-0 rounded-full ${gatewayStatusDot(status)}`} />
           <span className="text-sm">{t(`connect.status.${status}`)}</span>
         </div>
 
@@ -57,7 +57,7 @@ function StatusSection({ status, mode, url, error, onDisconnect, onScan }: { sta
           </div>
         )}
 
-        {error && <p className="text-xs text-red-500 font-mono">{error}</p>}
+        {error && <p className="text-xs deck-accent font-mono">{error}</p>}
 
         <div className="flex gap-2 pt-2">
           {status === "connected" ? (

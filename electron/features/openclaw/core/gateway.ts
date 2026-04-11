@@ -22,49 +22,19 @@ export type GatewayStatus = Omit<OpenClawStatus, "bridgeInstalled" | "installedB
 
 /**
  * 多层侦测本机 OpenClaw gateway。
- * 任一层命中即返回，未命中继续下一层。所有字段都尽可能填写（已安装但未运行的情形也有价值）。
+ * 编排四层探测：运行时（lock + port）→ 路径存在性 → CLI → 版本回填。
+ * 任一层命中即继续后续字段补齐，未命中继续下一层。
  * 不涉及 kaiwu 插件状态——插件检测由 plugin.ts 的 detectPluginInstall 负责。
  */
 export async function detectGateway(): Promise<GatewayStatus> {
   const configDir = resolveConfigDir()
-  const extensionsDir = path.join(configDir, "extensions")
-  const base: GatewayStatus = {
-    installed: false,
-    running: false,
-    version: null,
-    configDir,
-    extensionsDir,
-    gatewayPort: null,
-    detectedBy: null,
-  }
-
-  // 先看配置目录在不在，任何一层探测成功都至少说明"装过"
   const dirExists = await pathExists(configDir)
+  const base = await runtimeProbe(configDir)
 
-  // 1. lock 文件（最权威：有存活 pid 就能确定是 OpenClaw 本身在跑，不会被占同端口的其他进程误伤）
-  const liveLock = await findLiveLock()
-  if (liveLock) {
-    base.installed = true
-    base.running = true
-    base.detectedBy = "lock"
-  }
-
-  // 2. 端口探测（拿到具体 gatewayPort；未命中 lock 时也能独立证明运行中）
-  const portAlive = await probePort(DEFAULT_GATEWAY_PORT)
-  if (portAlive) {
-    base.installed = true
-    base.running = true
-    base.gatewayPort = DEFAULT_GATEWAY_PORT
-    if (!base.detectedBy) base.detectedBy = "port"
-  }
-
-  // 3. 配置目录存在（证明至少装过）
   if (!base.installed && dirExists) {
     base.installed = true
     base.detectedBy = "path"
   }
-
-  // 4. CLI 可用性（兜底，能拿到版本）
   if (!base.installed) {
     const cli = await probeCli()
     if (cli.found) {
@@ -73,10 +43,40 @@ export async function detectGateway(): Promise<GatewayStatus> {
       base.version = cli.version
     }
   }
-
-  // 版本拿取：优先 CLI（若还没拿），否则读 configDir/package.json 退路
   if (base.installed && !base.version) {
     base.version = await readInstalledVersion(configDir)
+  }
+  return base
+}
+
+/**
+ * 运行时探测：构造初始 status 并依次跑 lock / port 两层强证据。
+ * lock 文件最权威（有存活 pid 能确定是 OpenClaw 进程），port 探测兜底并能拿到端口号。
+ */
+async function runtimeProbe(configDir: string): Promise<GatewayStatus> {
+  const base: GatewayStatus = {
+    installed: false,
+    running: false,
+    version: null,
+    configDir,
+    extensionsDir: path.join(configDir, "extensions"),
+    gatewayPort: null,
+    detectedBy: null,
+  }
+
+  const liveLock = await findLiveLock()
+  if (liveLock) {
+    base.installed = true
+    base.running = true
+    base.detectedBy = "lock"
+  }
+
+  const portAlive = await probePort(DEFAULT_GATEWAY_PORT)
+  if (portAlive) {
+    base.installed = true
+    base.running = true
+    base.gatewayPort = DEFAULT_GATEWAY_PORT
+    if (!base.detectedBy) base.detectedBy = "port"
   }
 
   return base
