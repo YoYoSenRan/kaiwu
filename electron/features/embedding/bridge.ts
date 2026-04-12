@@ -7,7 +7,7 @@ export const embeddingBridge: EmbeddingBridge = {
   setConfig: (config) => ipcRenderer.invoke(embeddingChannels.config.set, config),
   listModels: () => ipcRenderer.invoke(embeddingChannels.model.list),
   download: (modelId) => ipcRenderer.invoke(embeddingChannels.model.download, modelId),
-  test: () => ipcRenderer.invoke(embeddingChannels.test),
+  test: (config) => ipcRenderer.invoke(embeddingChannels.test, config),
   onProgress(listener) {
     const handler = (_: unknown, info: unknown) => listener(info as Parameters<typeof listener>[0])
     ipcRenderer.on(embeddingChannels.model.progress, handler)

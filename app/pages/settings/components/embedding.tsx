@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { EmbeddingConfig, ModelInfo } from "../../../../electron/features/embedding/types"
 
 /** Embedding 引擎配置卡片：本地模型下载 + 远程 API 配置。 */
@@ -66,27 +65,25 @@ export function EmbeddingCard() {
     setTesting(true)
     setTestResult(null)
     try {
-      const result = await window.electron.embedding.test()
+      // 传入当前表单配置，测试前会自动保存并切换引擎
+      const result = await window.electron.embedding.test(config)
       if (result.ok) {
-        setTestResult(t("settings.embedding.testOk", { dimensions: result.dimensions }))
+        setTestResult(t("settings.embedding.testOk", { dimensions: result.dimensions, model: result.model }))
+      } else if (result.error === "MODEL_NOT_DOWNLOADED") {
+        setTestResult(t("settings.embedding.testFail", { error: t("settings.embedding.statusNotCached") }))
       } else {
         setTestResult(t("settings.embedding.testFail", { error: result.error }))
       }
     } finally {
       setTesting(false)
     }
-  }, [t])
+  }, [t, config])
 
   const selectedModel = models.find((m) => m.id === config.localModel)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("settings.embedding.title")}</CardTitle>
-        <CardDescription>{t("settings.embedding.description")}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* 引擎类型选择 */}
+    <div className="space-y-6">
+      {/* 引擎类型选择 */}
         <div className="flex items-center justify-between">
           <Label>{t("settings.embedding.providerLabel")}</Label>
           <div className="flex gap-1">
@@ -126,7 +123,7 @@ export function EmbeddingCard() {
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper">
                 {models.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
                     {m.name} · {m.size}
@@ -140,9 +137,7 @@ export function EmbeddingCard() {
                 <Progress value={downloadProgress} />
               </div>
             )}
-            {selectedModel?.cached ? (
-              <p className="text-muted-foreground text-xs">{t("settings.embedding.ready")}</p>
-            ) : (
+            {!selectedModel?.cached && (
               <Button size="sm" disabled={downloading || !config.localModel} onClick={handleDownload}>
                 {t("settings.embedding.download")}
               </Button>
@@ -192,7 +187,6 @@ export function EmbeddingCard() {
           </Button>
           {testResult && <p className="text-muted-foreground text-xs">{testResult}</p>}
         </div>
-      </CardContent>
-    </Card>
+    </div>
   )
 }

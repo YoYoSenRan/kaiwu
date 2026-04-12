@@ -177,6 +177,7 @@
     "tabs": {
       "documents": "文档",
       "search": "检索测试",
+      "graph": "图谱",
       "settings": "设置"
     },
     "doc": {
@@ -311,7 +312,7 @@
       "providerLocal": "本地",
       "providerRemote": "远程",
       "modelLabel": "模型",
-      "statusCached": "已缓存",
+      "statusCached": "已下载",
       "statusNotCached": "未下载",
       "statusDownloading": "下载中",
       "download": "下载模型",
@@ -323,7 +324,7 @@
       "remoteModelPlaceholder": "text-embedding-ada-002",
       "test": "测试连接",
       "testing": "测试中...",
-      "testOk": "连接成功（{{dimensions}} 维）",
+      "testOk": "{{model}} 连接成功（{{dimensions}} 维）",
       "testFail": "测试失败：{{error}}",
       "save": "保存配置",
       "saved": "配置已保存"

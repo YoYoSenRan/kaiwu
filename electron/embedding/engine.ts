@@ -74,18 +74,34 @@ export interface TestResult {
   ok: boolean
   error?: string
   dimensions?: number
+  /** 实际测试用的模型标识。 */
+  model?: string
 }
 
 /**
  * 测试当前引擎是否可用。
- * 尝试对一段测试文本做 embed，成功返回维度信息，失败返回错误。
+ * 本地模式会先检查模型是否已缓存，未下载直接返回失败，不触发下载。
  */
 export async function testProvider(): Promise<TestResult> {
   try {
+    log.info(`[embedding/test] providerType=${providerType}, localModelId=${localModelId}`)
+    // 本地模式先检查模型缓存，未下载不应该在测试时静默触发下载
+    if (providerType === "local") {
+      const { isModelCached } = await import("./local")
+      const modelId = localModelId ?? (await import("./models")).DEFAULT_MODEL
+      log.info(`[embedding/test] checking cache for ${modelId}`)
+      const cached = await isModelCached(modelId)
+      log.info(`[embedding/test] cached=${cached}`)
+      if (!cached) return { ok: false, error: "MODEL_NOT_DOWNLOADED", model: modelId }
+    }
+    log.info("[embedding/test] calling getProvider...")
     const p = await getProvider()
+    log.info(`[embedding/test] provider ready: ${p.model} (${p.dimensions}d)`)
     const [result] = await p.embed(["connectivity test"])
-    return { ok: true, dimensions: result.vector.length }
+    log.info(`[embedding/test] embed done, vector length=${result.vector.length}`)
+    return { ok: true, dimensions: result.vector.length, model: p.model }
   } catch (err) {
+    log.error("[embedding/test] error:", err)
     return { ok: false, error: (err as Error).message }
   }
 }

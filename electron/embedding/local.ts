@@ -33,6 +33,21 @@ function getWorker(): Worker {
   return worker
 }
 
+/** 向 Worker 发 init 消息切换模型，等待 ready 确认后才返回。 */
+function initWorkerModel(modelId: string): Promise<void> {
+  const w = getWorker()
+  return new Promise((resolve) => {
+    const handler = (msg: { type: string }) => {
+      if (msg.type === "ready") {
+        w.off("message", handler)
+        resolve()
+      }
+    }
+    w.on("message", handler)
+    w.postMessage({ type: "init", model: modelId })
+  })
+}
+
 /** 通过 Worker 执行批量 embedding，同时转发下载进度。 */
 function embedViaWorker(texts: string[]): Promise<{ vectors: number[][]; tokenCounts: number[] }> {
   const w = getWorker()
@@ -46,7 +61,7 @@ function embedViaWorker(texts: string[]): Promise<{ vectors: number[][]; tokenCo
         reject(new Error(msg.message))
       } else if (msg.type === "progress") {
         const pct = Math.round(msg.progress ?? 0)
-        log.info(`[embedding/local] model download: ${pct}%`)
+        log.info(`[embedding/local] model loading: ${pct}%`)
         progressListener?.(pct)
       }
     }
@@ -70,8 +85,8 @@ function resolveModel(modelId?: string) {
  */
 export async function createLocalProvider(modelId?: string): Promise<EmbeddingProvider> {
   const model = resolveModel(modelId)
-  const w = getWorker()
-  w.postMessage({ type: "init", model: model.id })
+  // 等 Worker 确认切换完成再返回，避免后续 embed 用到旧模型的 pipeline
+  await initWorkerModel(model.id)
 
   return {
     model: model.id,
@@ -92,8 +107,7 @@ export async function createLocalProvider(modelId?: string): Promise<EmbeddingPr
 export async function downloadModel(modelId: string, onProgress: (p: number) => void): Promise<void> {
   progressListener = onProgress
   try {
-    const w = getWorker()
-    w.postMessage({ type: "init", model: modelId })
+    await initWorkerModel(modelId)
     await embedViaWorker([""])
   } finally {
     progressListener = null
@@ -101,16 +115,24 @@ export async function downloadModel(modelId: string, onProgress: (p: number) => 
 }
 
 /**
- * 检查模型是否已缓存在本地。
- * 通过 local_files_only 尝试加载来判断，比猜路径可靠。
+ * 检查模型的所有 pipeline 文件是否已缓存。
+ * 用 pipeline + local_files_only 测试，确保 config + tokenizer + ONNX 权重全部就绪。
  * @param modelId HuggingFace 模型 ID
  */
 export async function isModelCached(modelId: string): Promise<boolean> {
   try {
-    const { AutoModel, env } = await import("@huggingface/transformers")
+    const { pipeline: createPipeline, env } = await import("@huggingface/transformers")
     env.cacheDir = getCacheDir()
-    await AutoModel.from_pretrained(modelId, { local_files_only: true })
-    return true
+    // allowRemoteModels=false 确保完全不发网络请求
+    env.allowRemoteModels = false
+    try {
+      const p = await createPipeline("feature-extraction", modelId, { local_files_only: true })
+      // 释放资源（dispose 如果存在的话）
+      if (p && typeof (p as any).dispose === "function") (p as any).dispose()
+      return true
+    } finally {
+      env.allowRemoteModels = true
+    }
   } catch {
     return false
   }
