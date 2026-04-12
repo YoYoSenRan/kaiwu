@@ -23,6 +23,7 @@ export function KnowledgeTab({ agentId }: Props) {
   }, [agentId])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 初始加载，与 useAgentDetail 同模式
     void refresh()
   }, [refresh])
 
