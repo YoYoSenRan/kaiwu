@@ -26,6 +26,7 @@ export interface RemoteConfig {
 let provider: EmbeddingProvider | null = null
 let providerType: "local" | "remote" = "local"
 let remoteConfig: RemoteConfig | null = null
+let localModelId: string | null = null
 
 /**
  * 获取当前激活的 embedding provider。
@@ -39,7 +40,7 @@ export async function getProvider(): Promise<EmbeddingProvider> {
     provider = createRemoteProvider(remoteConfig)
   } else {
     const { createLocalProvider } = await import("./local")
-    provider = await createLocalProvider()
+    provider = await createLocalProvider(localModelId ?? undefined)
   }
 
   log.info(`[embedding] provider initialized: ${provider.model} (${provider.dimensions}d)`)
@@ -50,15 +51,38 @@ export async function getProvider(): Promise<EmbeddingProvider> {
  * 切换 embedding 引擎。切换后清空缓存的 provider 实例。
  * @param type 引擎类型
  * @param config 远程模式需传配置
+ * @param modelId 本地模式的模型 ID
  */
-export function setProviderType(type: "local" | "remote", config?: RemoteConfig): void {
+export function setProviderType(type: "local" | "remote", config?: RemoteConfig, modelId?: string): void {
   providerType = type
   remoteConfig = config ?? null
+  localModelId = modelId ?? null
   provider = null
-  log.info(`[embedding] provider type set to ${type}`)
+  log.info(`[embedding] provider type set to ${type}${modelId ? ` (${modelId})` : ""}`)
 }
 
 /** 获取当前引擎类型。 */
 export function getProviderType(): "local" | "remote" {
   return providerType
+}
+
+/** 连通性测试结果。 */
+export interface TestResult {
+  ok: boolean
+  error?: string
+  dimensions?: number
+}
+
+/**
+ * 测试当前引擎是否可用。
+ * 尝试对一段测试文本做 embed，成功返回维度信息，失败返回错误。
+ */
+export async function testProvider(): Promise<TestResult> {
+  try {
+    const p = await getProvider()
+    const [result] = await p.embed(["connectivity test"])
+    return { ok: true, dimensions: result.vector.length }
+  } catch (err) {
+    return { ok: false, error: (err as Error).message }
+  }
 }
