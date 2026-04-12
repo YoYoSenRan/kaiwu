@@ -28,7 +28,7 @@ export function ChunkList({ docId }: Props) {
   if (chunks.length === 0) return <p className="text-muted-foreground py-4 text-center text-xs">{t("knowledge.doc.noChunks")}</p>
 
   return (
-    <div className="max-h-96 overflow-y-auto border-t">
+    <div className="border-t">
       <div className="space-y-2 p-3">
         {chunks.map((chunk) => (
           <div
