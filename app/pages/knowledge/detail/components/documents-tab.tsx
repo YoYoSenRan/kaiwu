@@ -2,11 +2,13 @@ import { FileText, RotateCcw, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
 import { UploadZone } from "./upload-zone"
 
 interface Props {
   kbId: string
   docs: Awaited<ReturnType<typeof window.electron.knowledge.doc.list>>
+  progressMap: Map<string, { progress: number; state: string }>
   onRefresh: () => void
 }
 
@@ -18,7 +20,7 @@ const STATE_VARIANT: Record<string, "default" | "secondary" | "destructive" | "o
 }
 
 /** 文档管理 tab。 */
-export function DocumentsTab({ kbId, docs, onRefresh }: Props) {
+export function DocumentsTab({ kbId, docs, progressMap, onRefresh }: Props) {
   const { t } = useTranslation()
 
   const handleDelete = async (docId: string) => {
@@ -53,6 +55,12 @@ export function DocumentsTab({ kbId, docs, onRefresh }: Props) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {(doc.state === "processing" || progressMap.has(doc.id)) && (
+                  <div className="flex items-center gap-2">
+                    <Progress value={progressMap.get(doc.id)?.progress ?? 0} className="h-2 w-24" />
+                    <span className="text-muted-foreground text-xs">{progressMap.get(doc.id)?.progress ?? 0}%</span>
+                  </div>
+                )}
                 <Badge variant={STATE_VARIANT[doc.state] ?? "outline"}>{t(`knowledge.doc.${doc.state}`)}</Badge>
                 {doc.state === "failed" && (
                   <Button variant="ghost" size="icon" className="size-7" onClick={() => handleRetry(doc.id)}>

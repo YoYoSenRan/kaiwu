@@ -10,6 +10,7 @@ export default function KnowledgeDetail() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation()
   const [detail, setDetail] = useState<Awaited<ReturnType<typeof window.electron.knowledge.base.detail>> | null>(null)
+  const [progressMap, setProgressMap] = useState<Map<string, { progress: number; state: string }>>(new Map())
 
   const refresh = useCallback(async () => {
     if (!id) return
@@ -22,9 +23,16 @@ export default function KnowledgeDetail() {
     void refresh()
   }, [refresh])
 
+  // 订阅进度事件：中间态更新 progressMap，终态清除并 refresh 拿最终数据
   useEffect(() => {
-    const unsub = window.electron.knowledge.doc.onProgress(() => {
-      void refresh()
+    const unsub = window.electron.knowledge.doc.onProgress((event) => {
+      if (event.state === "ready" || event.state === "failed") {
+        setProgressMap((prev) => { const next = new Map(prev); next.delete(event.docId); return next })
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 终态刷新一次拿最终数据
+        void refresh()
+      } else {
+        setProgressMap((prev) => new Map(prev).set(event.docId, event))
+      }
     })
     return unsub
   }, [refresh])
@@ -50,7 +58,7 @@ export default function KnowledgeDetail() {
           <TabsTrigger value="settings">{t("knowledge.tabs.settings")}</TabsTrigger>
         </TabsList>
         <TabsContent value="documents">
-          <DocumentsTab kbId={row.id} docs={docs} onRefresh={refresh} />
+          <DocumentsTab kbId={row.id} docs={docs} progressMap={progressMap} onRefresh={refresh} />
         </TabsContent>
         <TabsContent value="search">
           <SearchTab kbId={row.id} />
