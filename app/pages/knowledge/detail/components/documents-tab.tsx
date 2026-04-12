@@ -1,0 +1,67 @@
+import { FileText, RotateCcw, Trash2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { UploadZone } from "./upload-zone"
+
+interface Props {
+  kbId: string
+  docs: Awaited<ReturnType<typeof window.electron.knowledge.doc.list>>
+  onRefresh: () => void
+}
+
+const STATE_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  pending: "outline",
+  processing: "secondary",
+  ready: "default",
+  failed: "destructive",
+}
+
+/** 文档管理 tab。 */
+export function DocumentsTab({ kbId, docs, onRefresh }: Props) {
+  const { t } = useTranslation()
+
+  const handleDelete = async (docId: string) => {
+    await window.electron.knowledge.doc.delete(docId)
+    onRefresh()
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <UploadZone kbId={kbId} onUploaded={onRefresh} />
+      </div>
+
+      {docs.length === 0 ? (
+        <p className="text-muted-foreground py-8 text-center text-sm">{t("knowledge.emptyDescription")}</p>
+      ) : (
+        <div className="space-y-2">
+          {docs.map((doc) => (
+            <div key={doc.id} className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-3">
+                <FileText className="text-muted-foreground size-4" />
+                <div>
+                  <p className="text-sm font-medium">{doc.title}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {doc.format.toUpperCase()} · {(doc.size / 1024).toFixed(1)} KB · {doc.chunk_count} chunks
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant={STATE_VARIANT[doc.state] ?? "outline"}>{t(`knowledge.doc.${doc.state}`)}</Badge>
+                {doc.state === "failed" && (
+                  <Button variant="ghost" size="icon" className="size-7" onClick={() => window.electron.knowledge.doc.retry(doc.id)}>
+                    <RotateCcw className="size-3.5" />
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" className="size-7" onClick={() => handleDelete(doc.id)}>
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
