@@ -303,6 +303,30 @@
     "openclaw": {
       "title": "OpenClaw 桥接",
       "description": "监控并管理本机 OpenClaw gateway 与 kaiwu 插件的同步状态"
+    },
+    "embedding": {
+      "title": "Embedding 引擎",
+      "description": "向量化模型配置，用于知识库语义检索",
+      "providerLabel": "引擎类型",
+      "providerLocal": "本地",
+      "providerRemote": "远程",
+      "modelLabel": "模型",
+      "statusCached": "已缓存",
+      "statusNotCached": "未下载",
+      "statusDownloading": "下载中",
+      "download": "下载模型",
+      "ready": "已就绪",
+      "endpointLabel": "Endpoint",
+      "apiKeyLabel": "API Key",
+      "apiKeyPlaceholder": "sk-...",
+      "remoteModelLabel": "模型名称",
+      "remoteModelPlaceholder": "text-embedding-ada-002",
+      "test": "测试连接",
+      "testing": "测试中...",
+      "testOk": "连接成功（{{dimensions}} 维）",
+      "testFail": "测试失败：{{error}}",
+      "save": "保存配置",
+      "saved": "配置已保存"
     }
   }
 }
