@@ -100,7 +100,8 @@
     "tab": {
       "overview": "Overview",
       "workspace": "Workspace",
-      "sessions": "Sessions"
+      "sessions": "Sessions",
+      "knowledge": "Knowledge"
     },
     "detail": {
       "back": "Back",

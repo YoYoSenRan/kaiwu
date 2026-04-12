@@ -100,7 +100,8 @@
     "tab": {
       "overview": "概览",
       "workspace": "工作区文件",
-      "sessions": "会话"
+      "sessions": "会话",
+      "knowledge": "知识库"
     },
     "detail": {
       "back": "返回",
