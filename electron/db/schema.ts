@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm"
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core"
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core"
 
 /**
  * kaiwu 本地 agents 表。
@@ -33,5 +33,53 @@ export const agents = sqliteTable(
   (table) => [
     // 列表排序常用索引：先过滤 hidden，再按 pinned DESC / sort_order / created_at DESC 排列
     index("idx_agents_list").on(table.hidden, sql`${table.pinned} DESC`, table.sort_order, sql`${table.created_at} DESC`),
+  ],
+)
+
+/** 知识库。embedding_model 建库时锁定，换模型需重建全部 chunks。 */
+export const knowledges = sqliteTable(
+  "knowledges",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    description: text("description"),
+    embedding_model: text("embedding_model").notNull(),
+    chunk_count: integer("chunk_count").notNull().default(0),
+    doc_count: integer("doc_count").notNull().default(0),
+    created_at: integer("created_at").notNull(),
+    updated_at: integer("updated_at").notNull(),
+  },
+  (table) => [index("idx_knowledges_created").on(sql`${table.created_at} DESC`)],
+)
+
+/** 知识库文档。state 跟踪处理进度：pending → processing → ready / failed。 */
+export const knowledgeDocuments = sqliteTable(
+  "knowledge_documents",
+  {
+    id: text("id").primaryKey(),
+    kb_id: text("kb_id").notNull(),
+    title: text("title").notNull(),
+    format: text("format", { enum: ["md", "pdf", "docx", "xlsx", "txt"] }).notNull(),
+    size: integer("size").notNull(),
+    chunk_count: integer("chunk_count").notNull().default(0),
+    state: text("state", { enum: ["pending", "processing", "ready", "failed"] }).notNull().default("pending"),
+    error: text("error"),
+    created_at: integer("created_at").notNull(),
+    updated_at: integer("updated_at").notNull(),
+  },
+  (table) => [index("idx_kd_kb").on(table.kb_id, table.state)],
+)
+
+/** Agent ↔ 知识库多对多关联。 */
+export const agentKnowledge = sqliteTable(
+  "agent_knowledge",
+  {
+    agent_id: text("agent_id").notNull(),
+    kb_id: text("kb_id").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.agent_id, table.kb_id] }),
+    index("idx_ak_agent").on(table.agent_id),
+    index("idx_ak_kb").on(table.kb_id),
   ],
 )

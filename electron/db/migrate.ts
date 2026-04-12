@@ -3,9 +3,13 @@ import { app } from "electron"
 import Database from "better-sqlite3"
 import log from "../core/logger"
 import initialSql from "./migrations/0000_initial.sql?raw"
+import knowledgeSql from "./migrations/0001_knowledge.sql?raw"
 
 /** 迁移清单：每新增一个 drizzle-kit generate 产出的 SQL 文件就追加一项。 */
-const MIGRATIONS: { name: string; sql: string }[] = [{ name: "0000_initial", sql: initialSql }]
+const MIGRATIONS: { name: string; sql: string }[] = [
+  { name: "0000_initial", sql: initialSql },
+  { name: "0001_knowledge", sql: knowledgeSql },
+]
 
 interface MigrationRow {
   name: string
