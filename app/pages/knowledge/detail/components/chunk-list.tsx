@@ -33,20 +33,16 @@ export function ChunkList({ docId }: Props) {
         {chunks.map((chunk) => (
           <div
             key={chunk.id}
-            className="bg-muted/50 cursor-pointer rounded-md p-3 transition-colors hover:bg-muted"
+            className="bg-muted/50 hover:bg-muted cursor-pointer rounded-md p-3 transition-colors"
             onClick={() => setExpandedChunk((prev) => (prev === chunk.id ? null : chunk.id))}
           >
             <div className="mb-1 flex items-center justify-between">
-              <span className="text-muted-foreground text-xs font-medium">
-                {t("knowledge.doc.chunkPosition", { position: chunk.position + 1 })}
-              </span>
+              <span className="text-muted-foreground text-xs font-medium">{t("knowledge.doc.chunkPosition", { position: chunk.position + 1 })}</span>
               <Badge variant="outline" className="text-xs">
                 {t("knowledge.doc.chunkCount", { count: chunk.content.length })}
               </Badge>
             </div>
-            <p className={`text-xs whitespace-pre-wrap ${expandedChunk === chunk.id ? "" : "line-clamp-3"}`}>
-              {chunk.content}
-            </p>
+            <p className={`text-xs whitespace-pre-wrap ${expandedChunk === chunk.id ? "" : "line-clamp-3"}`}>{chunk.content}</p>
           </div>
         ))}
       </div>

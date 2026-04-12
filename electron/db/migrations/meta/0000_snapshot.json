@@ -141,19 +141,12 @@
       "indexes": {
         "agents_agent_unique": {
           "name": "agents_agent_unique",
-          "columns": [
-            "agent"
-          ],
+          "columns": ["agent"],
           "isUnique": true
         },
         "idx_agents_list": {
           "name": "idx_agents_list",
-          "columns": [
-            "hidden",
-            "\"pinned\" DESC",
-            "sort_order",
-            "\"created_at\" DESC"
-          ],
+          "columns": ["hidden", "\"pinned\" DESC", "sort_order", "\"created_at\" DESC"],
           "isUnique": false
         }
       },

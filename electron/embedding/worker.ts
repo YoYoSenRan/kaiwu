@@ -25,6 +25,14 @@ async function getPipeline() {
 
 parentPort?.on("message", async (msg: { type: string; texts?: string[]; model?: string }) => {
   try {
+    if (msg.type === "shutdown") {
+      if (pipeline && typeof (pipeline as { dispose?: () => void }).dispose === "function") {
+        ;(pipeline as { dispose: () => void }).dispose()
+      }
+      pipeline = null
+      process.exit(0)
+    }
+
     if (msg.type === "init" && msg.model) {
       modelId = msg.model
       pipeline = null

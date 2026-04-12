@@ -47,7 +47,9 @@ export function SettingsTab({ id, name: initialName, description: initialDesc, e
           <Label>Embedding Model</Label>
           <Input value={embeddingModel} disabled />
         </div>
-        <Button onClick={handleSave} disabled={!name.trim()}>保存</Button>
+        <Button onClick={handleSave} disabled={!name.trim()}>
+          保存
+        </Button>
       </div>
 
       <div className="border-destructive/20 rounded-lg border p-4">

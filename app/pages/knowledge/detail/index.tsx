@@ -1,8 +1,9 @@
 import { useParams } from "react-router"
 import { useTranslation } from "react-i18next"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DocumentsTab } from "./components/documents-tab"
+import { GraphTab } from "./components/graph-tab"
 import { SearchTab } from "./components/search-tab"
+import { DocumentsTab } from "./components/documents-tab"
 import { SettingsTab } from "./components/settings-tab"
 
 /** 知识库详情页。 */
@@ -58,6 +59,7 @@ export default function KnowledgeDetail() {
         <TabsList className="shrink-0">
           <TabsTrigger value="documents">{t("knowledge.tabs.documents")}</TabsTrigger>
           <TabsTrigger value="search">{t("knowledge.tabs.search")}</TabsTrigger>
+          <TabsTrigger value="graph">{t("knowledge.tabs.graph")}</TabsTrigger>
           <TabsTrigger value="settings">{t("knowledge.tabs.settings")}</TabsTrigger>
         </TabsList>
         <TabsContent value="documents" className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -65,6 +67,9 @@ export default function KnowledgeDetail() {
         </TabsContent>
         <TabsContent value="search" className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <SearchTab kbId={row.id} />
+        </TabsContent>
+        <TabsContent value="graph" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <GraphTab kbId={row.id} kbName={row.name} docs={docs} />
         </TabsContent>
         <TabsContent value="settings" className="min-h-0 flex-1 overflow-y-auto">
           <SettingsTab id={row.id} name={row.name} description={row.description} embeddingModel={row.embedding_model} onUpdated={refresh} />

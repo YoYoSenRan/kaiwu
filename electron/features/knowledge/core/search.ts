@@ -39,11 +39,7 @@ export async function search(input: SearchInput): Promise<SearchResult[]> {
   }
 
   const filter = `kb_id IN (${input.kbIds.map((id) => `'${id}'`).join(",")})`
-  const vectorResults = await table
-    .vectorSearch(queryVector)
-    .where(filter)
-    .limit(topK)
-    .toArray()
+  const vectorResults = await table.vectorSearch(queryVector).where(filter).limit(topK).toArray()
 
   return vectorResults.map((row, index) => ({
     chunkId: row.id as string,

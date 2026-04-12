@@ -177,6 +177,7 @@
     "tabs": {
       "documents": "Documents",
       "search": "Search Test",
+      "graph": "Graph",
       "settings": "Settings"
     },
     "doc": {
@@ -311,7 +312,7 @@
       "providerLocal": "Local",
       "providerRemote": "Remote",
       "modelLabel": "Model",
-      "statusCached": "Cached",
+      "statusCached": "Downloaded",
       "statusNotCached": "Not downloaded",
       "statusDownloading": "Downloading",
       "download": "Download model",
@@ -323,7 +324,7 @@
       "remoteModelPlaceholder": "text-embedding-ada-002",
       "test": "Test connection",
       "testing": "Testing...",
-      "testOk": "Connected ({{dimensions}} dimensions)",
+      "testOk": "{{model}} connected ({{dimensions}} dimensions)",
       "testFail": "Test failed: {{error}}",
       "save": "Save config",
       "saved": "Config saved"

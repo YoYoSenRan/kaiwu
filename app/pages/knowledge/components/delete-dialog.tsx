@@ -32,8 +32,12 @@ export function DeleteKnowledgeDialog({ open, name, onOpenChange, onConfirm }: P
           <DialogDescription>{t("knowledge.delete.confirm", { name })}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button variant="destructive" onClick={handleConfirm} disabled={loading}>{t("knowledge.delete.title")}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            取消
+          </Button>
+          <Button variant="destructive" onClick={handleConfirm} disabled={loading}>
+            {t("knowledge.delete.title")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

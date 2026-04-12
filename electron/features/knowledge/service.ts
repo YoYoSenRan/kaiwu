@@ -25,9 +25,7 @@ const EXT_MAP: Record<string, KnowledgeDocRow["format"]> = {
   ".xlsx": "xlsx",
 }
 
-const FILE_FILTERS: Electron.FileFilter[] = [
-  { name: "文档", extensions: ["md", "txt", "pdf", "docx", "xlsx"] },
-]
+const FILE_FILTERS: Electron.FileFilter[] = [{ name: "文档", extensions: ["md", "txt", "pdf", "docx", "xlsx"] }]
 
 // --- 知识库 CRUD ---
 
@@ -95,10 +93,7 @@ export function listDocuments(kbId: string): KnowledgeDocRow[] {
 }
 
 /** 弹出文件选择对话框 + 上传到指定知识库。 */
-export async function uploadDocuments(
-  kbId: string,
-  onProgress: (event: DocProgressEvent) => void,
-): Promise<KnowledgeDocRow[]> {
+export async function uploadDocuments(kbId: string, onProgress: (event: DocProgressEvent) => void): Promise<KnowledgeDocRow[]> {
   getKb(kbId)
   const parent = getMainWindow()
   const opts: Electron.OpenDialogOptions = {

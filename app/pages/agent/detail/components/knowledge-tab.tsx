@@ -68,7 +68,9 @@ export function KnowledgeTab({ agentId }: Props) {
               <div className="flex items-center gap-2">
                 <Library className="text-muted-foreground size-4" />
                 <span className="text-sm">{kb.name}</span>
-                <Badge variant="outline" className="text-xs">{kb.doc_count} docs</Badge>
+                <Badge variant="outline" className="text-xs">
+                  {kb.doc_count} docs
+                </Badge>
               </div>
             </div>
           ))}
@@ -86,7 +88,9 @@ export function KnowledgeTab({ agentId }: Props) {
                 <Checkbox checked={selected.has(kb.id)} onCheckedChange={() => toggleKb(kb.id)} />
                 <div>
                   <p className="text-sm font-medium">{kb.name}</p>
-                  <p className="text-muted-foreground text-xs">{kb.doc_count} docs · {kb.chunk_count} chunks</p>
+                  <p className="text-muted-foreground text-xs">
+                    {kb.doc_count} docs · {kb.chunk_count} chunks
+                  </p>
                 </div>
               </label>
             ))}

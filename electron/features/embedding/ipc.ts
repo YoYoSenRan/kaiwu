@@ -1,8 +1,8 @@
+import log from "../../core/logger"
 import store from "../../core/store"
 import { safeHandle } from "../../core/ipc"
 import { getMainWindow } from "../../core/window"
-import { LOCAL_MODELS } from "../../embedding/models"
-import { setProviderType, testProvider, isModelCached, downloadModel } from "../../embedding/engine"
+import { setProviderType, testProvider, isModelCached, downloadModel, LOCAL_MODELS } from "../../embedding/engine"
 import { embeddingChannels } from "./channels"
 import type { EmbeddingConfig, DownloadProgress } from "./types"
 
@@ -28,9 +28,7 @@ export function setupEmbedding(): void {
   })
 
   safeHandle(embeddingChannels.model.list, async () => {
-    const results = await Promise.all(
-      LOCAL_MODELS.map(async (m) => ({ ...m, cached: await isModelCached(m.id) })),
-    )
+    const results = await Promise.all(LOCAL_MODELS.map(async (m) => ({ ...m, cached: await isModelCached(m.id) })))
     return results
   })
 
@@ -45,5 +43,16 @@ export function setupEmbedding(): void {
     })
   })
 
-  safeHandle(embeddingChannels.test, () => testProvider())
+  // 测试前先应用传入的配置，确保测的是用户当前选择的引擎
+  safeHandle(embeddingChannels.test, (config) => {
+    log.info(`[embedding/ipc] test called, config received:`, JSON.stringify(config))
+    if (config) {
+      const cfg = config as EmbeddingConfig
+      log.info(`[embedding/ipc] applying config: provider=${cfg.provider}, localModel=${cfg.localModel}`)
+      store.set("embedding", cfg)
+      const remote = cfg.provider === "remote" ? cfg.remote : undefined
+      setProviderType(cfg.provider, remote, cfg.localModel)
+    }
+    return testProvider()
+  })
 }
