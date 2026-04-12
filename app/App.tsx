@@ -3,7 +3,8 @@ import Task from "@/pages/task"
 import Connect from "@/pages/connect"
 import Settings from "@/pages/settings"
 import Dashboard from "@/pages/dashboard"
-import Knowledge from "@/pages/knowledge"
+import KnowledgeList from "@/pages/knowledge/list"
+import KnowledgeDetail from "@/pages/knowledge/detail"
 import AgentList from "@/pages/agent/list"
 import AgentDetail from "@/pages/agent/detail"
 import { Header } from "@/components/layout/header"
@@ -42,7 +43,7 @@ function App() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key={location.pathname}
-                  className="h-full"
+                  className="flex h-full flex-col"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -54,7 +55,8 @@ function App() {
                     <Route path="/agent/:id" element={<AgentDetail />} />
                     <Route path="/task" element={<Task />} />
                     <Route path="/chat" element={<Chat />} />
-                    <Route path="/knowledge" element={<Knowledge />} />
+                    <Route path="/knowledge" element={<KnowledgeList />} />
+                    <Route path="/knowledge/:id" element={<KnowledgeDetail />} />
                     <Route path="/connect" element={<Connect />} />
                     <Route path="/settings" element={<Settings />} />
                   </Routes>

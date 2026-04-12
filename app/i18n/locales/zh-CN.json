@@ -100,7 +100,8 @@
     "tab": {
       "overview": "概览",
       "workspace": "工作区文件",
-      "sessions": "会话"
+      "sessions": "会话",
+      "knowledge": "知识库"
     },
     "detail": {
       "back": "返回",
@@ -169,9 +170,45 @@
   "knowledge": {
     "title": "知识库",
     "description": "向量索引与文档管理",
+    "create": "新建知识库",
     "upload": "上传文档",
     "emptyTitle": "知识库为空",
-    "emptyDescription": "上传文档构建你的私有知识库"
+    "emptyDescription": "创建知识库并上传文档，构建你的私有知识",
+    "tabs": {
+      "documents": "文档",
+      "search": "检索测试",
+      "settings": "设置"
+    },
+    "doc": {
+      "pending": "等待处理",
+      "processing": "处理中",
+      "ready": "就绪",
+      "failed": "失败",
+      "retry": "重试",
+      "noChunks": "暂无分块数据",
+      "chunkPosition": "分块 #{{position}}",
+      "chunkCount": "{{count}} 个字符"
+    },
+    "search": {
+      "placeholder": "输入查询内容...",
+      "noResults": "未找到相关内容",
+      "score": "相似度"
+    },
+    "bind": {
+      "title": "关联知识库",
+      "empty": "未关联任何知识库",
+      "select": "选择知识库"
+    },
+    "delete": {
+      "title": "删除知识库",
+      "confirm": "确认删除知识库「{{name}}」？所有文档和向量数据将被永久删除。"
+    },
+    "form": {
+      "name": "名称",
+      "namePlaceholder": "输入知识库名称",
+      "description": "描述",
+      "descriptionPlaceholder": "可选，简要描述知识库内容"
+    }
   },
   "connect": {
     "title": "连接",

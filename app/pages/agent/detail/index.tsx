@@ -4,6 +4,7 @@ import { OverviewTab } from "./components/overview-tab"
 import { MessageSquare, Trash2 } from "lucide-react"
 import { SessionsTab } from "./components/sessions-tab"
 import { WorkspaceTab } from "./components/workspace-tab"
+import { KnowledgeTab } from "./components/knowledge-tab"
 import { useAgentDetail } from "./hooks/use-agent-detail"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DeleteAgentDialog } from "../components/delete-dialog"
@@ -88,10 +89,11 @@ export default function AgentDetail() {
       </div>
 
       <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col">
-        <TabsList className="grid w-fit shrink-0 grid-cols-3">
+        <TabsList className="grid w-fit shrink-0 grid-cols-4">
           <TabsTrigger value="overview">{t("agent.tab.overview")}</TabsTrigger>
           <TabsTrigger value="workspace">{t("agent.tab.workspace")}</TabsTrigger>
           <TabsTrigger value="sessions">{t("agent.tab.sessions")}</TabsTrigger>
+          <TabsTrigger value="knowledge">{t("agent.tab.knowledge")}</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <OverviewTab row={row} onChanged={refresh} />
@@ -101,6 +103,9 @@ export default function AgentDetail() {
         </TabsContent>
         <TabsContent value="sessions" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <SessionsTab row={row} />
+        </TabsContent>
+        <TabsContent value="knowledge" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <KnowledgeTab agentId={row.id} />
         </TabsContent>
       </Tabs>
 

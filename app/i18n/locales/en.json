@@ -100,7 +100,8 @@
     "tab": {
       "overview": "Overview",
       "workspace": "Workspace",
-      "sessions": "Sessions"
+      "sessions": "Sessions",
+      "knowledge": "Knowledge"
     },
     "detail": {
       "back": "Back",
@@ -167,11 +168,47 @@
     "startConversation": "New Conversation"
   },
   "knowledge": {
-    "title": "Knowledge",
+    "title": "Knowledge Base",
     "description": "Vector indexes and document management",
+    "create": "New Knowledge Base",
     "upload": "Upload Document",
     "emptyTitle": "Knowledge base is empty",
-    "emptyDescription": "Upload documents to build your private knowledge base"
+    "emptyDescription": "Upload documents to build your private knowledge base",
+    "tabs": {
+      "documents": "Documents",
+      "search": "Search Test",
+      "settings": "Settings"
+    },
+    "doc": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "ready": "Ready",
+      "failed": "Failed",
+      "retry": "Retry",
+      "noChunks": "No chunks available",
+      "chunkPosition": "Chunk #{{position}}",
+      "chunkCount": "{{count}} characters"
+    },
+    "search": {
+      "placeholder": "Enter search query...",
+      "noResults": "No relevant content found",
+      "score": "Similarity"
+    },
+    "bind": {
+      "title": "Linked Knowledge Bases",
+      "empty": "No knowledge bases linked",
+      "select": "Select Knowledge Bases"
+    },
+    "delete": {
+      "title": "Delete Knowledge Base",
+      "confirm": "Delete knowledge base \"{{name}}\"? All documents and vector data will be permanently deleted."
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Enter knowledge base name",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional, briefly describe the content"
+    }
   },
   "connect": {
     "title": "Connect",
