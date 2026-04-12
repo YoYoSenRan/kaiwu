@@ -44,7 +44,7 @@ export function DocumentsTab({ kbId, docs, progressMap, onRefresh }: Props) {
       {docs.length === 0 ? (
         <p className="text-muted-foreground py-8 text-center text-sm">{t("knowledge.emptyDescription")}</p>
       ) : (
-        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-0.5">
           {docs.map((doc) => (
             <div key={doc.id} className="rounded-lg border">
               <div

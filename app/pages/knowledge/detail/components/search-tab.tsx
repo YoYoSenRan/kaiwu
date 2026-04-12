@@ -27,7 +27,7 @@ export function SearchTab({ kbId }: Props) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="flex shrink-0 gap-2">
+      <div className="flex shrink-0 gap-2 p-0.5">
         <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("knowledge.search.placeholder")} onKeyDown={(e) => e.key === "Enter" && handleSearch()} />
         <Button onClick={handleSearch} disabled={loading || !query.trim()}>
           <Search className="mr-1.5 size-4" />
@@ -35,7 +35,7 @@ export function SearchTab({ kbId }: Props) {
         </Button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto p-0.5">
         {results.length === 0 && !loading && query && (
           <p className="text-muted-foreground py-8 text-center text-sm">{t("knowledge.search.noResults")}</p>
         )}
