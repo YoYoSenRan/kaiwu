@@ -8,6 +8,11 @@ export interface StoreSchema {
     width: number
     height: number
   }
+  embedding: {
+    provider: "local" | "remote"
+    localModel: string
+    remote: { endpoint: string; apiKey: string; model: string }
+  }
 }
 
 const store = new Store<StoreSchema>({
@@ -15,6 +20,11 @@ const store = new Store<StoreSchema>({
     windowBounds: {
       width: 800,
       height: 600,
+    },
+    embedding: {
+      provider: "local",
+      localModel: "Xenova/bge-small-zh-v1.5",
+      remote: { endpoint: "", apiKey: "", model: "" },
     },
   },
 })
