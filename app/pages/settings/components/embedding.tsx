@@ -25,10 +25,7 @@ export function EmbeddingCard() {
   const [saved, setSaved] = useState(false)
 
   const loadData = useCallback(async () => {
-    const [cfg, mdls] = await Promise.all([
-      window.electron.embedding.getConfig(),
-      window.electron.embedding.listModels(),
-    ])
+    const [cfg, mdls] = await Promise.all([window.electron.embedding.getConfig(), window.electron.embedding.listModels()])
     setConfig(cfg)
     setModels(mdls)
   }, [])
@@ -84,109 +81,96 @@ export function EmbeddingCard() {
   return (
     <div className="space-y-6">
       {/* 引擎类型选择 */}
-        <div className="flex items-center justify-between">
-          <Label>{t("settings.embedding.providerLabel")}</Label>
-          <div className="flex gap-1">
-            <Button
-              size="sm"
-              variant={config.provider === "local" ? "default" : "outline"}
-              onClick={() => setConfig((c) => ({ ...c, provider: "local" }))}
-            >
-              {t("settings.embedding.providerLocal")}
-            </Button>
-            <Button
-              size="sm"
-              variant={config.provider === "remote" ? "default" : "outline"}
-              onClick={() => setConfig((c) => ({ ...c, provider: "remote" }))}
-            >
-              {t("settings.embedding.providerRemote")}
-            </Button>
-          </div>
+      <div className="flex items-center justify-between">
+        <Label>{t("settings.embedding.providerLabel")}</Label>
+        <div className="flex gap-1">
+          <Button size="sm" variant={config.provider === "local" ? "default" : "outline"} onClick={() => setConfig((c) => ({ ...c, provider: "local" }))}>
+            {t("settings.embedding.providerLocal")}
+          </Button>
+          <Button size="sm" variant={config.provider === "remote" ? "default" : "outline"} onClick={() => setConfig((c) => ({ ...c, provider: "remote" }))}>
+            {t("settings.embedding.providerRemote")}
+          </Button>
         </div>
+      </div>
 
-        <Separator />
+      <Separator />
 
-        {/* 本地模式 */}
-        {config.provider === "local" && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>{t("settings.embedding.modelLabel")}</Label>
-              {selectedModel && (
-                <Badge variant={selectedModel.cached ? "default" : "secondary"}>
-                  {selectedModel.cached
-                    ? t("settings.embedding.statusCached")
-                    : t("settings.embedding.statusNotCached")}
-                </Badge>
-              )}
-            </div>
-            <Select value={config.localModel} onValueChange={(v) => setConfig((c) => ({ ...c, localModel: v }))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper">
-                {models.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name} · {m.size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {downloading && (
-              <div className="space-y-1">
-                <p className="text-muted-foreground text-xs">{t("settings.embedding.statusDownloading")}</p>
-                <Progress value={downloadProgress} />
-              </div>
-            )}
-            {!selectedModel?.cached && (
-              <Button size="sm" disabled={downloading || !config.localModel} onClick={handleDownload}>
-                {t("settings.embedding.download")}
-              </Button>
+      {/* 本地模式 */}
+      {config.provider === "local" && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label>{t("settings.embedding.modelLabel")}</Label>
+            {selectedModel && (
+              <Badge variant={selectedModel.cached ? "default" : "secondary"}>
+                {selectedModel.cached ? t("settings.embedding.statusCached") : t("settings.embedding.statusNotCached")}
+              </Badge>
             )}
           </div>
-        )}
-
-        {/* 远程模式 */}
-        {config.provider === "remote" && (
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label>{t("settings.embedding.endpointLabel")}</Label>
-              <Input
-                value={config.remote.endpoint}
-                onChange={(e) => setConfig((c) => ({ ...c, remote: { ...c.remote, endpoint: e.target.value } }))}
-              />
+          <Select value={config.localModel} onValueChange={(v) => setConfig((c) => ({ ...c, localModel: v }))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              {models.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.name} · {m.size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {downloading && (
+            <div className="space-y-1">
+              <p className="text-muted-foreground text-xs">{t("settings.embedding.statusDownloading")}</p>
+              <Progress value={downloadProgress} />
             </div>
-            <div className="space-y-1.5">
-              <Label>{t("settings.embedding.apiKeyLabel")}</Label>
-              <Input
-                type="password"
-                placeholder={t("settings.embedding.apiKeyPlaceholder")}
-                value={config.remote.apiKey}
-                onChange={(e) => setConfig((c) => ({ ...c, remote: { ...c.remote, apiKey: e.target.value } }))}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>{t("settings.embedding.remoteModelLabel")}</Label>
-              <Input
-                placeholder={t("settings.embedding.remoteModelPlaceholder")}
-                value={config.remote.model}
-                onChange={(e) => setConfig((c) => ({ ...c, remote: { ...c.remote, model: e.target.value } }))}
-              />
-            </div>
-          </div>
-        )}
-
-        <Separator />
-
-        {/* 测试 + 保存 */}
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" disabled={testing} onClick={handleTest}>
-            {testing ? t("settings.embedding.testing") : t("settings.embedding.test")}
-          </Button>
-          <Button size="sm" disabled={saved} onClick={handleSave}>
-            {saved ? t("settings.embedding.saved") : t("settings.embedding.save")}
-          </Button>
-          {testResult && <p className="text-muted-foreground text-xs">{testResult}</p>}
+          )}
+          {!selectedModel?.cached && (
+            <Button size="sm" disabled={downloading || !config.localModel} onClick={handleDownload}>
+              {t("settings.embedding.download")}
+            </Button>
+          )}
         </div>
+      )}
+
+      {/* 远程模式 */}
+      {config.provider === "remote" && (
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>{t("settings.embedding.endpointLabel")}</Label>
+            <Input value={config.remote.endpoint} onChange={(e) => setConfig((c) => ({ ...c, remote: { ...c.remote, endpoint: e.target.value } }))} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>{t("settings.embedding.apiKeyLabel")}</Label>
+            <Input
+              type="password"
+              placeholder={t("settings.embedding.apiKeyPlaceholder")}
+              value={config.remote.apiKey}
+              onChange={(e) => setConfig((c) => ({ ...c, remote: { ...c.remote, apiKey: e.target.value } }))}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>{t("settings.embedding.remoteModelLabel")}</Label>
+            <Input
+              placeholder={t("settings.embedding.remoteModelPlaceholder")}
+              value={config.remote.model}
+              onChange={(e) => setConfig((c) => ({ ...c, remote: { ...c.remote, model: e.target.value } }))}
+            />
+          </div>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* 测试 + 保存 */}
+      <div className="flex items-center gap-2">
+        <Button size="sm" variant="outline" disabled={testing} onClick={handleTest}>
+          {testing ? t("settings.embedding.testing") : t("settings.embedding.test")}
+        </Button>
+        <Button size="sm" disabled={saved} onClick={handleSave}>
+          {saved ? t("settings.embedding.saved") : t("settings.embedding.save")}
+        </Button>
+        {testResult && <p className="text-muted-foreground text-xs">{testResult}</p>}
+      </div>
     </div>
   )
 }

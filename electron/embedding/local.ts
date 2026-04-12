@@ -128,7 +128,7 @@ export async function isModelCached(modelId: string): Promise<boolean> {
     try {
       const p = await createPipeline("feature-extraction", modelId, { local_files_only: true })
       // 释放资源（dispose 如果存在的话）
-      if (p && typeof (p as any).dispose === "function") (p as any).dispose()
+      if (p && typeof p.dispose === "function") p.dispose()
       return true
     } finally {
       env.allowRemoteModels = true
@@ -136,4 +136,20 @@ export async function isModelCached(modelId: string): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+/**
+ * 终止 embedding Worker 线程。
+ * 先发送 shutdown 消息让 Worker 释放 ONNX 资源，超时则强制 terminate。
+ */
+export async function terminateWorker(): Promise<void> {
+  if (!worker) return
+  const w = worker
+  worker = null
+  w.postMessage({ type: "shutdown" })
+  const timeout = setTimeout(() => w.terminate(), 3000)
+  return w
+    .terminate()
+    .finally(() => clearTimeout(timeout))
+    .then(() => {})
 }

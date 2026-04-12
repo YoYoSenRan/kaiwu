@@ -67,7 +67,9 @@ export function GraphTab({ kbId, kbName, docs }: Props) {
             nodes.push({ id: chunk.id, label: `#${chunk.position + 1}`, type: "chunk", detail: preview })
             links.push({ source: doc.id, target: chunk.id })
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
       setData({ nodes, links })
     })()
@@ -90,49 +92,52 @@ export function GraphTab({ kbId, kbName, docs }: Props) {
   const typeLabel = (type: GraphNode["type"]) => (type === "kb" ? "知识库" : type === "doc" ? "文档" : "分块")
 
   /** 自定义 Canvas 节点绘制：圆形 + 光晕 + 标签，hover 时放大。 */
-  const paintNode = useCallback((node: NodeObject<GraphNode>, ctx: CanvasRenderingContext2D) => {
-    const x = node.x ?? 0
-    const y = node.y ?? 0
-    const baseR = NODE_RADIUS[node.type] ?? 4
-    const isHovered = node.id === hoveredId
-    const r = isHovered ? baseR * 1.4 : baseR
-    const color = NODE_COLORS[node.type] ?? "#888"
+  const paintNode = useCallback(
+    (node: NodeObject<GraphNode>, ctx: CanvasRenderingContext2D) => {
+      const x = node.x ?? 0
+      const y = node.y ?? 0
+      const baseR = NODE_RADIUS[node.type] ?? 4
+      const isHovered = node.id === hoveredId
+      const r = isHovered ? baseR * 1.4 : baseR
+      const color = NODE_COLORS[node.type] ?? "#888"
 
-    // 外圈光晕
-    const glow = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 2)
-    glow.addColorStop(0, color + "30")
-    glow.addColorStop(1, "transparent")
-    ctx.fillStyle = glow
-    ctx.beginPath()
-    ctx.arc(x, y, r * 2, 0, Math.PI * 2)
-    ctx.fill()
+      // 外圈光晕
+      const glow = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 2)
+      glow.addColorStop(0, color + "30")
+      glow.addColorStop(1, "transparent")
+      ctx.fillStyle = glow
+      ctx.beginPath()
+      ctx.arc(x, y, r * 2, 0, Math.PI * 2)
+      ctx.fill()
 
-    // 实心圆
-    ctx.fillStyle = color
-    ctx.beginPath()
-    ctx.arc(x, y, r, 0, Math.PI * 2)
-    ctx.fill()
+      // 实心圆
+      ctx.fillStyle = color
+      ctx.beginPath()
+      ctx.arc(x, y, r, 0, Math.PI * 2)
+      ctx.fill()
 
-    // 高光（左上角小白点）
-    const hlGrad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r)
-    hlGrad.addColorStop(0, "rgba(255,255,255,0.5)")
-    hlGrad.addColorStop(0.5, "rgba(255,255,255,0)")
-    ctx.fillStyle = hlGrad
-    ctx.beginPath()
-    ctx.arc(x, y, r, 0, Math.PI * 2)
-    ctx.fill()
+      // 高光（左上角小白点）
+      const hlGrad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r)
+      hlGrad.addColorStop(0, "rgba(255,255,255,0.5)")
+      hlGrad.addColorStop(0.5, "rgba(255,255,255,0)")
+      ctx.fillStyle = hlGrad
+      ctx.beginPath()
+      ctx.arc(x, y, r, 0, Math.PI * 2)
+      ctx.fill()
 
-    // 文字标签（kb 和 doc 显示，chunk 只在 hover 时显示）
-    if (node.type !== "chunk" || isHovered) {
-      const fontSize = node.type === "kb" ? 5 : node.type === "doc" ? 3.5 : 2.5
-      const label = node.label.slice(0, 14) + (node.label.length > 14 ? "…" : "")
-      ctx.font = `bold ${fontSize}px sans-serif`
-      ctx.textAlign = "center"
-      ctx.textBaseline = "top"
-      ctx.fillStyle = "rgba(255,255,255,0.85)"
-      ctx.fillText(label, x, y + r + 2)
-    }
-  }, [hoveredId])
+      // 文字标签（kb 和 doc 显示，chunk 只在 hover 时显示）
+      if (node.type !== "chunk" || isHovered) {
+        const fontSize = node.type === "kb" ? 5 : node.type === "doc" ? 3.5 : 2.5
+        const label = node.label.slice(0, 14) + (node.label.length > 14 ? "…" : "")
+        ctx.font = `bold ${fontSize}px sans-serif`
+        ctx.textAlign = "center"
+        ctx.textBaseline = "top"
+        ctx.fillStyle = "rgba(255,255,255,0.85)"
+        ctx.fillText(label, x, y + r + 2)
+      }
+    },
+    [hoveredId],
+  )
 
   return (
     <div ref={containerRef} className="relative min-h-0 flex-1 overflow-hidden rounded-xl border bg-[#0a0a14]">
@@ -142,10 +147,10 @@ export function GraphTab({ kbId, kbName, docs }: Props) {
           <Button variant="ghost" size="icon" className="size-7 text-white/70 hover:text-white" onClick={() => fgRef.current?.zoomToFit(400, 40)}>
             <Maximize2 className="size-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="size-7 text-white/70 hover:text-white" onClick={() => fgRef.current?.zoom(((fgRef.current as any).zoom?.() ?? 1) * 1.3, 200)}>
+          <Button variant="ghost" size="icon" className="size-7 text-white/70 hover:text-white" onClick={() => fgRef.current?.zoom((fgRef.current?.zoom?.() ?? 1) * 1.3, 200)}>
             <ZoomIn className="size-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="size-7 text-white/70 hover:text-white" onClick={() => fgRef.current?.zoom(((fgRef.current as any).zoom?.() ?? 1) / 1.3, 200)}>
+          <Button variant="ghost" size="icon" className="size-7 text-white/70 hover:text-white" onClick={() => fgRef.current?.zoom((fgRef.current?.zoom?.() ?? 1) / 1.3, 200)}>
             <ZoomOut className="size-3.5" />
           </Button>
         </div>
@@ -171,7 +176,7 @@ export function GraphTab({ kbId, kbName, docs }: Props) {
                 <X className="size-3.5" />
               </Button>
             </div>
-            <p className="mt-1 text-sm font-medium leading-snug">{selectedNode.label}</p>
+            <p className="mt-1 text-sm leading-snug font-medium">{selectedNode.label}</p>
             {selectedNode.detail && <p className="mt-1 text-xs leading-relaxed text-white/50">{selectedNode.detail}</p>}
           </Card>
         </div>

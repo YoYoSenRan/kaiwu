@@ -25,26 +25,19 @@
       "indexes": {
         "idx_ak_agent": {
           "name": "idx_ak_agent",
-          "columns": [
-            "agent_id"
-          ],
+          "columns": ["agent_id"],
           "isUnique": false
         },
         "idx_ak_kb": {
           "name": "idx_ak_kb",
-          "columns": [
-            "kb_id"
-          ],
+          "columns": ["kb_id"],
           "isUnique": false
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "agent_knowledge_agent_id_kb_id_pk": {
-          "columns": [
-            "agent_id",
-            "kb_id"
-          ],
+          "columns": ["agent_id", "kb_id"],
           "name": "agent_knowledge_agent_id_kb_id_pk"
         }
       },
@@ -188,19 +181,12 @@
       "indexes": {
         "agents_agent_unique": {
           "name": "agents_agent_unique",
-          "columns": [
-            "agent"
-          ],
+          "columns": ["agent"],
           "isUnique": true
         },
         "idx_agents_list": {
           "name": "idx_agents_list",
-          "columns": [
-            "hidden",
-            "\"pinned\" DESC",
-            "sort_order",
-            "\"created_at\" DESC"
-          ],
+          "columns": ["hidden", "\"pinned\" DESC", "sort_order", "\"created_at\" DESC"],
           "isUnique": false
         }
       },
@@ -288,10 +274,7 @@
       "indexes": {
         "idx_kd_kb": {
           "name": "idx_kd_kb",
-          "columns": [
-            "kb_id",
-            "state"
-          ],
+          "columns": ["kb_id", "state"],
           "isUnique": false
         }
       },
@@ -365,9 +348,7 @@
       "indexes": {
         "idx_knowledges_created": {
           "name": "idx_knowledges_created",
-          "columns": [
-            "\"created_at\" DESC"
-          ],
+          "columns": ["\"created_at\" DESC"],
           "isUnique": false
         }
       },

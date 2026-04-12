@@ -36,17 +36,17 @@ export function SearchTab({ kbId }: Props) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-0.5">
-        {results.length === 0 && !loading && query && (
-          <p className="text-muted-foreground py-8 text-center text-sm">{t("knowledge.search.noResults")}</p>
-        )}
+        {results.length === 0 && !loading && query && <p className="text-muted-foreground py-8 text-center text-sm">{t("knowledge.search.noResults")}</p>}
 
         <div className="space-y-3">
           {results.map((r) => (
             <div key={r.chunkId} className="rounded-lg border p-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-muted-foreground text-xs">{t("knowledge.search.score")}: {(r.score * 100).toFixed(1)}%</span>
+                <span className="text-muted-foreground text-xs">
+                  {t("knowledge.search.score")}: {(r.score * 100).toFixed(1)}%
+                </span>
               </div>
-              <p className="whitespace-pre-wrap text-sm">{r.content}</p>
+              <p className="text-sm whitespace-pre-wrap">{r.content}</p>
             </div>
           ))}
         </div>

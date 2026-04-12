@@ -2,8 +2,7 @@ import log from "../../core/logger"
 import store from "../../core/store"
 import { safeHandle } from "../../core/ipc"
 import { getMainWindow } from "../../core/window"
-import { LOCAL_MODELS } from "../../embedding/models"
-import { setProviderType, testProvider, isModelCached, downloadModel } from "../../embedding/engine"
+import { setProviderType, testProvider, isModelCached, downloadModel, LOCAL_MODELS } from "../../embedding/engine"
 import { embeddingChannels } from "./channels"
 import type { EmbeddingConfig, DownloadProgress } from "./types"
 
@@ -29,9 +28,7 @@ export function setupEmbedding(): void {
   })
 
   safeHandle(embeddingChannels.model.list, async () => {
-    const results = await Promise.all(
-      LOCAL_MODELS.map(async (m) => ({ ...m, cached: await isModelCached(m.id) })),
-    )
+    const results = await Promise.all(LOCAL_MODELS.map(async (m) => ({ ...m, cached: await isModelCached(m.id) })))
     return results
   })
 

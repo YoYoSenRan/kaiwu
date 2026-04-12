@@ -54,7 +54,9 @@ export function AppearanceCard() {
 
       <div className="flex items-center justify-between">
         <div>
-          <Label htmlFor="sidebar-collapse" className="text-sm">{t("settings.sidebarLabel")}</Label>
+          <Label htmlFor="sidebar-collapse" className="text-sm">
+            {t("settings.sidebarLabel")}
+          </Label>
           <p className="text-muted-foreground mt-0.5 text-xs">{t("settings.sidebarHint")}</p>
         </div>
         <Switch id="sidebar-collapse" checked={collapsed} onCheckedChange={setSidebarCollapsed} />

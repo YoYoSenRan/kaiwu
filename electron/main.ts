@@ -14,7 +14,9 @@ import { setupUpdater } from "./features/updater/ipc"
 import { setupOpenclaw } from "./features/openclaw/ipc"
 import { stopPlugin } from "./features/openclaw/core/lifecycle"
 import { setupDeeplinkListeners } from "./features/deeplink/ipc"
+import { terminateWorker } from "./embedding/local"
 import { prepareApp, requestSingleInstance, setupAppLifecycle } from "./core/app"
+import { setupCSP } from "./core/security"
 import { flushPendingDeepLink, setupProtocol } from "./features/deeplink/service"
 
 // ===== 启动前同步准备 =====
@@ -41,6 +43,9 @@ setupAppLifecycle()
 // ===== 应用就绪后创建窗口 =====
 
 app.whenReady().then(() => {
+  // CSP 必须在创建窗口前注入
+  setupCSP()
+
   // 接管 application menu，避免 Electron 默认菜单触发的 NSMenu noise log
   setupAppMenu()
 
@@ -64,9 +69,22 @@ app.whenReady().then(() => {
   flushPendingDeepLink()
 })
 
-// 退出前关闭本地 bridge server 释放端口 + 关闭 sqlite 以 checkpoint WAL
-app.on("before-quit", () => {
+function gracefulShutdown(): void {
+  void terminateWorker()
   void closeVectorDb()
   void stopPlugin()
   closeDb()
+}
+
+// 正常退出路径
+app.on("before-quit", gracefulShutdown)
+
+// 开发环境 Ctrl+C / SIGTERM（不会触发 before-quit）
+process.on("SIGINT", () => {
+  gracefulShutdown()
+  process.exit(0)
+})
+process.on("SIGTERM", () => {
+  gracefulShutdown()
+  process.exit(0)
 })

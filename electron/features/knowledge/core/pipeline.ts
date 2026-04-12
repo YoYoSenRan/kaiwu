@@ -33,11 +33,7 @@ export interface DocProgressEvent {
  * @param filePath 文件绝对路径
  * @param onProgress 进度回调
  */
-export async function processDocument(
-  doc: KnowledgeDocRow,
-  filePath: string,
-  onProgress: (event: DocProgressEvent) => void,
-): Promise<void> {
+export async function processDocument(doc: KnowledgeDocRow, filePath: string, onProgress: (event: DocProgressEvent) => void): Promise<void> {
   const docId = doc.id
   const kbId = doc.kb_id
   const now = Date.now()

@@ -62,7 +62,9 @@ export const knowledgeDocuments = sqliteTable(
     format: text("format", { enum: ["md", "pdf", "docx", "xlsx", "txt"] }).notNull(),
     size: integer("size").notNull(),
     chunk_count: integer("chunk_count").notNull().default(0),
-    state: text("state", { enum: ["pending", "processing", "ready", "failed"] }).notNull().default("pending"),
+    state: text("state", { enum: ["pending", "processing", "ready", "failed"] })
+      .notNull()
+      .default("pending"),
     error: text("error"),
     created_at: integer("created_at").notNull(),
     updated_at: integer("updated_at").notNull(),
@@ -77,9 +79,5 @@ export const agentKnowledge = sqliteTable(
     agent_id: text("agent_id").notNull(),
     kb_id: text("kb_id").notNull(),
   },
-  (table) => [
-    primaryKey({ columns: [table.agent_id, table.kb_id] }),
-    index("idx_ak_agent").on(table.agent_id),
-    index("idx_ak_kb").on(table.kb_id),
-  ],
+  (table) => [primaryKey({ columns: [table.agent_id, table.kb_id] }), index("idx_ak_agent").on(table.agent_id), index("idx_ak_kb").on(table.kb_id)],
 )

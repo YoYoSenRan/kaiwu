@@ -1,7 +1,8 @@
 import log from "../core/logger"
+import { DEFAULT_MODEL, LOCAL_MODELS } from "./models"
+import { createLocalProvider, isModelCached, downloadModel } from "./local"
 
-// re-export 供 features/embedding/ipc.ts 使用，避免 ipc.ts 直接 import local.ts 产生静态/动态 import 冲突
-export { isModelCached, downloadModel } from "./local"
+export { isModelCached, downloadModel, LOCAL_MODELS }
 
 /** 单条 embedding 结果。 */
 export interface EmbeddingResult {
@@ -42,7 +43,6 @@ export async function getProvider(): Promise<EmbeddingProvider> {
     const { createRemoteProvider } = await import("./remote")
     provider = createRemoteProvider(remoteConfig)
   } else {
-    const { createLocalProvider } = await import("./local")
     provider = await createLocalProvider(localModelId ?? undefined)
   }
 
@@ -87,8 +87,7 @@ export async function testProvider(): Promise<TestResult> {
     log.info(`[embedding/test] providerType=${providerType}, localModelId=${localModelId}`)
     // 本地模式先检查模型缓存，未下载不应该在测试时静默触发下载
     if (providerType === "local") {
-      const { isModelCached } = await import("./local")
-      const modelId = localModelId ?? (await import("./models")).DEFAULT_MODEL
+      const modelId = localModelId ?? DEFAULT_MODEL
       log.info(`[embedding/test] checking cache for ${modelId}`)
       const cached = await isModelCached(modelId)
       log.info(`[embedding/test] cached=${cached}`)

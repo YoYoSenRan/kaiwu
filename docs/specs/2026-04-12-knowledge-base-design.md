@@ -70,42 +70,42 @@ app/pages/knowledge/
 
 #### knowledges
 
-| 列 | 类型 | 约束 | 说明 |
-|----|------|------|------|
-| id | TEXT | PK | nanoid |
-| name | TEXT | NOT NULL | 知识库名称 |
-| description | TEXT | | 知识库描述 |
-| embedding_model | TEXT | NOT NULL | 建库时锁定的模型标识，换模型需重建全部 chunks |
-| chunk_count | INTEGER | NOT NULL DEFAULT 0 | 冗余计数，列表页不需要 join 聚合 |
-| doc_count | INTEGER | NOT NULL DEFAULT 0 | 同上 |
-| created_at | INTEGER | NOT NULL | 毫秒时间戳 |
-| updated_at | INTEGER | NOT NULL | 毫秒时间戳 |
+| 列              | 类型    | 约束               | 说明                                          |
+| --------------- | ------- | ------------------ | --------------------------------------------- |
+| id              | TEXT    | PK                 | nanoid                                        |
+| name            | TEXT    | NOT NULL           | 知识库名称                                    |
+| description     | TEXT    |                    | 知识库描述                                    |
+| embedding_model | TEXT    | NOT NULL           | 建库时锁定的模型标识，换模型需重建全部 chunks |
+| chunk_count     | INTEGER | NOT NULL DEFAULT 0 | 冗余计数，列表页不需要 join 聚合              |
+| doc_count       | INTEGER | NOT NULL DEFAULT 0 | 同上                                          |
+| created_at      | INTEGER | NOT NULL           | 毫秒时间戳                                    |
+| updated_at      | INTEGER | NOT NULL           | 毫秒时间戳                                    |
 
 索引：`idx_knowledges_created (created_at DESC)`
 
 #### knowledge_documents
 
-| 列 | 类型 | 约束 | 说明 |
-|----|------|------|------|
-| id | TEXT | PK | nanoid |
-| kb_id | TEXT | FK → knowledges.id, NOT NULL | 所属知识库 |
-| title | TEXT | NOT NULL | 原始文件名 |
-| format | TEXT | NOT NULL | "md" / "pdf" / "docx" / "xlsx" / "txt" |
-| size | INTEGER | NOT NULL | 原始文件字节数 |
-| chunk_count | INTEGER | NOT NULL DEFAULT 0 | 该文档的分块数 |
-| state | TEXT | NOT NULL | "pending" / "processing" / "ready" / "failed" |
-| error | TEXT | | 失败原因 |
-| created_at | INTEGER | NOT NULL | 毫秒时间戳 |
-| updated_at | INTEGER | NOT NULL | 毫秒时间戳 |
+| 列          | 类型    | 约束                         | 说明                                          |
+| ----------- | ------- | ---------------------------- | --------------------------------------------- |
+| id          | TEXT    | PK                           | nanoid                                        |
+| kb_id       | TEXT    | FK → knowledges.id, NOT NULL | 所属知识库                                    |
+| title       | TEXT    | NOT NULL                     | 原始文件名                                    |
+| format      | TEXT    | NOT NULL                     | "md" / "pdf" / "docx" / "xlsx" / "txt"        |
+| size        | INTEGER | NOT NULL                     | 原始文件字节数                                |
+| chunk_count | INTEGER | NOT NULL DEFAULT 0           | 该文档的分块数                                |
+| state       | TEXT    | NOT NULL                     | "pending" / "processing" / "ready" / "failed" |
+| error       | TEXT    |                              | 失败原因                                      |
+| created_at  | INTEGER | NOT NULL                     | 毫秒时间戳                                    |
+| updated_at  | INTEGER | NOT NULL                     | 毫秒时间戳                                    |
 
 索引：`idx_kd_kb (kb_id, state)`
 
 #### agent_knowledge
 
-| 列 | 类型 | 约束 | 说明 |
-|----|------|------|------|
-| agent_id | TEXT | FK → agents.id | 本地 agent id |
-| kb_id | TEXT | FK → knowledges.id | 知识库 id |
+| 列       | 类型 | 约束               | 说明          |
+| -------- | ---- | ------------------ | ------------- |
+| agent_id | TEXT | FK → agents.id     | 本地 agent id |
+| kb_id    | TEXT | FK → knowledges.id | 知识库 id     |
 
 主键：`PRIMARY KEY (agent_id, kb_id)`
 
@@ -113,15 +113,15 @@ app/pages/knowledge/
 
 #### knowledge_chunks（全局单表）
 
-| 列 | 类型 | 说明 |
-|----|------|------|
-| id | TEXT | nanoid |
-| kb_id | TEXT | 过滤用，对应 knowledges.id |
-| doc_id | TEXT | 对应 knowledge_documents.id |
-| content | TEXT | 原始文本 |
-| vector | VECTOR[dim] | embedding 向量，维度由模型决定 |
-| position | INTEGER | chunk 在文档中的序号 |
-| metadata | TEXT | JSON，标题/页码等上下文信息 |
+| 列       | 类型        | 说明                           |
+| -------- | ----------- | ------------------------------ |
+| id       | TEXT        | nanoid                         |
+| kb_id    | TEXT        | 过滤用，对应 knowledges.id     |
+| doc_id   | TEXT        | 对应 knowledge_documents.id    |
+| content  | TEXT        | 原始文本                       |
+| vector   | VECTOR[dim] | embedding 向量，维度由模型决定 |
+| position | INTEGER     | chunk 在文档中的序号           |
+| metadata | TEXT        | JSON，标题/页码等上下文信息    |
 
 单表设计，按 `kb_id` 字段过滤。所有知识库共用同一 embedding 模型和维度。
 
@@ -347,8 +347,8 @@ filePath
 
 ```ts
 interface ChunkOptions {
-  maxTokens?: number      // 默认 512
-  overlap?: number        // 默认 50
+  maxTokens?: number // 默认 512
+  overlap?: number // 默认 50
 }
 
 function split(text: string, options?: ChunkOptions): Chunk[]
@@ -362,7 +362,7 @@ function split(text: string, options?: ChunkOptions): Chunk[]
 interface SearchInput {
   query: string
   kbIds: string[]
-  topK?: number           // 默认 5
+  topK?: number // 默认 5
 }
 
 interface SearchResult {
@@ -370,7 +370,7 @@ interface SearchResult {
   docId: string
   kbId: string
   content: string
-  score: number           // 归一化相似度 0-1
+  score: number // 归一化相似度 0-1
   metadata: string
 }
 ```
@@ -378,8 +378,8 @@ interface SearchResult {
 检索流程：
 
 1. query → `embedding.embed([query])` 得到查询向量
-2. LanceDB 向量检索：`where kb_id in (kbIds)` + ANN 近似搜索，取 topK * 2 候选
-3. BM25 关键词检索：LanceDB FTS 全文匹配，取 topK * 2 候选
+2. LanceDB 向量检索：`where kb_id in (kbIds)` + ANN 近似搜索，取 topK \* 2 候选
+3. BM25 关键词检索：LanceDB FTS 全文匹配，取 topK \* 2 候选
 4. 合并去重 + RRF（Reciprocal Rank Fusion）融合排序
 5. 截取 topK 返回
 

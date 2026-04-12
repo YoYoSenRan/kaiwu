@@ -24,7 +24,7 @@ export default function Settings() {
     <div className="flex h-full overflow-hidden">
       {/* 左侧导航 */}
       <nav className="flex w-48 shrink-0 flex-col border-r pr-4">
-        <h2 className="text-muted-foreground mb-3 px-3 text-xs font-medium uppercase tracking-wider">{t("settings.title")}</h2>
+        <h2 className="text-muted-foreground mb-3 px-3 text-xs font-medium tracking-wider uppercase">{t("settings.title")}</h2>
         <div className="flex flex-col gap-0.5">
           {MODULES.map(({ key, icon: Icon, labelKey }) => (
             <button
