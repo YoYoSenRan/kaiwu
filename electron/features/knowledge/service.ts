@@ -150,9 +150,26 @@ export async function deleteDocument(docId: string): Promise<void> {
   await removeCacheFile(doc.kb_id, docId, doc.format)
 }
 
-/** 重试失败文档。从缓存文件重新跑 pipeline。 */
-export async function retryDocument(_docId: string): Promise<void> {
-  throw new Error("NOT_IMPLEMENTED")
+/**
+ * 重试失败文档。清理旧 chunks 后从缓存文件重新跑 pipeline。
+ * @param docId 文档 id
+ * @param onProgress 进度回调
+ */
+export async function retryDocument(docId: string, onProgress: (event: DocProgressEvent) => void): Promise<void> {
+  const doc = documentsRepo.findById(docId)
+  if (!doc) throw new Error("DOCUMENT_NOT_FOUND")
+  if (doc.state !== "failed") throw new Error("DOCUMENT_NOT_FAILED")
+
+  try {
+    const db = await getVectorDb()
+    const table = await db.openTable("knowledge_chunks")
+    await table.delete(`doc_id = '${docId}'`)
+  } catch {
+    // 表不存在，忽略
+  }
+
+  documentsRepo.update(docId, { state: "pending", chunk_count: 0, error: null, updated_at: Date.now() })
+  void processDocument(doc, getCachePath(doc.kb_id, docId, doc.format), onProgress)
 }
 
 // --- 检索 ---

@@ -26,6 +26,11 @@ export function DocumentsTab({ kbId, docs, onRefresh }: Props) {
     onRefresh()
   }
 
+  const handleRetry = async (docId: string) => {
+    await window.electron.knowledge.doc.retry(docId)
+    onRefresh()
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -50,7 +55,7 @@ export function DocumentsTab({ kbId, docs, onRefresh }: Props) {
               <div className="flex items-center gap-2">
                 <Badge variant={STATE_VARIANT[doc.state] ?? "outline"}>{t(`knowledge.doc.${doc.state}`)}</Badge>
                 {doc.state === "failed" && (
-                  <Button variant="ghost" size="icon" className="size-7" onClick={() => window.electron.knowledge.doc.retry(doc.id)}>
+                  <Button variant="ghost" size="icon" className="size-7" onClick={() => handleRetry(doc.id)}>
                     <RotateCcw className="size-3.5" />
                   </Button>
                 )}
