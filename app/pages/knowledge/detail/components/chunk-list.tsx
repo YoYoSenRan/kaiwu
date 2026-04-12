@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface Props {
   docId: string
@@ -29,12 +28,12 @@ export function ChunkList({ docId }: Props) {
   if (chunks.length === 0) return <p className="text-muted-foreground py-4 text-center text-xs">{t("knowledge.doc.noChunks")}</p>
 
   return (
-    <ScrollArea className="max-h-96">
-      <div className="space-y-2 p-2">
+    <div className="max-h-96 overflow-y-auto border-t">
+      <div className="space-y-2 p-3">
         {chunks.map((chunk) => (
           <div
             key={chunk.id}
-            className="bg-muted/50 cursor-pointer rounded-md border p-3 transition-colors hover:bg-muted"
+            className="bg-muted/50 cursor-pointer rounded-md p-3 transition-colors hover:bg-muted"
             onClick={() => setExpandedChunk((prev) => (prev === chunk.id ? null : chunk.id))}
           >
             <div className="mb-1 flex items-center justify-between">
@@ -51,6 +50,6 @@ export function ChunkList({ docId }: Props) {
           </div>
         ))}
       </div>
-    </ScrollArea>
+    </div>
   )
 }
