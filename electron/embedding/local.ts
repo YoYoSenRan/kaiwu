@@ -1,4 +1,3 @@
-import os from "node:os"
 import path from "node:path"
 import fs from "node:fs/promises"
 import { Worker } from "node:worker_threads"
@@ -42,7 +41,8 @@ function embedViaWorker(texts: string[]): Promise<{ vectors: number[][]; tokenCo
         w.off("message", handler)
         reject(new Error(msg.message))
       } else if (msg.type === "progress") {
-        const pct = Math.round((msg.progress ?? 0) * 100)
+        // Transformers.js 的 progress 值已经是 0-100 百分比
+        const pct = Math.round(msg.progress ?? 0)
         log.info(`[embedding/local] model download: ${pct}%`)
         progressListener?.(pct)
       }
@@ -101,16 +101,19 @@ export async function downloadModel(modelId: string, onProgress: (p: number) => 
 
 /**
  * 检查模型是否已缓存在本地。
- * Transformers.js 默认缓存在 ~/.cache/huggingface/hub/models--org--name/。
+ * Transformers.js v4 默认缓存在模块目录的 .cache/ 下，key 是 HuggingFace URL 路径。
+ * 通过检查 config.json 文件是否存在判断模型是否已下载。
  * @param modelId HuggingFace 模型 ID
  */
 export async function isModelCached(modelId: string): Promise<boolean> {
-  // Xenova/bge-small-zh-v1.5 → models--Xenova--bge-small-zh-v1.5
-  const dirName = `models--${modelId.replace("/", "--")}`
-  const cacheBase = process.env.HF_HOME ?? path.join(os.homedir(), ".cache", "huggingface", "hub")
-  const modelDir = path.join(cacheBase, dirName)
   try {
-    await fs.access(modelDir)
+    // 动态获取 Transformers.js 实际使用的缓存目录
+    const { env } = await import("@huggingface/transformers")
+    const cacheDir = env.cacheDir
+    if (!cacheDir) return false
+    // 缓存 key 格式：https://huggingface.co/{modelId}/resolve/main/config.json
+    const cachedFile = path.join(cacheDir, `https://huggingface.co/${modelId}/resolve/main/config.json`)
+    await fs.access(cachedFile)
     return true
   } catch {
     return false
