@@ -36,15 +36,15 @@ export function DocumentsTab({ kbId, docs, progressMap, onRefresh }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex shrink-0 justify-end">
         <UploadZone kbId={kbId} onUploaded={onRefresh} />
       </div>
 
       {docs.length === 0 ? (
         <p className="text-muted-foreground py-8 text-center text-sm">{t("knowledge.emptyDescription")}</p>
       ) : (
-        <div className="space-y-2">
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
           {docs.map((doc) => (
             <div key={doc.id} className="rounded-lg border">
               <div

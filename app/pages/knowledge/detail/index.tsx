@@ -60,10 +60,10 @@ export default function KnowledgeDetail() {
           <TabsTrigger value="search">{t("knowledge.tabs.search")}</TabsTrigger>
           <TabsTrigger value="settings">{t("knowledge.tabs.settings")}</TabsTrigger>
         </TabsList>
-        <TabsContent value="documents" className="min-h-0 flex-1 overflow-y-auto">
+        <TabsContent value="documents" className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <DocumentsTab kbId={row.id} docs={docs} progressMap={progressMap} onRefresh={refresh} />
         </TabsContent>
-        <TabsContent value="search" className="min-h-0 flex-1 overflow-y-auto">
+        <TabsContent value="search" className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <SearchTab kbId={row.id} />
         </TabsContent>
         <TabsContent value="settings" className="min-h-0 flex-1 overflow-y-auto">
