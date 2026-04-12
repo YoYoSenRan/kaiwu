@@ -5,7 +5,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* 项目样式分层：变量 → 元素基础 → 自定义 class */
+/* 项目样式分层：变量 → 元素基础 → 自定义 class → markdown 容器 */
 @import "./tokens.css";
 @import "./base.css";
 @import "./app.css";
+@import "./markdown.css";

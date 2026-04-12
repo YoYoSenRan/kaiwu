@@ -10,20 +10,19 @@
 import log from "../../core/logger"
 import { dialog } from "electron"
 import { nanoid } from "nanoid"
-import { getDb } from "./core/db"
 import { saveUploadedAvatar } from "./core/avatar"
+import { agentsRepo } from "../../db/repositories/agents"
 import { getMainWindow } from "../../core/window"
 import { resolveWorkspacePath } from "../../core/paths"
 import { requireClient } from "../openclaw/core/connection"
 import { agentsCreate, agentsDelete, agentsList, agentsUpdate } from "../openclaw/agent/methods"
 import { listWorkspaceFiles, readWorkspaceFile, workspaceExists, writeWorkspaceFile } from "./core/workspace"
 import type { GatewayAgentRow } from "../openclaw/agent/contract"
-import type { AgentDetailData, AgentRow, AgentCreateInput, AgentPatchInput, AgentSyncState, AgentUpdateInput, AvatarInput } from "./types"
+import type { AgentDetailData, AgentRow, AgentCreateInput, AgentPatchInput, AgentUpdateInput, AvatarInput } from "./types"
 
 /** 按 kaiwu 展示顺序返回本地 agents。 */
 export function listLocal(): AgentRow[] {
-  const db = getDb()
-  return db.prepare(`SELECT * FROM agents ORDER BY hidden, pinned DESC, sort_order, created_at DESC`).all() as AgentRow[]
+  return agentsRepo.list()
 }
 
 /**
@@ -51,47 +50,52 @@ export async function sync(): Promise<AgentRow[]> {
     workspaceChecks.set(r.id, r.workspace ? await workspaceExists(r.workspace) : false)
   }
 
-  const db = getDb()
-  const localRows = db.prepare(`SELECT * FROM agents`).all() as AgentRow[]
+  const localRows = agentsRepo.listAll()
   const localByAgent = new Map(localRows.map((r) => [r.agent, r]))
   const remoteIds = new Set(remote.agents.map((a) => a.id))
 
-  db.transaction(() => {
+  agentsRepo.transaction(() => {
     for (const r of remote.agents) {
       applyRemoteRow(r, localByAgent.get(r.id), workspaceChecks.get(r.id) ?? false, now)
     }
     for (const local of localRows) {
       if (!remoteIds.has(local.agent)) {
-        db.prepare(`UPDATE agents SET sync_state = 'orphan-local', last_synced_at = ? WHERE id = ?`).run(now, local.id)
+        agentsRepo.markOrphan(local.id, now)
       }
     }
-  })()
+  })
 
   return listLocal()
 }
 
 /** sync 内部：把单条远端行 upsert 到本地。 */
 function applyRemoteRow(r: GatewayAgentRow, local: AgentRow | undefined, workspaceOk: boolean, now: number): void {
-  const db = getDb()
-  const syncState: AgentSyncState = workspaceOk ? "ok" : "workspace-missing"
+  const sync_state = workspaceOk ? "ok" : "workspace-missing"
   const model = r.model?.primary ?? null
   const emoji = r.identity?.emoji ?? null
   const avatar = r.identity?.avatar ?? null
-  const avatarUrl = r.identity?.avatarUrl ?? null
+  const avatar_url = r.identity?.avatarUrl ?? null
   const name = r.name ?? r.id
   const workspace = r.workspace ?? ""
 
   if (!local) {
-    db.prepare(
-      `INSERT INTO agents (id, agent, name, workspace, model, emoji, avatar, avatar_url, created_at, updated_at, last_synced_at, sync_state)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(nanoid(), r.id, name, workspace, model, emoji, avatar, avatarUrl, now, now, now, syncState)
+    agentsRepo.insert({
+      id: nanoid(),
+      agent: r.id,
+      name,
+      workspace,
+      model,
+      emoji,
+      avatar,
+      avatar_url,
+      created_at: now,
+      updated_at: now,
+      last_synced_at: now,
+      sync_state,
+    })
     return
   }
-  db.prepare(
-    `UPDATE agents SET name = ?, workspace = ?, model = ?, emoji = ?, avatar = ?, avatar_url = ?, updated_at = ?, last_synced_at = ?, sync_state = ?
-     WHERE id = ?`,
-  ).run(name, workspace, model, emoji, avatar, avatarUrl, now, now, syncState, local.id)
+  agentsRepo.update(local.id, { name, workspace, model, emoji, avatar, avatar_url, updated_at: now, last_synced_at: now, sync_state })
 }
 
 /**
@@ -136,8 +140,7 @@ function validateAgentFormat(agent: string): void {
 }
 
 async function ensureNotOccupied(agent: string, workspace: string): Promise<void> {
-  const db = getDb()
-  if (db.prepare(`SELECT id FROM agents WHERE agent = ?`).get(agent)) throw new Error("AGENT_ID_EXISTS")
+  if (agentsRepo.findByAgent(agent)) throw new Error("AGENT_ID_EXISTS")
   if (await workspaceExists(workspace)) throw new Error("WORKSPACE_EXISTS")
 }
 
@@ -158,12 +161,18 @@ async function persistAvatar(workspace: string, avatar: AvatarInput | undefined)
 function insertLocalAgent(row: { agent: string; name: string; workspace: string; emoji: string | null; avatar: string | null }): AgentRow {
   const id = nanoid()
   const now = Date.now()
-  getDb()
-    .prepare(
-      `INSERT INTO agents (id, agent, name, workspace, emoji, avatar, created_at, updated_at, last_synced_at, sync_state)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ok')`,
-    )
-    .run(id, row.agent, row.name, row.workspace, row.emoji, row.avatar, now, now, now)
+  agentsRepo.insert({
+    id,
+    agent: row.agent,
+    name: row.name,
+    workspace: row.workspace,
+    emoji: row.emoji,
+    avatar: row.avatar,
+    created_at: now,
+    updated_at: now,
+    last_synced_at: now,
+    sync_state: "ok",
+  })
   return getRow(id)
 }
 
@@ -180,18 +189,12 @@ export async function update(input: AgentUpdateInput): Promise<AgentRow> {
     avatar: avatarRef ?? undefined,
   })
 
-  const now = Date.now()
-  getDb()
-    .prepare(
-      `UPDATE agents SET
-         name = COALESCE(?, name),
-         model = COALESCE(?, model),
-         emoji = COALESCE(?, emoji),
-         avatar = COALESCE(?, avatar),
-         updated_at = ?
-       WHERE id = ?`,
-    )
-    .run(input.name ?? null, input.model ?? null, input.emoji ?? null, avatarRef ?? null, now, input.id)
+  const patch: Parameters<typeof agentsRepo.update>[1] = { updated_at: Date.now() }
+  if (input.name !== undefined) patch.name = input.name
+  if (input.model !== undefined) patch.model = input.model
+  if (input.emoji !== undefined) patch.emoji = input.emoji
+  if (avatarRef !== undefined) patch.avatar = avatarRef
+  agentsRepo.update(input.id, patch)
   return getRow(input.id)
 }
 
@@ -201,33 +204,27 @@ export async function remove(id: string, removeWorkspace: boolean): Promise<void
   if (row.sync_state !== "orphan-local") {
     await agentsDelete(requireClient(), { agentId: row.agent, deleteFiles: removeWorkspace })
   }
-  getDb().prepare(`DELETE FROM agents WHERE id = ?`).run(id)
+  agentsRepo.deleteById(id)
 }
-
-const PATCHABLE_FIELDS = ["pinned", "hidden", "sort_order", "tags", "remark", "last_opened_at"] as const
 
 /** 仅更新 kaiwu 本地元数据。不触发 gateway RPC。 */
 export function patchMeta(id: string, patch: AgentPatchInput): AgentRow {
-  const updates: string[] = []
-  const values: unknown[] = []
-  for (const field of PATCHABLE_FIELDS) {
-    if (patch[field] === undefined) continue
-    updates.push(`${field} = ?`)
-    values.push(patch[field])
-  }
-  if (updates.length === 0) return getRow(id)
-  updates.push(`updated_at = ?`)
-  values.push(Date.now(), id)
-  getDb()
-    .prepare(`UPDATE agents SET ${updates.join(", ")} WHERE id = ?`)
-    .run(...values)
+  const cleaned: Parameters<typeof agentsRepo.update>[1] = {}
+  if (patch.pinned !== undefined) cleaned.pinned = patch.pinned
+  if (patch.hidden !== undefined) cleaned.hidden = patch.hidden
+  if (patch.sort_order !== undefined) cleaned.sort_order = patch.sort_order
+  if (patch.tags !== undefined) cleaned.tags = patch.tags
+  if (patch.remark !== undefined) cleaned.remark = patch.remark
+  if (patch.last_opened_at !== undefined) cleaned.last_opened_at = patch.last_opened_at
+  if (Object.keys(cleaned).length === 0) return getRow(id)
+  cleaned.updated_at = Date.now()
+  agentsRepo.update(id, cleaned)
   return getRow(id)
 }
 
 /** 批量清理 orphan-local 本地记录，返回删除条数。 */
 export function cleanupOrphans(): number {
-  const result = getDb().prepare(`DELETE FROM agents WHERE sync_state = 'orphan-local'`).run()
-  return result.changes
+  return agentsRepo.deleteOrphans()
 }
 
 export async function listFiles(id: string): Promise<string[]> {
@@ -256,7 +253,7 @@ export async function pickAvatar(): Promise<string | null> {
 
 /** 按本地 id 查 agent 行，找不到抛错。 */
 function getRow(id: string): AgentRow {
-  const row = getDb().prepare(`SELECT * FROM agents WHERE id = ?`).get(id) as AgentRow | undefined
+  const row = agentsRepo.findById(id)
   if (!row) throw new Error("AGENT_NOT_FOUND")
   return row
 }

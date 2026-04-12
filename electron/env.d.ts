@@ -9,3 +9,9 @@ declare namespace NodeJS {
     VSCODE_DEBUG?: "true"
   }
 }
+
+// Vite 的 ?raw 导入：把文件内容作为 string 编译期嵌入 bundle，运行时无需 fs 访问
+declare module "*.sql?raw" {
+  const content: string
+  export default content
+}
