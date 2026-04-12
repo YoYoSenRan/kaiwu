@@ -1,5 +1,8 @@
 import log from "../core/logger"
 
+// re-export 供 features/embedding/ipc.ts 使用，避免 ipc.ts 直接 import local.ts 产生静态/动态 import 冲突
+export { isModelCached, downloadModel } from "./local"
+
 /** 单条 embedding 结果。 */
 export interface EmbeddingResult {
   vector: number[]
