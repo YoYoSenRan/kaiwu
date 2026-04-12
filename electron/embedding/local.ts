@@ -1,5 +1,4 @@
 import path from "node:path"
-import fs from "node:fs/promises"
 import { Worker } from "node:worker_threads"
 import { app } from "electron"
 import log from "../core/logger"
@@ -9,12 +8,17 @@ import type { EmbeddingProvider, EmbeddingResult } from "./engine"
 let worker: Worker | null = null
 let progressListener: ((p: number) => void) | null = null
 
-/** 获取或创建 Worker 实例。 */
+/** 模型缓存目录，放在 userData 下避免打包后丢失。 */
+function getCacheDir(): string {
+  return path.join(app.getPath("userData"), "models")
+}
+
+/** 获取或创建 Worker 实例，传入 cacheDir 供 Worker 设置 env.cacheDir。 */
 function getWorker(): Worker {
   if (worker) return worker
 
   const workerPath = path.join(app.getAppPath(), "dist-electron", "main", "worker.js")
-  worker = new Worker(workerPath)
+  worker = new Worker(workerPath, { workerData: { cacheDir: getCacheDir() } })
 
   worker.on("error", (err) => {
     log.error("[embedding/local] worker error:", err)
@@ -41,7 +45,6 @@ function embedViaWorker(texts: string[]): Promise<{ vectors: number[][]; tokenCo
         w.off("message", handler)
         reject(new Error(msg.message))
       } else if (msg.type === "progress") {
-        // Transformers.js 的 progress 值已经是 0-100 百分比
         const pct = Math.round(msg.progress ?? 0)
         log.info(`[embedding/local] model download: ${pct}%`)
         progressListener?.(pct)
@@ -67,7 +70,6 @@ function resolveModel(modelId?: string) {
  */
 export async function createLocalProvider(modelId?: string): Promise<EmbeddingProvider> {
   const model = resolveModel(modelId)
-  // 通知 Worker 切换到目标模型
   const w = getWorker()
   w.postMessage({ type: "init", model: model.id })
 
@@ -92,7 +94,6 @@ export async function downloadModel(modelId: string, onProgress: (p: number) => 
   try {
     const w = getWorker()
     w.postMessage({ type: "init", model: modelId })
-    // 用一条空文本触发 pipeline 加载（包含模型下载）
     await embedViaWorker([""])
   } finally {
     progressListener = null
@@ -101,19 +102,14 @@ export async function downloadModel(modelId: string, onProgress: (p: number) => 
 
 /**
  * 检查模型是否已缓存在本地。
- * Transformers.js v4 默认缓存在模块目录的 .cache/ 下，key 是 HuggingFace URL 路径。
- * 通过检查 config.json 文件是否存在判断模型是否已下载。
+ * 通过 local_files_only 尝试加载来判断，比猜路径可靠。
  * @param modelId HuggingFace 模型 ID
  */
 export async function isModelCached(modelId: string): Promise<boolean> {
   try {
-    // 动态获取 Transformers.js 实际使用的缓存目录
-    const { env } = await import("@huggingface/transformers")
-    const cacheDir = env.cacheDir
-    if (!cacheDir) return false
-    // 缓存 key 格式：https://huggingface.co/{modelId}/resolve/main/config.json
-    const cachedFile = path.join(cacheDir, `https://huggingface.co/${modelId}/resolve/main/config.json`)
-    await fs.access(cachedFile)
+    const { AutoModel, env } = await import("@huggingface/transformers")
+    env.cacheDir = getCacheDir()
+    await AutoModel.from_pretrained(modelId, { local_files_only: true })
     return true
   } catch {
     return false
