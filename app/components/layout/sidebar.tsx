@@ -1,7 +1,7 @@
 import { Zap } from "lucide-react"
 import { NAV_ITEMS } from "@/config/nav"
 import { useTranslation } from "react-i18next"
-import { gatewayDotColor } from "@/lib/gateway"
+import { gatewayDotColor } from "@/utils/gateway"
 import { NavLink, useLocation, useNavigate } from "react-router"
 import { useGatewayStore } from "@/stores/gateway"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"

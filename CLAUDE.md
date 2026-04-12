@@ -64,7 +64,7 @@ app/                           渲染进程（React 19 + react-router HashRouter
 ├── stores/                    zustand store（settings 持久化、counter 临时）
 ├── i18n/                      i18next + react-i18next（zh-CN / en）
 ├── styles/                    全局 CSS / Tailwind v4 入口
-└── lib/                       通用工具
+└── utils/                     通用工具
 ```
 
 ### 装配铁律

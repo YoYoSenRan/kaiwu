@@ -12,9 +12,9 @@
   "iconLibrary": "lucide",
   "aliases": {
     "components": "@/components",
-    "utils": "@/lib/utils",
+    "utils": "@/utils/utils",
     "hooks": "@/hooks",
-    "lib": "@/lib",
+    "lib": "@/utils",
     "ui": "@/components/ui"
   }
 }

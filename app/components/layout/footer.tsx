@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next"
-import { gatewayDotColor } from "@/lib/gateway"
+import { gatewayDotColor } from "@/utils/gateway"
 import { useGatewayStore } from "@/stores/gateway"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 

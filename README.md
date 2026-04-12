@@ -42,7 +42,7 @@ pnpm build
 ├── app/                     渲染进程 (React 应用)
 │   ├── components/          组件 (ui/、theme-provider、update)
 │   ├── i18n/                国际化配置与翻译文件
-│   ├── lib/                 工具函数
+│   ├── utils/               工具函数
 │   ├── stores/              zustand 状态管理
 │   ├── styles/              全局样式 (CSS 变量、主题)
 │   └── types/               类型声明
