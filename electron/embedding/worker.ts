@@ -3,19 +3,28 @@ import { parentPort } from "node:worker_threads"
 let pipeline: unknown = null
 let modelId = "Xenova/bge-small-zh-v1.5"
 
+// 按文件聚合下载进度，避免多文件交叉导致进度跳动
+const fileStats = new Map<string, { loaded: number; total: number }>()
+
 async function getPipeline() {
   const { pipeline: createPipeline, env } = await import("@huggingface/transformers")
   // Worker 线程内限制单线程，避免 ONNX 运行时争抢 CPU
-  // wasm 后端可能未初始化，安全访问避免 undefined
   if (env.backends.onnx.wasm) {
     env.backends.onnx.wasm.numThreads = 1
   }
   return createPipeline("feature-extraction", modelId, {
-    // ProgressInfo 是联合类型，只有 status==='progress' 的分支才有 progress 字段
-    progress_callback: (info) => {
-      if ("progress" in info && info.progress !== undefined) {
-        parentPort?.postMessage({ type: "progress", progress: info.progress })
+    progress_callback: (info: { status?: string; file?: string; progress?: number; loaded?: number; total?: number }) => {
+      if (info.status !== "progress" || !info.file) return
+      // 按字节数聚合所有文件的总进度
+      fileStats.set(info.file, { loaded: info.loaded ?? 0, total: info.total ?? 0 })
+      let totalLoaded = 0
+      let totalSize = 0
+      for (const { loaded, total } of fileStats.values()) {
+        totalLoaded += loaded
+        totalSize += total
       }
+      const overall = totalSize > 0 ? (totalLoaded / totalSize) * 100 : 0
+      parentPort?.postMessage({ type: "progress", progress: overall })
     },
   })
 }
@@ -25,6 +34,7 @@ parentPort?.on("message", async (msg: { type: string; texts?: string[]; model?: 
     if (msg.type === "init" && msg.model) {
       modelId = msg.model
       pipeline = null
+      fileStats.clear()
       parentPort?.postMessage({ type: "ready" })
       return
     }
