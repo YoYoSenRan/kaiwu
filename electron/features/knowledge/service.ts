@@ -7,10 +7,10 @@ import { getProvider } from "../../embedding/engine"
 import { getMainWindow } from "../../core/window"
 import { knowledgesRepo } from "../../db/repositories/knowledges"
 import { documentsRepo } from "../../db/repositories/documents"
-import { bindingsRepo } from "../../db/repositories/bindings"
 import { processDocument } from "./core/pipeline"
 import { search as vectorSearch } from "./core/search"
 import { copyToCache, getCachePath, removeCacheFile, removeCacheDir } from "./core/cache"
+import { deleteBindingsByKb } from "./core/bindings"
 import type { KnowledgeRow } from "../../db/repositories/knowledges"
 import type { KnowledgeDocRow } from "../../db/repositories/documents"
 import type { DocProgressEvent } from "./core/pipeline"
@@ -81,7 +81,7 @@ export async function deleteKnowledge(id: string): Promise<void> {
   }
   knowledgesRepo.transaction(() => {
     documentsRepo.deleteByKb(id)
-    bindingsRepo.deleteByKb(id)
+    deleteBindingsByKb(id)
     knowledgesRepo.deleteById(id)
   })
   await removeCacheDir(id)
@@ -179,19 +179,9 @@ export async function searchKnowledge(input: SearchInput): Promise<SearchResult[
   return vectorSearch(input)
 }
 
-// --- Agent 绑定 ---
+// --- Agent 绑定（委托 core/bindings）---
 
-/** 获取某 agent 绑定的知识库。 */
-export function listBindings(agentId: string): KnowledgeRow[] {
-  return bindingsRepo.listByAgent(agentId)
-}
-
-/** 覆盖式设置某 agent 的知识库绑定。 */
-export function setBindings(agentId: string, kbIds: string[]): void {
-  knowledgesRepo.transaction(() => {
-    bindingsRepo.setForAgent(agentId, kbIds)
-  })
-}
+export { listBindings, setBindings } from "./core/bindings"
 
 /** 按 id 查知识库行，找不到抛错。 */
 function getKb(id: string): KnowledgeRow {
