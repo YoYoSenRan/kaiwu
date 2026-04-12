@@ -1,4 +1,4 @@
-import { parentPort } from "node:worker_threads"
+import { parentPort, workerData } from "node:worker_threads"
 
 let pipeline: unknown = null
 let modelId = "Xenova/bge-small-zh-v1.5"
@@ -6,14 +6,17 @@ let modelId = "Xenova/bge-small-zh-v1.5"
 async function getPipeline() {
   const { pipeline: createPipeline, env } = await import("@huggingface/transformers")
   // Worker 线程内限制单线程，避免 ONNX 运行时争抢 CPU
-  // wasm 后端可能未初始化，安全访问避免 undefined
   if (env.backends.onnx.wasm) {
     env.backends.onnx.wasm.numThreads = 1
   }
+  // 缓存目录由主进程传入，避免默认存在 node_modules 里打包后丢失
+  if (workerData?.cacheDir) {
+    env.cacheDir = workerData.cacheDir
+  }
   return createPipeline("feature-extraction", modelId, {
-    // ProgressInfo 是联合类型，只有 status==='progress' 的分支才有 progress 字段
-    progress_callback: (info) => {
-      if ("progress" in info && info.progress !== undefined) {
+    // v4 的 progress_total 事件已聚合所有文件的总进度，无需手动计算
+    progress_callback: (info: { status?: string; progress?: number }) => {
+      if (info.status === "progress_total" && info.progress !== undefined) {
         parentPort?.postMessage({ type: "progress", progress: info.progress })
       }
     },

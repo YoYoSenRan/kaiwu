@@ -303,6 +303,30 @@
     "openclaw": {
       "title": "OpenClaw Bridge",
       "description": "Monitor and manage the sync state between local OpenClaw gateway and the kaiwu plugin"
+    },
+    "embedding": {
+      "title": "Embedding Engine",
+      "description": "Vector model configuration for semantic knowledge base retrieval",
+      "providerLabel": "Engine Type",
+      "providerLocal": "Local",
+      "providerRemote": "Remote",
+      "modelLabel": "Model",
+      "statusCached": "Cached",
+      "statusNotCached": "Not downloaded",
+      "statusDownloading": "Downloading",
+      "download": "Download model",
+      "ready": "Ready",
+      "endpointLabel": "Endpoint",
+      "apiKeyLabel": "API Key",
+      "apiKeyPlaceholder": "sk-...",
+      "remoteModelLabel": "Model name",
+      "remoteModelPlaceholder": "text-embedding-ada-002",
+      "test": "Test connection",
+      "testing": "Testing...",
+      "testOk": "Connected ({{dimensions}} dimensions)",
+      "testFail": "Test failed: {{error}}",
+      "save": "Save config",
+      "saved": "Config saved"
     }
   }
 }

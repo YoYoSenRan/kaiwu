@@ -6,6 +6,7 @@ import { updaterBridge } from "./features/updater/bridge"
 import { deeplinkBridge } from "./features/deeplink/bridge"
 import { openclawBridge } from "./features/openclaw/bridge"
 import { knowledgeBridge } from "./features/knowledge/bridge"
+import { embeddingBridge } from "./features/embedding/bridge"
 
 /** Electron API 类型，供 renderer 端通过 global.d.ts 引用 */
 export type ElectronAPI = typeof api
@@ -24,6 +25,7 @@ const api = {
   updater: updaterBridge,
   deeplink: deeplinkBridge,
   openclaw: openclawBridge,
+  embedding: embeddingBridge,
   knowledge: knowledgeBridge,
 } as const
 

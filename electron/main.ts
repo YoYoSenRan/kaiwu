@@ -7,6 +7,7 @@ import { setupAppMenu } from "./core/menu"
 import { setupLog } from "./features/log/ipc"
 import { setupAgent } from "./features/agent/ipc"
 import { setupKnowledge } from "./features/knowledge/ipc"
+import { setupEmbedding } from "./features/embedding/ipc"
 import { createMainWindow } from "./core/window"
 import { setupChrome } from "./features/chrome/ipc"
 import { setupUpdater } from "./features/updater/ipc"
@@ -57,6 +58,7 @@ app.whenReady().then(() => {
   setupOpenclaw()
   setupAgent()
   setupKnowledge()
+  setupEmbedding()
 
   // 处理 macOS 冷启动时暂存的深度链接
   flushPendingDeepLink()
