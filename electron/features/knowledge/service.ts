@@ -10,6 +10,7 @@ import { documentsRepo } from "../../db/repositories/documents"
 import { bindingsRepo } from "../../db/repositories/bindings"
 import { processDocument } from "./core/pipeline"
 import { search as vectorSearch } from "./core/search"
+import { copyToCache, getCachePath, removeCacheFile, removeCacheDir } from "./core/cache"
 import type { KnowledgeRow } from "../../db/repositories/knowledges"
 import type { KnowledgeDocRow } from "../../db/repositories/documents"
 import type { DocProgressEvent } from "./core/pipeline"
@@ -83,6 +84,7 @@ export async function deleteKnowledge(id: string): Promise<void> {
     bindingsRepo.deleteByKb(id)
     knowledgesRepo.deleteById(id)
   })
+  await removeCacheDir(id)
 }
 
 // --- 文档管理 ---
@@ -117,9 +119,10 @@ export async function uploadDocuments(
     const id = nanoid()
     const now = Date.now()
     documentsRepo.insert({ id, kb_id: kbId, title: path.basename(filePath), format, size: stat.size, state: "pending", created_at: now, updated_at: now })
+    await copyToCache(filePath, kbId, id, format)
     const doc = documentsRepo.findById(id)!
     docs.push(doc)
-    void processDocument(doc, filePath, onProgress)
+    void processDocument(doc, getCachePath(kbId, id, format), onProgress)
   }
   return docs
 }
@@ -144,9 +147,10 @@ export async function deleteDocument(docId: string): Promise<void> {
     })
   }
   documentsRepo.deleteById(docId)
+  await removeCacheFile(doc.kb_id, docId, doc.format)
 }
 
-/** 重试失败文档。MVP 暂不实现。 */
+/** 重试失败文档。从缓存文件重新跑 pipeline。 */
 export async function retryDocument(_docId: string): Promise<void> {
   throw new Error("NOT_IMPLEMENTED")
 }
