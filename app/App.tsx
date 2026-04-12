@@ -43,7 +43,7 @@ function App() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key={location.pathname}
-                  className="h-full"
+                  className="flex h-full flex-col"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
