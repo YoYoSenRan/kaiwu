@@ -46,9 +46,9 @@ export function DocumentsTab({ kbId, docs, progressMap, onRefresh }: Props) {
       ) : (
         <div className="space-y-2">
           {docs.map((doc) => (
-            <div key={doc.id} className="max-h-[70vh] overflow-y-auto rounded-lg border">
+            <div key={doc.id} className="rounded-lg border">
               <div
-                className={`flex items-center justify-between p-3 ${doc.state === "ready" ? "cursor-pointer hover:bg-muted/50" : ""}`}
+                className={`flex items-center justify-between p-3 ${doc.state === "ready" ? "hover:bg-muted/50 cursor-pointer" : ""}`}
                 onClick={() => doc.state === "ready" && setExpandedId((prev) => (prev === doc.id ? null : doc.id))}
               >
                 <div className="flex items-center gap-3">

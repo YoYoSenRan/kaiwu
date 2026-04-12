@@ -27,7 +27,11 @@ export default function KnowledgeDetail() {
   useEffect(() => {
     const unsub = window.electron.knowledge.doc.onProgress((event) => {
       if (event.state === "ready" || event.state === "failed") {
-        setProgressMap((prev) => { const next = new Map(prev); next.delete(event.docId); return next })
+        setProgressMap((prev) => {
+          const next = new Map(prev)
+          next.delete(event.docId)
+          return next
+        })
         void refresh()
       } else {
         setProgressMap((prev) => new Map(prev).set(event.docId, event))
@@ -41,8 +45,8 @@ export default function KnowledgeDetail() {
   const { row, docs } = detail
 
   return (
-    <div className="space-y-4">
-      <div>
+    <div className="flex h-full flex-col gap-4 overflow-hidden">
+      <div className="shrink-0">
         <h1 className="text-2xl font-semibold tracking-tight">{row.name}</h1>
         {row.description && <p className="text-muted-foreground mt-1 text-sm">{row.description}</p>}
         <p className="text-muted-foreground mt-1 text-xs">
@@ -50,19 +54,19 @@ export default function KnowledgeDetail() {
         </p>
       </div>
 
-      <Tabs defaultValue="documents">
-        <TabsList>
+      <Tabs defaultValue="documents" className="flex min-h-0 flex-1 flex-col">
+        <TabsList className="shrink-0">
           <TabsTrigger value="documents">{t("knowledge.tabs.documents")}</TabsTrigger>
           <TabsTrigger value="search">{t("knowledge.tabs.search")}</TabsTrigger>
           <TabsTrigger value="settings">{t("knowledge.tabs.settings")}</TabsTrigger>
         </TabsList>
-        <TabsContent value="documents">
+        <TabsContent value="documents" className="min-h-0 flex-1 overflow-y-auto">
           <DocumentsTab kbId={row.id} docs={docs} progressMap={progressMap} onRefresh={refresh} />
         </TabsContent>
-        <TabsContent value="search">
+        <TabsContent value="search" className="min-h-0 flex-1 overflow-y-auto">
           <SearchTab kbId={row.id} />
         </TabsContent>
-        <TabsContent value="settings">
+        <TabsContent value="settings" className="min-h-0 flex-1 overflow-y-auto">
           <SettingsTab id={row.id} name={row.name} description={row.description} embeddingModel={row.embedding_model} onUpdated={refresh} />
         </TabsContent>
       </Tabs>
