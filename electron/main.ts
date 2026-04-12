@@ -1,6 +1,7 @@
 import "./core/logger"
 import { app } from "electron"
 import { closeDb } from "./db/client"
+import { closeVectorDb } from "./core/vector"
 import { runMigrations } from "./db/migrate"
 import { setupAppMenu } from "./core/menu"
 import { setupLog } from "./features/log/ipc"
@@ -61,6 +62,7 @@ app.whenReady().then(() => {
 
 // 退出前关闭本地 bridge server 释放端口 + 关闭 sqlite 以 checkpoint WAL
 app.on("before-quit", () => {
+  void closeVectorDb()
   void stopPlugin()
   closeDb()
 })
