@@ -25,6 +25,10 @@ function useBreadcrumbs(): Crumb[] {
     return [{ label: t("nav.agent"), path: "/agent" }, { label: t("common.detail") }]
   }
 
+  if (pathname.startsWith("/knowledge/")) {
+    return [{ label: t("knowledge.title"), path: "/knowledge" }, { label: t("common.detail") }]
+  }
+
   const item = NAV_ITEMS.find((n) => n.path === pathname)
   if (item) {
     return [{ label: t(`${item.key}.title`) }]
