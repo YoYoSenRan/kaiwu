@@ -1,10 +1,10 @@
 import "./core/logger"
 import { app } from "electron"
+import { closeDb } from "./db/client"
+import { runMigrations } from "./db/migrate"
 import { setupAppMenu } from "./core/menu"
-import { setupCSP } from "./core/security"
 import { setupLog } from "./features/log/ipc"
 import { setupAgent } from "./features/agent/ipc"
-import { closeDb } from "./features/agent/core/db"
 import { createMainWindow } from "./core/window"
 import { setupChrome } from "./features/chrome/ipc"
 import { setupUpdater } from "./features/updater/ipc"
@@ -38,11 +38,11 @@ setupAppLifecycle()
 // ===== 应用就绪后创建窗口 =====
 
 app.whenReady().then(() => {
-  // CSP 必须在创建窗口前设置，否则首次加载不会应用策略
-  setupCSP()
-
   // 接管 application menu，避免 Electron 默认菜单触发的 NSMenu noise log
   setupAppMenu()
+
+  // db migration 必须在 setupAgent() 注册 IPC 之前跑完，否则首次查询会打到未建表的 db
+  runMigrations()
 
   // 先创建主窗口，因为 setupChrome 需要绑定窗口的 maximize 事件
   createMainWindow()

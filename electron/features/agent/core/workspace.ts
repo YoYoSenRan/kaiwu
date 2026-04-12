@@ -1,20 +1,23 @@
 import path from "node:path"
 import { promises as fs } from "node:fs"
 
-/** 不应在 workspace tab 中展示的顶层条目前缀。 */
-const EXCLUDED_PREFIXES = [".openclaw", ".git", "avatar"]
+/** 不在 workspace tab 展示的业务文件名前缀（点开头的 dotfile 走单独规则）。 */
+const EXCLUDED_FILE_PREFIXES = ["avatar"]
 
 /** 标准 bootstrap 文件顺序，展示时优先按此顺序排序。 */
 const STANDARD_ORDER = ["SOUL.md", "IDENTITY.md", "USER.md", "HEARTBEAT.md", "TOOLS.md", "AGENTS.md", "BOOTSTRAP.md"]
 
 /**
  * 列出 workspace 根目录下的文件（不递归）。
- * 过滤掉 .openclaw/ / .git/ / avatar/ 等内部目录，标准文件按固定顺序排在前面，
- * 其余按名字升序排在后。
+ * 过滤掉所有 dotfile（.DS_Store / .gitkeep / .openclaw.* 等系统与工具产物）以及 avatar.*；
+ * 标准 bootstrap 文件按固定顺序排在前面，其余按名字升序排在后。
  */
 export async function listWorkspaceFiles(workspace: string): Promise<string[]> {
   const entries = await fs.readdir(workspace, { withFileTypes: true })
-  const files = entries.filter((e) => e.isFile() && !EXCLUDED_PREFIXES.some((p) => e.name === p || e.name.startsWith(`${p}.`))).map((e) => e.name)
+  const files = entries
+    .filter((e) => e.isFile() && !e.name.startsWith("."))
+    .filter((e) => !EXCLUDED_FILE_PREFIXES.some((p) => e.name === p || e.name.startsWith(`${p}.`)))
+    .map((e) => e.name)
 
   const standard = STANDARD_ORDER.filter((n) => files.includes(n))
   const rest = files.filter((n) => !STANDARD_ORDER.includes(n)).sort()

@@ -1,36 +1,16 @@
 /**
  * Agent feature 的本地类型定义。
- * - AgentRow：agents 表的一行，字段名严格镜像 sqlite schema
+ * - AgentRow：从 drizzle schema 自动推导，字段名严格镜像 sqlite 列名（snake_case）
  * - AgentCreateInput / AgentPatchInput：渲染层提交的业务入参
  * - AgentBridge：暴露给 renderer 的 API 形态
  */
 
-/** 本地 vs gateway 对比结果。 */
-export type AgentSyncState = "ok" | "orphan-local" | "workspace-missing"
+import type { AgentRow } from "../../db/repositories/agents"
 
-/** sqlite `agents` 表的完整行，字段名与 schema 严格对齐（snake_case）。 */
-export interface AgentRow {
-  id: string
-  agent: string
-  name: string
-  workspace: string
-  model: string | null
-  emoji: string | null
-  avatar: string | null
-  avatar_url: string | null
-  created_at: number
-  updated_at: number
-  last_synced_at: number | null
-  /** sqlite 无原生 boolean，统一用 0/1。 */
-  pinned: number
-  hidden: number
-  sort_order: number
-  /** JSON 字符串数组，未设置时为 null。 */
-  tags: string | null
-  last_opened_at: number | null
-  remark: string | null
-  sync_state: AgentSyncState
-}
+export type { AgentRow }
+
+/** 本地 vs gateway 对比结果，与 schema 的 sync_state 枚举保持一致。 */
+export type AgentSyncState = AgentRow["sync_state"]
 
 /** 新建表单的 avatar 输入：上传文件 / URL / 未设置。 */
 export type AvatarInput = { type: "file"; path: string } | { type: "url"; url: string }

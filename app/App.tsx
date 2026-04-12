@@ -40,7 +40,14 @@ function App() {
             <Header />
             <main className="flex-1 overflow-y-auto p-4">
               <AnimatePresence mode="wait">
-                <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15, ease: "easeOut" }}>
+                <motion.div
+                  key={location.pathname}
+                  className="h-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                >
                   <Routes location={location}>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/agent" element={<AgentList />} />

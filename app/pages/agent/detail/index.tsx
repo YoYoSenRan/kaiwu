@@ -43,8 +43,8 @@ export default function AgentDetail() {
   const startChat = () => navigate(`/chat?agentId=${row.agent}`)
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <div className="flex items-start justify-between gap-4">
+    <div className="flex h-full flex-col gap-4 overflow-hidden">
+      <div className="flex shrink-0 items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
@@ -93,13 +93,13 @@ export default function AgentDetail() {
           <TabsTrigger value="workspace">{t("agent.tab.workspace")}</TabsTrigger>
           <TabsTrigger value="sessions">{t("agent.tab.sessions")}</TabsTrigger>
         </TabsList>
-        <TabsContent value="overview" className="min-h-0 flex-1 overflow-y-auto">
+        <TabsContent value="overview" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <OverviewTab row={row} onChanged={refresh} />
         </TabsContent>
-        <TabsContent value="workspace" className="min-h-0 flex-1 overflow-hidden">
+        <TabsContent value="workspace" className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <WorkspaceTab row={row} />
         </TabsContent>
-        <TabsContent value="sessions" className="min-h-0 flex-1 overflow-y-auto">
+        <TabsContent value="sessions" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <SessionsTab row={row} />
         </TabsContent>
       </Tabs>
