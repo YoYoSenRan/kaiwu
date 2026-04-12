@@ -184,7 +184,10 @@
       "processing": "Processing",
       "ready": "Ready",
       "failed": "Failed",
-      "retry": "Retry"
+      "retry": "Retry",
+      "noChunks": "No chunks available",
+      "chunkPosition": "Chunk #{{position}}",
+      "chunkCount": "{{count}} characters"
     },
     "search": {
       "placeholder": "Enter search query...",

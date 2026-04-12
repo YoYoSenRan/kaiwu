@@ -14,7 +14,7 @@ import { deleteBindingsByKb } from "./core/bindings"
 import type { KnowledgeRow } from "../../db/repositories/knowledges"
 import type { KnowledgeDocRow } from "../../db/repositories/documents"
 import type { DocProgressEvent } from "./core/pipeline"
-import type { KbCreateInput, KbUpdateInput, KbDetailData } from "./types"
+import type { KbCreateInput, KbUpdateInput, KbDetailData, ChunkItem } from "./types"
 import type { SearchInput, SearchResult } from "./core/search"
 
 const EXT_MAP: Record<string, KnowledgeDocRow["format"]> = {
@@ -170,6 +170,26 @@ export async function retryDocument(docId: string, onProgress: (event: DocProgre
 
   documentsRepo.update(docId, { state: "pending", chunk_count: 0, error: null, updated_at: Date.now() })
   void processDocument(doc, getCachePath(doc.kb_id, docId, doc.format), onProgress)
+}
+
+// --- Chunk 查看 ---
+
+/**
+ * 按文档 id 查询所有 chunks，按 position 排序，不返回 vector。
+ * @param docId 文档 id
+ */
+export async function listChunks(docId: string): Promise<ChunkItem[]> {
+  const db = await getVectorDb()
+  let table
+  try {
+    table = await db.openTable("knowledge_chunks")
+  } catch {
+    return []
+  }
+  const rows = await table.query().where(`doc_id = '${docId}'`).toArray()
+  return rows
+    .map((r) => ({ id: r.id as string, content: r.content as string, position: r.position as number, metadata: r.metadata as string }))
+    .sort((a, b) => a.position - b.position)
 }
 
 // --- 检索 ---

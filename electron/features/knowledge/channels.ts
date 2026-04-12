@@ -12,6 +12,7 @@ export const knowledgeChannels = {
     upload: "knowledge:doc:upload",
     delete: "knowledge:doc:delete",
     retry: "knowledge:doc:retry",
+    chunks: "knowledge:doc:chunks",
     progress: "knowledge:doc:progress",
   },
   search: {

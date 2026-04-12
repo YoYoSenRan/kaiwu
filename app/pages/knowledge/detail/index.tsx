@@ -28,7 +28,6 @@ export default function KnowledgeDetail() {
     const unsub = window.electron.knowledge.doc.onProgress((event) => {
       if (event.state === "ready" || event.state === "failed") {
         setProgressMap((prev) => { const next = new Map(prev); next.delete(event.docId); return next })
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- 终态刷新一次拿最终数据
         void refresh()
       } else {
         setProgressMap((prev) => new Map(prev).set(event.docId, event))

@@ -17,6 +17,14 @@ export interface KbUpdateInput {
   description?: string
 }
 
+/** Chunk 查看返回类型（不含 vector）。 */
+export interface ChunkItem {
+  id: string
+  content: string
+  position: number
+  metadata: string
+}
+
 /** 详情页数据载荷。 */
 export interface KbDetailData {
   row: KnowledgeRow
@@ -37,6 +45,8 @@ export interface KnowledgeBridge {
     upload: (kbId: string) => Promise<KnowledgeDocRow[]>
     delete: (docId: string) => Promise<void>
     retry: (docId: string) => Promise<void>
+    /** 查看文档的分块内容。 */
+    chunks: (docId: string) => Promise<ChunkItem[]>
     onProgress: (listener: (event: DocProgressEvent) => void) => () => void
   }
   search: {

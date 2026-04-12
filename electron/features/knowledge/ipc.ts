@@ -11,6 +11,7 @@ import {
   uploadDocuments,
   deleteDocument,
   retryDocument,
+  listChunks,
   searchKnowledge,
   listBindings,
   setBindings,
@@ -40,6 +41,7 @@ export function setupKnowledge(): void {
   safeHandle(knowledgeChannels.doc.upload, (kbId) => uploadDocuments(kbId as string, sendProgress))
   safeHandle(knowledgeChannels.doc.delete, (docId) => deleteDocument(docId as string))
   safeHandle(knowledgeChannels.doc.retry, (docId) => retryDocument(docId as string, sendProgress))
+  safeHandle(knowledgeChannels.doc.chunks, (docId) => listChunks(docId as string))
 
   safeHandle(knowledgeChannels.search.query, (input) => searchKnowledge(input as SearchInput))
 

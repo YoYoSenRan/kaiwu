@@ -184,7 +184,10 @@
       "processing": "处理中",
       "ready": "就绪",
       "failed": "失败",
-      "retry": "重试"
+      "retry": "重试",
+      "noChunks": "暂无分块数据",
+      "chunkPosition": "分块 #{{position}}",
+      "chunkCount": "{{count}} 个字符"
     },
     "search": {
       "placeholder": "输入查询内容...",

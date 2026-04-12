@@ -15,6 +15,7 @@ export const knowledgeBridge: KnowledgeBridge = {
     upload: (kbId) => ipcRenderer.invoke(knowledgeChannels.doc.upload, kbId),
     delete: (docId) => ipcRenderer.invoke(knowledgeChannels.doc.delete, docId),
     retry: (docId) => ipcRenderer.invoke(knowledgeChannels.doc.retry, docId),
+    chunks: (docId) => ipcRenderer.invoke(knowledgeChannels.doc.chunks, docId),
     onProgress(listener) {
       const handler = (_: unknown, event: unknown) => listener(event as Parameters<typeof listener>[0])
       ipcRenderer.on(knowledgeChannels.doc.progress, handler)
