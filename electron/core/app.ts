@@ -1,5 +1,5 @@
-import { app, BrowserWindow } from "electron"
 import { isWin, isWin7 } from "./env"
+import { app, BrowserWindow } from "electron"
 import { clearMainWindow, createMainWindow } from "./window"
 
 /**
@@ -26,19 +26,20 @@ export function requestSingleInstance(): boolean {
  * 注册应用级生命周期事件：窗口全部关闭和 macOS dock 激活。
  */
 export function setupAppLifecycle(): void {
-  app.on("window-all-closed", () => {
-    clearMainWindow()
-    // 所有平台统一行为：关闭窗口即退出应用
-    app.quit()
-  })
-
   app.on("activate", () => {
     // macOS dock 图标点击：有窗口则聚焦第一个，无窗口则新建
     const windows = BrowserWindow.getAllWindows()
-    if (windows.length > 0) {
-      windows[0].focus()
+    if (windows.length) {
+      const win = windows[0]
+      if (win.isMinimized()) win.restore()
+      win.focus()
     } else {
       createMainWindow()
     }
+  })
+
+  app.on("window-all-closed", () => {
+    clearMainWindow()
+    app.quit()
   })
 }
