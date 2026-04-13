@@ -1,0 +1,16 @@
+/* CSS 入口：main.tsx 只 import 这一个文件，按层级顺序聚合所有样式 */
+
+/* 第三方：Tailwind v4 + 动画扩展 + shadcn 预设 */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* streamdown：让 Tailwind 扫描其 dist 中的 utility class */
+@source "../../node_modules/streamdown/dist/*.js";
+@source "../../node_modules/@streamdown/code/dist/*.js";
+
+/* 项目样式分层：变量 → 元素基础 → 自定义 class → markdown 容器 */
+@import "./tokens.css";
+@import "./base.css";
+@import "./app.css";
+@import "./markdown.css";

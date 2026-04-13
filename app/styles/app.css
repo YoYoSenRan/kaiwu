@@ -1,0 +1,86 @@
+/* ===== 自定义 class：布局壳 + titlebar ===== */
+/* CSS 变量定义在 tokens.css，元素级 reset 在 base.css */
+
+/* titlebar 下方的应用壳：容纳 shadcn SidebarProvider，自身不滚动 */
+.app-shell {
+  position: absolute;
+  top: var(--titlebar-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+/* SidebarProvider 默认用 min-h-svh 会超出 .app-shell，需要用实际可用高度约束 */
+.app-shell > * {
+  height: 100%;
+  min-height: 0 !important;
+}
+
+/* ===== 自定义标题栏 ===== */
+
+.titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--titlebar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 9999;
+  user-select: none;
+  /* 背景色跟随主题，使用 tokens.css 中定义的 CSS 变量 */
+  background-color: var(--background);
+}
+
+/* macOS 红绿灯按钮占位区域 */
+/* trafficLightPosition 设置为 x:12，三个按钮总宽约 68px，留 70px 安全边距 */
+.titlebar-macos-spacer {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+/* Win/Linux 窗口控制按钮容器，靠右排列 */
+.titlebar-controls {
+  display: flex;
+  margin-left: auto;
+  height: 100%;
+}
+
+/* 窗口控制按钮基础样式 */
+.titlebar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.titlebar-btn:hover {
+  background-color: var(--accent);
+}
+
+/* 关闭按钮 hover 变红，遵循 Windows 标题栏惯例 */
+.titlebar-btn-close:hover {
+  background-color: var(--titlebar-close-hover);
+  color: white;
+}
+
+/* ===== shadcn Sidebar 定位覆盖 ===== */
+
+/*
+ * shadcn sidebar-container 默认 `fixed inset-y-0 h-svh` 相对 viewport 定位，
+ * 会越过自定义 titlebar 顶到视口顶。这里精确覆盖为 titlebar 下方可用高度。
+ * 选择器只命中桌面版（mobile 用 Sheet，data-slot 不同），不影响小窗口模式。
+ */
+[data-slot="sidebar-container"] {
+  top: var(--titlebar-h) !important;
+  bottom: 0 !important;
+  height: calc(100svh - var(--titlebar-h)) !important;
+}
