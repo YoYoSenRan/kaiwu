@@ -1,7 +1,7 @@
 import type { KnowledgeRow } from "../../db/repositories/knowledges"
 import type { KnowledgeDocRow } from "../../db/repositories/documents"
-import type { SearchInput, SearchResult } from "./core/search"
-import type { DocProgressEvent } from "./core/pipeline"
+import type { SearchInput, SearchResult } from "../../knowledge/search"
+import type { DocProgressEvent } from "../../knowledge/pipeline"
 
 export type { KnowledgeRow, KnowledgeDocRow, SearchInput, SearchResult, DocProgressEvent }
 

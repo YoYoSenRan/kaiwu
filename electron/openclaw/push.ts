@@ -1,8 +1,8 @@
-import type { GatewayState, OpenClawStatus, PluginEvent } from "../types"
+import type { GatewayState, OpenClawStatus, PluginEvent } from "./types"
 
-import { scope } from "../../core/logger"
-import { getMainWindow } from "../../core/window"
-import { openclawChannels } from "../channels"
+import { scope } from "../core/logger"
+import { getMainWindow } from "../core/window"
+import { openclawChannels } from "./channels"
 
 const pushLog = scope("openclaw:push")
 

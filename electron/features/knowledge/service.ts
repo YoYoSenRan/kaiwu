@@ -1,9 +1,9 @@
 import { nanoid } from "nanoid"
 import { getProvider } from "../../embedding/engine"
-import { getVectorDb } from "../../core/vector"
 import { knowledgesRepo } from "../../db/repositories/knowledges"
 import { documentsRepo } from "../../db/repositories/documents"
 import { search as vectorSearch } from "../../knowledge/search"
+import { deleteChunksByKb } from "../../knowledge/vector"
 import { removeCacheDir } from "../../knowledge/cache"
 import { deleteBindingsByKb } from "./bindings"
 import type { KnowledgeRow } from "../../db/repositories/knowledges"
@@ -48,9 +48,7 @@ export function updateKnowledge(id: string, input: KbUpdateInput): KnowledgeRow 
 export async function deleteKnowledge(id: string): Promise<void> {
   getKb(id)
   try {
-    const db = await getVectorDb()
-    const table = await db.openTable("knowledge_chunks")
-    await table.delete(`kb_id = '${id}'`)
+    await deleteChunksByKb(id)
   } catch {
     // 表不存在，忽略
   }

@@ -101,22 +101,24 @@ app.whenReady().then(() => {
   startup.info("应用初始化完毕")
 })
 
-function gracefulShutdown(): void {
-  void terminateWorker()
-  void closeVectorDb()
-  void stopPlugin()
+async function gracefulShutdown(): Promise<void> {
+  await Promise.allSettled([terminateWorker(), closeVectorDb()])
+  await Promise.allSettled([stopPlugin()])
   closeDb()
 }
 
-// 正常退出路径
-app.on("before-quit", gracefulShutdown)
+// 正常退出路径：等待异步清理完成后再真正退出
+app.on("before-quit", (e) => {
+  e.preventDefault()
+  void gracefulShutdown().then(() => app.quit())
+})
 
 // 开发环境 Ctrl+C / SIGTERM（不会触发 before-quit）
-process.on("SIGINT", () => {
-  gracefulShutdown()
+process.on("SIGINT", async () => {
+  await gracefulShutdown()
   process.exit(0)
 })
-process.on("SIGTERM", () => {
-  gracefulShutdown()
+process.on("SIGTERM", async () => {
+  await gracefulShutdown()
   process.exit(0)
 })

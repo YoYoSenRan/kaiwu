@@ -16,6 +16,7 @@ export interface StoreSchema {
 }
 
 const store = new Store<StoreSchema>({
+  encryptionKey: "kaiwu-store-v1",
   defaults: {
     windowBounds: {
       width: 800,

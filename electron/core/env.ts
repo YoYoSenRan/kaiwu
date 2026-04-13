@@ -16,7 +16,7 @@ export const isX64 = process.arch === "x64"
 /** 是否为 ARM64 架构（Apple Silicon / ARM Windows） */
 export const isArm64 = process.arch === "arm64"
 
-/** 是否为 Windows 7（通过 NT 内核版本号 6.1 判断） */
+/** 是否为 Windows 7（NT 6.1，含 Windows Server 2008 R2）。 */
 export const isWin7 = isWin && os.release().startsWith("6.1")
 
 /** 是否为 Linux 平台 */

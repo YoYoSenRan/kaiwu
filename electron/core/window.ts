@@ -2,7 +2,7 @@ import path from "node:path"
 import store from "./store"
 import { isDev, isMac } from "./env"
 import { indexHtml, preloadPath, publicPath, viteDevServerUrl } from "./paths"
-import { BrowserWindow, BrowserWindowConstructorOptions, shell } from "electron"
+import { app, BrowserWindow, BrowserWindowConstructorOptions, shell } from "electron"
 
 // 模块级单例：全项目共享同一个主窗口引用
 let mainWindow: BrowserWindow | null = null
@@ -41,7 +41,7 @@ function resolveWindowOptions(): BrowserWindowConstructorOptions {
   const options: BrowserWindowConstructorOptions = {
     x,
     y,
-    title: "Main window",
+    title: app.getName(),
     width,
     height,
     minWidth: 400,

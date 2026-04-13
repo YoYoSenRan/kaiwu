@@ -13,4 +13,4 @@ export type {
   AgentUpdateInput,
   WorkspaceFile,
 } from "../../electron/features/agent/types"
-export type { GatewayAgentRow, ModelChoice } from "../../electron/features/openclaw/agent/contract"
+export type { GatewayAgentRow, ModelChoice } from "../../electron/openclaw/agent/contract"

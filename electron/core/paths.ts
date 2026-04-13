@@ -19,7 +19,7 @@ export const indexHtml = path.join(rendererDist, "index.html")
 export const preloadPath = path.join(mainDist, "preload/preload.mjs")
 
 /** 静态资源目录：dev 时指向 public，build 时指向 dist */
-export const publicPath = process.env.VITE_DEV_SERVER_URL ? path.join(appRoot, "public") : rendererDist
+export const publicPath = process.env.VITE_DEV_SERVER_URL?.trim() ? path.join(appRoot, "public") : rendererDist
 
 /** Vite 开发服务器地址，仅 dev 模式存在 */
 export const viteDevServerUrl = process.env.VITE_DEV_SERVER_URL

@@ -4,13 +4,12 @@ import type { PluginServer } from "./transport"
 import { spawn } from "node:child_process"
 import { isWin } from "../../core/env"
 import { scope } from "../../core/logger"
-import { dispatchMonitorEvent, isMonitorEvent } from "../hook/dispatcher"
 import { stopGatewayConnection } from "./connection"
 import { checkCompatibility } from "./compat"
 import { detectGateway } from "./gateway"
 import { removeHandshake, writeHandshake } from "./handshake"
 import { detectPluginInstall, removePluginFiles, syncPlugin } from "./plugin"
-import { pushPluginEvent, pushStatusChanged } from "./push"
+import { pushStatusChanged } from "../push"
 import { startPluginServer } from "./transport"
 
 const openclawLog = scope("openclaw")
@@ -24,6 +23,7 @@ let pluginServer: PluginServer | null = null
 
 /**
  * 启动本地 bridge WS server。kaiwu 启动时调用一次；幂等。
+ * 返回的 PluginServer 可供上层绑定 onEvent。
  * 启动后自动刷新 handshake 文件（如果插件已安装），避免插件用上一次 kaiwu 进程
  * 留下的 stale port/token 去连接一个已死的 WS。
  */
@@ -31,11 +31,6 @@ export async function startPlugin(): Promise<PluginServer | null> {
   if (pluginServer) return pluginServer
   try {
     pluginServer = await startPluginServer()
-    pluginServer.onEvent((event) => {
-      // monitor 事件走独立通道，其余走通用 bridgeEvent 通道
-      if (isMonitorEvent(event)) dispatchMonitorEvent(event)
-      else pushPluginEvent(event)
-    })
     openclawLog.info(`桥接服务启动于 127.0.0.1:${pluginServer.info.port}`)
     await refreshHandshakeIfInstalled()
     return pluginServer

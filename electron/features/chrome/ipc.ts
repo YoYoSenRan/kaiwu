@@ -49,8 +49,6 @@ function openChildWindow(targetPath: string): void {
   const child = new BrowserWindow({
     webPreferences: {
       preload: preloadPath,
-      nodeIntegration: true,
-      contextIsolation: false,
     },
   })
 

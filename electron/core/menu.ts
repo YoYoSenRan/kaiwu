@@ -1,7 +1,6 @@
 import type { MenuItemConstructorOptions } from "electron"
-
-import { app, Menu } from "electron"
 import { isMac } from "./env"
+import { app, Menu } from "electron"
 
 /**
  * 安装 application menu。
