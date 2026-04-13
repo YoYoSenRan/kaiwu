@@ -49,8 +49,12 @@ pnpm pretest && pnpm exec vitest run test/e2e.spec.ts -t "startup"
 electron/                      主进程 + preload
 ├── main.ts                    入口，只做装配（启动顺序见 architecture.md）
 ├── preload.ts                 聚合 feature bridge → contextBridge.exposeInMainWorld("electron", api)
-├── core/                      基础设施层（app/window/security/menu/store/logger/paths/env）
-└── features/                  业务切片：updater / chrome / log / deeplink
+├── core/                      Electron 基础设施层（app/window/security/menu/store/logger/paths/env/vector）
+├── db/                        数据持久化层（schema/migrate/client/repositories，跨 feature 共用）
+├── embedding/                 嵌入引擎层（ML 推理：local ONNX + remote API，跨 feature 共用）
+├── engine/                    对话执行引擎层（AI 编排策略：runner/context/strategy）
+├── openclaw/                  OpenClaw 集成大模块（独立子系统：core/gateway/agent/hook）
+└── features/                  IPC 功能切片
     └── <name>/
         ├── channels.ts        IPC channel 常量
         ├── types.ts           Bridge 接口类型
@@ -69,7 +73,8 @@ app/                           渲染进程（React 19 + react-router HashRouter
 
 ### 装配铁律
 
-- core 不依赖 features；features 之间禁止互相 import；共享能力下沉到 core。
+- **依赖方向**：core ← db/embedding/engine ← features；各层均不可反向依赖 features；features 之间禁止互相 import。
+- 需要跨 feature 共用的无 IPC 能力：SQLite CRUD → `db/`；ML 推理 → `embedding/`；AI 编排 → `engine/`；Electron 封装 → `core/`。
 - feature **不创建 `index.ts` barrel**：barrel 会让 rollup 沿 re-export 链把 `ipc.ts` / `service.ts` 拉进 preload bundle，导致 `node:path` 等主进程 API 进入 preload，preload 启动崩溃。`main.ts` 和 `preload.ts` 必须直接 import 具体文件（`./features/x/ipc` 或 `./features/x/bridge`）。
 - feature 通过 `setup<Name>()` 自注册，`main.ts` 在 `app.whenReady` 后统一调用。
 - renderer 调用约定：`window.electron.<feature>.<method>`（preload 在 `electron/preload.ts:21` 用 `exposeInMainWorld("electron", api)` 暴露，`window` 类型在 `app/types/window.d.ts`）。

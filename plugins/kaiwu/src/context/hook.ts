@@ -29,9 +29,12 @@ export function createPromptHook(): (_event: unknown, ctx: unknown) => PromptBui
       result.appendSystemContext = data.instruction
     }
 
-    // 知识库片段 → 用户消息前面（模型会当作用户给的参考资料处理）
-    if (data.knowledge.length > 0) {
-      result.prependContext = formatKnowledge(data.knowledge)
+    // 共享历史 + 知识库片段 → 用户消息前面（模型会当作用户给的参考资料处理）
+    const prependParts: string[] = []
+    if (data.sharedHistory) prependParts.push(data.sharedHistory)
+    if (data.knowledge.length > 0) prependParts.push(formatKnowledge(data.knowledge))
+    if (prependParts.length > 0) {
+      result.prependContext = prependParts.join("\n\n")
     }
 
     return result

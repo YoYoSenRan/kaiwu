@@ -1,19 +1,43 @@
+/**
+ * `/kaiwu/*` HTTP 路由分派器。
+ *
+ * 支持两种 action 注册方式：
+ * 1. 带域前缀的全名注册：registerAction("context.set", handler)
+ * 2. 域 setup 里的短名注册：ctx.registerAction("set", handler) → 自动加域前缀 "context.set"
+ *
+ * 分发时按 action 字段精确匹配。
+ */
+
 import type { HttpRouteHandler } from "../../api.js"
+import type { ActionHandler } from "../domain.js"
 
-import { handleStageClear, handleStageSet } from "../context/route.js"
+/** 全局 action 注册表。key 是完整 action 名（如 "context.set"）。 */
+const registry = new Map<string, ActionHandler>()
 
-type ActionResult = { ok: boolean; error?: string; result?: unknown }
-type ActionHandler = (params: unknown) => ActionResult
-
-/** action → handler 映射。新增能力域时在这里注册对应的 action 前缀。 */
-const actions: Record<string, ActionHandler> = {
-  "stage.set": handleStageSet,
-  "stage.clear": handleStageClear,
+/**
+ * 注册一个 action handler。
+ * @param action 完整 action 名（如 "context.set"）
+ * @param handler 处理函数
+ */
+export function registerAction(action: string, handler: ActionHandler): void {
+  if (registry.has(action)) {
+    throw new Error(`action "${action}" already registered`)
+  }
+  registry.set(action, handler)
 }
 
 /**
- * `/kaiwu/*` HTTP 路由分派器。
- * 按请求体的 `action` 字段路由到各能力域的 handler。
+ * 为指定域创建一个 action 注册器。
+ * 域 setup 调用 `register("set", handler)` 时自动加前缀变成 "domain.set"。
+ * @param domain 域名（如 "context"、"monitor"）
+ */
+export function createDomainRegistrar(domain: string): (method: string, handler: ActionHandler) => void {
+  return (method, handler) => registerAction(`${domain}.${method}`, handler)
+}
+
+/**
+ * `/kaiwu/*` HTTP 路由入口。
+ * 按请求体的 `action` 字段路由到已注册的 handler。
  */
 export function createKaiwuRouteHandler(): HttpRouteHandler {
   return async (req, res) => {
@@ -24,13 +48,13 @@ export function createKaiwuRouteHandler(): HttpRouteHandler {
     }
 
     const action = (body as { action?: string }).action
-    const handler = action ? actions[action] : undefined
+    const handler = action ? registry.get(action) : undefined
     if (!handler) {
       respond(res, 400, { ok: false, error: { message: `unknown action: ${action}` } })
       return true
     }
 
-    const result = handler((body as { params?: unknown }).params)
+    const result = await handler((body as { params?: unknown }).params)
     respond(res, 200, result)
     return true
   }

@@ -1,24 +1,21 @@
 /**
  * Agent 管理的业务服务层。
  *
- * 架构备注：本文件会 import `features/openclaw/*` 的若干模块（requireClient / methods），
- * 这是有意为之——openclaw 在 kaiwu 里扮演 infra feature 的角色，所有基于 gateway 的
- * 业务 feature（agent/task/chat…）都需要它提供的 client 与 RPC 包装。
- * 替代方案是把 gateway client 下沉到 core/，但那样会把协议细节泄漏到基础设施层。
+ * openclaw 是平台 SDK 层（electron/openclaw/），所有基于 gateway 的
+ * 业务 feature（agent/chat/knowledge…）通过它访问 client 与 RPC 包装。
  */
 
-import log from "../../core/logger"
 import { dialog } from "electron"
 import { nanoid } from "nanoid"
-import { saveUploadedAvatar } from "./core/avatar"
 import { agentsRepo } from "../../db/repositories/agents"
 import { getMainWindow } from "../../core/window"
-import { resolveWorkspacePath } from "../../core/paths"
-import { requireClient } from "../openclaw/core/connection"
-import { agentsCreate, agentsDelete, agentsList, agentsUpdate } from "../openclaw/agent/methods"
-import { listWorkspaceFiles, readWorkspaceFile, workspaceExists, writeWorkspaceFile } from "./core/workspace"
-import type { GatewayAgentRow } from "../openclaw/agent/contract"
-import type { AgentDetailData, AgentRow, AgentCreateInput, AgentPatchInput, AgentUpdateInput, AvatarInput } from "./types"
+import { requireCaller } from "../../openclaw/core/connection"
+import { agentsList } from "../../openclaw/agent/methods"
+import { listWorkspaceFiles, readWorkspaceFile, workspaceExists, writeWorkspaceFile } from "./workspace"
+import type { GatewayAgentRow } from "../../openclaw/agent/contract"
+import type { AgentDetailData, AgentRow, AgentPatchInput } from "./types"
+
+export { create, update, remove, cleanupOrphans } from "./lifecycle"
 
 /** 按 kaiwu 展示顺序返回本地 agents。 */
 export function listLocal(): AgentRow[] {
@@ -27,8 +24,7 @@ export function listLocal(): AgentRow[] {
 
 /**
  * 详情页数据入口：按本地 id 拉单个 agent。
- * 和 listLocal 并列的顶层 service 函数——detail 页可以 deep link 直接访问，
- * 不依赖 list 的 store 状态。未来聚合字段（运行时状态、配置 delta 等）都加在这个函数里。
+ * detail 页可以 deep link 直接访问，不依赖 list 的 store 状态。
  */
 export function getDetail(id: string): AgentDetailData {
   return { row: getRow(id) }
@@ -40,7 +36,7 @@ export function getDetail(id: string): AgentDetailData {
  * 本地独有 → 标记 orphan-local；workspace 磁盘缺失 → 标记 workspace-missing。
  */
 export async function sync(): Promise<AgentRow[]> {
-  const client = requireClient()
+  const client = requireCaller()
   const remote = await agentsList(client)
   const now = Date.now()
 
@@ -79,132 +75,10 @@ function applyRemoteRow(r: GatewayAgentRow, local: AgentRow | undefined, workspa
   const workspace = r.workspace ?? ""
 
   if (!local) {
-    agentsRepo.insert({
-      id: nanoid(),
-      agent: r.id,
-      name,
-      workspace,
-      model,
-      emoji,
-      avatar,
-      avatar_url,
-      created_at: now,
-      updated_at: now,
-      last_synced_at: now,
-      sync_state,
-    })
+    agentsRepo.insert({ id: nanoid(), agent: r.id, name, workspace, model, emoji, avatar, avatar_url, created_at: now, updated_at: now, last_synced_at: now, sync_state })
     return
   }
   agentsRepo.update(local.id, { name, workspace, model, emoji, avatar, avatar_url, updated_at: now, last_synced_at: now, sync_state })
-}
-
-/**
- * 新建 agent。两阶段事务：
- * 1. 调 gateway `agents.create` 写配置和 bootstrap 文件
- * 2. 复制头像 / 覆盖用户填的 workspace 文件 / 写 db
- * 任一步失败回滚（调 agents.delete 清理 gateway 侧）。
- */
-export async function create(input: AgentCreateInput): Promise<AgentRow> {
-  validateAgentFormat(input.agent)
-  const workspace = resolveWorkspacePath(input.agent)
-  await ensureNotOccupied(input.agent, workspace)
-
-  const client = requireClient()
-  const created = await agentsCreate(client, { name: input.name, workspace, emoji: input.emoji })
-
-  try {
-    await writeInitialFiles(created.workspace, input.files)
-    const avatarRef = await persistAvatar(created.workspace, input.avatar)
-    if (avatarRef) {
-      await agentsUpdate(client, { agentId: created.agentId, avatar: avatarRef })
-    }
-    return insertLocalAgent({
-      agent: created.agentId,
-      name: input.name,
-      workspace: created.workspace,
-      emoji: input.emoji ?? null,
-      avatar: avatarRef,
-    })
-  } catch (err) {
-    log.error(`[agent/create] 失败回滚 ${created.agentId}:`, err)
-    await agentsDelete(client, { agentId: created.agentId, deleteFiles: true }).catch((e) => log.warn(`[agent/create] 回滚失败:`, e))
-    throw err
-  }
-}
-
-function validateAgentFormat(agent: string): void {
-  if (!agent) throw new Error("AGENT_ID_EMPTY")
-  if (agent === "main") throw new Error("AGENT_ID_RESERVED")
-  if (agent.length > 64) throw new Error("AGENT_ID_TOO_LONG")
-  if (!/^[a-z0-9][a-z0-9_-]*$/.test(agent)) throw new Error("AGENT_ID_INVALID")
-}
-
-async function ensureNotOccupied(agent: string, workspace: string): Promise<void> {
-  if (agentsRepo.findByAgent(agent)) throw new Error("AGENT_ID_EXISTS")
-  if (await workspaceExists(workspace)) throw new Error("WORKSPACE_EXISTS")
-}
-
-async function writeInitialFiles(workspace: string, files: Record<string, string> | undefined): Promise<void> {
-  if (!files) return
-  for (const [filename, content] of Object.entries(files)) {
-    if (content == null || content === "") continue
-    await writeWorkspaceFile(workspace, filename, content)
-  }
-}
-
-async function persistAvatar(workspace: string, avatar: AvatarInput | undefined): Promise<string | null> {
-  if (!avatar) return null
-  if (avatar.type === "file") return saveUploadedAvatar(workspace, avatar.path)
-  return avatar.url
-}
-
-function insertLocalAgent(row: { agent: string; name: string; workspace: string; emoji: string | null; avatar: string | null }): AgentRow {
-  const id = nanoid()
-  const now = Date.now()
-  agentsRepo.insert({
-    id,
-    agent: row.agent,
-    name: row.name,
-    workspace: row.workspace,
-    emoji: row.emoji,
-    avatar: row.avatar,
-    created_at: now,
-    updated_at: now,
-    last_synced_at: now,
-    sync_state: "ok",
-  })
-  return getRow(id)
-}
-
-/** 结构化更新：通过 gateway 改 name / model / avatar，并同步本地。 */
-export async function update(input: AgentUpdateInput): Promise<AgentRow> {
-  const row = getRow(input.id)
-  const client = requireClient()
-  const avatarRef = input.avatar ? await persistAvatar(row.workspace, input.avatar) : undefined
-
-  await agentsUpdate(client, {
-    agentId: row.agent,
-    name: input.name,
-    model: input.model,
-    avatar: avatarRef ?? undefined,
-  })
-
-  const patch: Parameters<typeof agentsRepo.update>[1] = { updated_at: Date.now() }
-  if (input.name !== undefined) patch.name = input.name
-  if (input.model !== undefined) patch.model = input.model
-  if (input.emoji !== undefined) patch.emoji = input.emoji
-  if (avatarRef !== undefined) patch.avatar = avatarRef
-  agentsRepo.update(input.id, patch)
-  return getRow(input.id)
-}
-
-/** 删除 agent。孤儿记录只清本地，不再调 gateway 避免 RPC 报错。 */
-export async function remove(id: string, removeWorkspace: boolean): Promise<void> {
-  const row = getRow(id)
-  if (row.sync_state !== "orphan-local") {
-    await agentsDelete(requireClient(), { agentId: row.agent, deleteFiles: removeWorkspace })
-  }
-  agentsRepo.deleteById(id)
 }
 
 /** 仅更新 kaiwu 本地元数据。不触发 gateway RPC。 */
@@ -220,11 +94,6 @@ export function patchMeta(id: string, patch: AgentPatchInput): AgentRow {
   cleaned.updated_at = Date.now()
   agentsRepo.update(id, cleaned)
   return getRow(id)
-}
-
-/** 批量清理 orphan-local 本地记录，返回删除条数。 */
-export function cleanupOrphans(): number {
-  return agentsRepo.deleteOrphans()
 }
 
 export async function listFiles(id: string): Promise<string[]> {
@@ -252,7 +121,7 @@ export async function pickAvatar(): Promise<string | null> {
 }
 
 /** 按本地 id 查 agent 行，找不到抛错。 */
-function getRow(id: string): AgentRow {
+export function getRow(id: string): AgentRow {
   const row = agentsRepo.findById(id)
   if (!row) throw new Error("AGENT_NOT_FOUND")
   return row

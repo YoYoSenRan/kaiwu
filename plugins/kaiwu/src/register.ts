@@ -1,22 +1,42 @@
+/**
+ * kaiwu 插件的运行时注册入口。
+ *
+ * 装配模式：创建共享基础设施（transport + http），然后遍历各能力域的 setup 函数。
+ * 新增能力域只需：1) 创建 src/<domain>/setup.ts  2) 在 DOMAINS 数组里加一行。
+ */
+
 import type { OpenClawPluginApi } from "../api.js"
+import type { DomainSetup } from "./domain.js"
 
-import { createPromptHook } from "./context/hook.js"
 import { resolveBridgeConfig } from "./core/handshake.js"
-import { createKaiwuRouteHandler } from "./core/http.js"
+import { createKaiwuRouteHandler, createDomainRegistrar } from "./core/http.js"
 import { createBridgeClient } from "./core/transport.js"
-import { setupCollector } from "./monitor/collector.js"
-import { createMonitorSink } from "./monitor/relay.js"
+import { setupContext } from "./context/setup.js"
+import { setupMonitor } from "./monitor/setup.js"
 
-/** HTTP 路由前缀，kaiwu 端也写死用这个路径。 */
+/** HTTP 路由前缀。 */
 const HTTP_ROUTE_PREFIX = "/kaiwu/"
 
 /**
- * kaiwu 插件的运行时注册入口。
- * 当前只装配 infra（transport + http 分派器）和生命周期 hook；
- * session / chat / hook 能力域的实现分散在 src/<capability>/ 下，
- * 未来在此统一挂载 setup<Cap>()。
+ * 能力域注册清单。
+ * 新增域只需在这里加一行 [域名, setup 函数]。
+ * 域名会作为 action 前缀（如 "context" → "context.set"）。
+ */
+const DOMAINS: Array<[string, DomainSetup]> = [
+  ["context", setupContext],
+  ["monitor", setupMonitor],
+  // 未来扩展：
+  // ["chat", setupChat],
+  // ["session", setupSession],
+  // ["hook", setupHook],
+]
+
+/**
+ * 插件启动入口。创建基础设施，遍历能力域 setup。
+ * @param api OpenClaw 插件 API
  */
 export async function registerBridgePlugin(api: OpenClawPluginApi): Promise<void> {
+  // --- 基础设施 ---
   const bridgeClient = createBridgeClient({
     logger: api.logger,
     configFactory: () =>
@@ -35,7 +55,7 @@ export async function registerBridgePlugin(api: OpenClawPluginApi): Promise<void
     handler: createKaiwuRouteHandler(),
   })
 
-  // gateway 起来时启动 WS 连接；停止时断开。复杂的事件上报交给能力层。
+  // gateway 起来时启动 WS 连接；停止时断开
   api.on("gateway_start", async () => {
     bridgeClient.start()
   })
@@ -43,11 +63,14 @@ export async function registerBridgePlugin(api: OpenClawPluginApi): Promise<void
     bridgeClient.stop("gateway_stop")
   })
 
-  // agent 每轮推理前注入阶段上下文（知识库 + 指令），不污染 chat.send 消息体
-  api.on("before_prompt_build", createPromptHook())
+  // --- 遍历能力域 ---
+  for (const [name, setup] of DOMAINS) {
+    await setup({
+      api,
+      registerAction: createDomainRegistrar(name),
+      bridge: bridgeClient,
+    })
+  }
 
-  // 订阅 OpenClaw 运行时 hook，通过 bridge WS 转发给 kaiwu 主进程
-  setupCollector(api.on.bind(api), createMonitorSink(bridgeClient))
-
-  api.logger.info?.("[kaiwu] registered")
+  api.logger.info?.(`[kaiwu] registered ${DOMAINS.length} domains: ${DOMAINS.map(([n]) => n).join(", ")}`)
 }

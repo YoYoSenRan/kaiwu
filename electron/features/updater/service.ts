@@ -1,10 +1,12 @@
 import { app } from "electron"
-import log from "../../core/logger"
+import { scope } from "../../core/logger"
 import { createRequire } from "node:module"
 import { updaterChannels } from "./channels"
 import { getMainWindow } from "../../core/window"
 import type { ProgressInfo, UpdateInfo } from "electron-updater"
 import type { CheckResult, UpdateAvailability, UpdaterError } from "./types"
+
+const updaterLog = scope("updater")
 
 // electron-updater 是 CJS 包，在 ESM 主进程中需要通过 createRequire 加载
 const require = createRequire(import.meta.url)
@@ -91,7 +93,7 @@ export function quitAndInstall(): void {
 function pushToRenderer(channel: string, payload: unknown): void {
   const win = getMainWindow()
   if (!win) {
-    log.warn(`[updater] 无主窗口，丢弃事件 ${channel}`)
+    updaterLog.warn(`无主窗口，丢弃事件 ${channel}`)
     return
   }
   win.webContents.send(channel, payload)

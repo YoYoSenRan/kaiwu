@@ -1,5 +1,7 @@
-import log from "../core/logger"
+import { scope } from "../core/logger"
 import type { EmbeddingProvider, EmbeddingResult, RemoteConfig } from "./engine"
+
+const remoteLog = scope("embedding:remote")
 
 interface OpenAIEmbeddingResponse {
   data: Array<{ embedding: number[]; index: number }>
@@ -34,7 +36,7 @@ export function createRemoteProvider(config: RemoteConfig): EmbeddingProvider {
 
       if (!resp.ok) {
         const body = await resp.text()
-        log.error(`[embedding/remote] API error ${resp.status}: ${body}`)
+        remoteLog.error(`API 错误 ${resp.status}: ${body}`)
         throw new Error(`Embedding API error: ${resp.status}`)
       }
 

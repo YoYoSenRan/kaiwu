@@ -14,6 +14,8 @@ export interface StageContext {
   instruction: string
   /** 知识库片段 → prependContext（用户消息前面，每轮发送）。 */
   knowledge: string[]
+  /** 共享对话历史 → prependContext（用户消息前面，每轮发送）。 */
+  sharedHistory?: string
 }
 
 // ---------- HTTP invoke action 参数 ----------
@@ -26,6 +28,8 @@ export interface StageSetParams {
   instruction: string
   /** 知识库片段列表。空数组表示本阶段无知识库。 */
   knowledge: string[]
+  /** 共享对话历史。空字符串或省略表示本阶段无共享历史。 */
+  sharedHistory?: string
 }
 
 /** action = "stage.clear" 的 params。 */

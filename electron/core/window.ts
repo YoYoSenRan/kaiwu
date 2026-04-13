@@ -1,7 +1,7 @@
 import path from "node:path"
 import { BrowserWindow, shell } from "electron"
 import { isMac } from "./env"
-import log from "./logger"
+import { scope } from "./logger"
 import { INDEX_HTML, PRELOAD_PATH, VITE_DEV_SERVER_URL, VITE_PUBLIC } from "./paths"
 import store from "./store"
 
@@ -94,6 +94,6 @@ function loadContent(win: BrowserWindow): void {
   }
 
   win.webContents.on("did-finish-load", () => {
-    log.info("[window] 主窗口加载完成")
+    scope("window").info("主窗口加载完成")
   })
 }

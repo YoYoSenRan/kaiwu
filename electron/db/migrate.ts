@@ -1,14 +1,20 @@
 import path from "node:path"
 import { app } from "electron"
 import Database from "better-sqlite3"
-import log from "../core/logger"
+import { scope } from "../core/logger"
 import initialSql from "./migrations/0000_initial.sql?raw"
 import knowledgeSql from "./migrations/0001_knowledge.sql?raw"
+import chatSql from "./migrations/0002_chat.sql?raw"
+import invocationsSql from "./migrations/0003_invocations.sql?raw"
+
+const dbLog = scope("db")
 
 /** 迁移清单：每新增一个 drizzle-kit generate 产出的 SQL 文件就追加一项。 */
 const MIGRATIONS: { name: string; sql: string }[] = [
   { name: "0000_initial", sql: initialSql },
   { name: "0001_knowledge", sql: knowledgeSql },
+  { name: "0002_chat", sql: chatSql },
+  { name: "0003_invocations", sql: invocationsSql },
 ]
 
 interface MigrationRow {
@@ -41,7 +47,7 @@ export function runMigrations(): void {
     for (const m of MIGRATIONS) {
       if (applied.has(m.name)) continue
       applyMigration(sqlite, m)
-      log.info(`[db] migration applied: ${m.name}`)
+      dbLog.info(`数据库迁移已应用: ${m.name}`)
     }
   } finally {
     sqlite.close()

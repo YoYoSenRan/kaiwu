@@ -1,10 +1,12 @@
 import path from "node:path"
 import { app } from "electron"
-import log from "../../core/logger"
+import { scope } from "../../core/logger"
 import type { BrowserWindow } from "electron"
 import type { DeepLinkPayload } from "./types"
 import { getMainWindow } from "../../core/window"
 import { deeplinkChannels, PROTOCOL } from "./channels"
+
+const deeplinkLog = scope("deeplink")
 
 // 冷启动时窗口尚未创建，暂存 URL 等待 flush
 let pendingUrl: string | null = null
@@ -28,7 +30,7 @@ export function setupProtocol(): void {
  * @param url 完整的协议 URL，例如 electron-vite-react://foo?bar=1
  */
 export function handleDeepLink(url: string): void {
-  log.info("[deeplink] 收到链接", url)
+  deeplinkLog.info("收到链接", url)
 
   const win = getMainWindow()
   if (!win) {
@@ -74,7 +76,7 @@ function sendPayload(win: BrowserWindow, url: string): void {
     }
     win.webContents.send(deeplinkChannels.event.received, payload)
   } catch (err) {
-    log.error("[deeplink] URL 解析失败", err)
+    deeplinkLog.error("URL 解析失败", err)
   }
 }
 

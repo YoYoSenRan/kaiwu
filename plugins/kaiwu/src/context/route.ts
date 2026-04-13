@@ -18,6 +18,7 @@ export function handleStageSet(params: unknown): { ok: boolean; error?: string }
   setStageContext(p.sessionKey, {
     instruction: p.instruction ?? "",
     knowledge: p.knowledge ?? [],
+    sharedHistory: p.sharedHistory,
   })
   return { ok: true }
 }

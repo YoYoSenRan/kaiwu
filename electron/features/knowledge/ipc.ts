@@ -17,7 +17,7 @@ import {
   setBindings,
 } from "./service"
 import type { KbCreateInput, KbUpdateInput, DocProgressEvent } from "./types"
-import type { SearchInput } from "./core/search"
+import type { SearchInput } from "../../knowledge/search"
 
 /** 将文档处理进度事件推送到渲染进程。 */
 function sendProgress(event: DocProgressEvent): void {

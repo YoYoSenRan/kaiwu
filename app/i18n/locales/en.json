@@ -162,10 +162,75 @@
   },
   "chat": {
     "title": "Chat",
-    "description": "Conversation workspace for your agents",
-    "emptyTitle": "Start a new conversation",
-    "emptyDescription": "Pick an agent or model to begin chatting",
-    "startConversation": "New Conversation"
+    "description": "Chat with AI Agents",
+    "newChat": "New Chat",
+    "search": "Search chats...",
+    "empty": "No chats yet",
+    "startConversation": "Start Conversation",
+    "inputPlaceholder": "Type a message...",
+    "inputPlaceholderRoundtable": "Share your thoughts or guide the discussion...",
+    "send": "Send",
+    "abort": "Abort",
+    "delete": "Delete Chat",
+    "deleteConfirm": "Are you sure you want to delete this chat? All messages will be permanently removed.",
+    "mode": {
+      "single": "Single Agent",
+      "roundtable": "Roundtable"
+    },
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed",
+      "archived": "Archived"
+    },
+    "roundtable": {
+      "round": "Round {{n}}",
+      "discussing": "Discussing",
+      "speaking": "Speaking...",
+      "spoken": "Spoke",
+      "waiting": "Waiting",
+      "start": "Start Discussion",
+      "pause": "Pause",
+      "resume": "Resume",
+      "stop": "Stop"
+    },
+    "panel": {
+      "agent": "Agent",
+      "participants": "Participants",
+      "contextBudget": "Context Budget",
+      "history": "Session History",
+      "knowledge": "Knowledge Base",
+      "memory": "Agent Memory",
+      "systemReserved": "System Reserved",
+      "linkedKnowledge": "Linked Knowledge",
+      "addKnowledge": "Add Knowledge",
+      "addParticipant": "Add Participant",
+      "orchestration": "Orchestration",
+      "turnStrategy": "Turn Strategy",
+      "maxRounds": "Max Rounds",
+      "sharedHistory": "Shared History",
+      "stats": "Statistics",
+      "messageCount": "Messages",
+      "tokenUsage": "Token Usage",
+      "estimatedCost": "Estimated Cost"
+    },
+    "create": {
+      "title": "New Chat",
+      "chatTitle": "Chat Title",
+      "selectMode": "Select Mode",
+      "selectAgent": "Select Agent",
+      "selectAgents": "Select Participants",
+      "confirm": "Create"
+    },
+    "toggle": {
+      "toolCalls": "Show tool calls",
+      "thinking": "Show thinking"
+    },
+    "thinking": "Thinking",
+    "tool": {
+      "call": "Tool call",
+      "result": "Tool result"
+    }
   },
   "knowledge": {
     "title": "Knowledge Base",

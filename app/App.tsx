@@ -39,7 +39,7 @@ function App() {
           <AppSidebar />
           <SidebarInset className="flex min-w-0 flex-col overflow-hidden">
             <Header />
-            <main className="flex-1 overflow-y-auto p-4">
+            <main className="relative flex-1 overflow-y-auto p-4">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={location.pathname}

@@ -2,8 +2,10 @@ import path from "node:path"
 import { app } from "electron"
 import Database from "better-sqlite3"
 import { drizzle } from "drizzle-orm/better-sqlite3"
-import log from "../core/logger"
+import { scope } from "../core/logger"
 import * as schema from "./schema"
+
+const dbLog = scope("db")
 
 type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>
 
@@ -25,7 +27,7 @@ export function getDb(): DrizzleDb {
   sqlite.pragma("foreign_keys = ON")
 
   instance = drizzle(sqlite, { schema })
-  log.info(`[db] opened ${dbPath}`)
+  dbLog.info(`数据库已打开: ${dbPath}`)
   return instance
 }
 

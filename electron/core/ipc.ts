@@ -1,5 +1,7 @@
 import { ipcMain } from "electron"
-import log from "./logger"
+import { scope } from "./logger"
+
+const ipcLog = scope("ipc")
 
 /**
  * 包装 ipcMain.handle，统一捕获异常并在主进程记录完整堆栈。
@@ -12,7 +14,7 @@ export function safeHandle(channel: string, fn: (...args: unknown[]) => unknown)
     try {
       return await fn(...args)
     } catch (err) {
-      log.error(`[ipc] ${channel}:`, err)
+      ipcLog.error(`${channel}:`, err)
       throw err
     }
   })

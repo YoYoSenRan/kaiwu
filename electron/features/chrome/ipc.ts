@@ -1,6 +1,7 @@
-import { chromeChannels } from "./channels"
-import { getMainWindow } from "../../core/window"
 import { BrowserWindow, ipcMain } from "electron"
+import { chromeChannels } from "./channels"
+import { closeWindow, isMaximized, minimizeWindow, toggleMaximize } from "./service"
+import { getMainWindow } from "../../core/window"
 import { INDEX_HTML, PRELOAD_PATH, VITE_DEV_SERVER_URL } from "../../core/paths"
 
 /**
@@ -12,34 +13,13 @@ export function setupChrome(): void {
   bindMaximizeEvents()
 }
 
-/** 注册所有 ipcMain.handle，与窗口实例无关。 */
+/** 注册所有 ipcMain.handle。 */
 function registerHandlers(): void {
-  ipcMain.handle(chromeChannels.window.minimize, () => {
-    getMainWindow()?.minimize()
-  })
-
-  ipcMain.handle(chromeChannels.window.maximize, () => {
-    const win = getMainWindow()
-    if (!win) return
-    // 切换最大化/还原
-    if (win.isMaximized()) {
-      win.unmaximize()
-    } else {
-      win.maximize()
-    }
-  })
-
-  ipcMain.handle(chromeChannels.window.close, () => {
-    getMainWindow()?.close()
-  })
-
-  ipcMain.handle(chromeChannels.window.state, () => {
-    return getMainWindow()?.isMaximized() ?? false
-  })
-
-  ipcMain.handle(chromeChannels.open, (_event, targetPath: string) => {
-    openChildWindow(targetPath)
-  })
+  ipcMain.handle(chromeChannels.window.minimize, () => minimizeWindow())
+  ipcMain.handle(chromeChannels.window.maximize, () => toggleMaximize())
+  ipcMain.handle(chromeChannels.window.close, () => closeWindow())
+  ipcMain.handle(chromeChannels.window.state, () => isMaximized())
+  ipcMain.handle(chromeChannels.open, (_event, targetPath: string) => openChildWindow(targetPath))
 }
 
 /**
@@ -62,6 +42,7 @@ function bindMaximizeEvents(): void {
 
 /**
  * 打开子窗口并加载指定路径。
+ * 直接使用 BrowserWindow —— 子窗口创建不属于可复用业务逻辑，保留在 IPC 层。
  * @param targetPath 子窗口要加载的路由路径
  */
 function openChildWindow(targetPath: string): void {

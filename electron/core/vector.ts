@@ -2,7 +2,9 @@ import path from "node:path"
 import { app } from "electron"
 import { connect } from "@lancedb/lancedb"
 import type { Connection } from "@lancedb/lancedb"
-import log from "./logger"
+import { scope } from "./logger"
+
+const vectorLog = scope("vector")
 
 let instance: Connection | null = null
 
@@ -15,7 +17,7 @@ export async function getVectorDb(): Promise<Connection> {
 
   const dbPath = path.join(app.getPath("userData"), "vector")
   instance = await connect(dbPath)
-  log.info(`[vector] opened ${dbPath}`)
+  vectorLog.info(`向量数据库已打开: ${dbPath}`)
   return instance
 }
 
@@ -26,6 +28,6 @@ export async function getVectorDb(): Promise<Connection> {
 export async function closeVectorDb(): Promise<void> {
   if (instance) {
     instance = null
-    log.info("[vector] closed")
+    vectorLog.info("向量数据库已关闭")
   }
 }

@@ -21,5 +21,7 @@ log.initialize()
 // 捕获未处理的异常和 Promise rejection，写入日志文件
 log.errorHandler.startCatching()
 
+export const scope = (name: string) => log.scope(name)
+
 export default log
 export type Logger = typeof log

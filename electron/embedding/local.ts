@@ -1,9 +1,11 @@
 import path from "node:path"
 import { Worker } from "node:worker_threads"
 import { app } from "electron"
-import log from "../core/logger"
+import { scope } from "../core/logger"
 import { LOCAL_MODELS, DEFAULT_MODEL } from "./models"
 import type { EmbeddingProvider, EmbeddingResult } from "./engine"
+
+const localLog = scope("embedding:local")
 
 let worker: Worker | null = null
 let progressListener: ((p: number) => void) | null = null
@@ -21,12 +23,12 @@ function getWorker(): Worker {
   worker = new Worker(workerPath, { workerData: { cacheDir: getCacheDir() } })
 
   worker.on("error", (err) => {
-    log.error("[embedding/local] worker error:", err)
+    localLog.error("Worker 错误:", err)
     worker = null
   })
 
   worker.on("exit", (code) => {
-    if (code !== 0) log.warn(`[embedding/local] worker exited with code ${code}`)
+    if (code !== 0) localLog.warn(`Worker 异常退出，退出码 ${code}`)
     worker = null
   })
 
@@ -61,7 +63,7 @@ function embedViaWorker(texts: string[]): Promise<{ vectors: number[][]; tokenCo
         reject(new Error(msg.message))
       } else if (msg.type === "progress") {
         const pct = Math.round(msg.progress ?? 0)
-        log.info(`[embedding/local] model loading: ${pct}%`)
+        localLog.info(`模型加载中: ${pct}%`)
         progressListener?.(pct)
       }
     }

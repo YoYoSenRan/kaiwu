@@ -17,6 +17,7 @@ release
 # Editor directories and files
 .vscode/.debug.env
 .idea
+.superpowers
 .DS_Store
 *.suo
 *.ntvs*
@@ -31,3 +32,4 @@ yarn.lock
 /test-results/
 /playwright-report/
 /playwright/.cache/
+.omx/
