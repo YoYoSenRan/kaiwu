@@ -27,6 +27,7 @@ export async function getVectorDb(): Promise<Connection> {
  */
 export async function closeVectorDb(): Promise<void> {
   if (instance) {
+    instance.close()
     instance = null
     vectorLog.info("向量数据库已关闭")
   }

@@ -21,7 +21,7 @@ interface ChunkRecord extends Record<string, unknown> {
   metadata: string
 }
 
-/** 进度事件，通过 IPC 推给渲染进程。 */
+/** 文档处理进度事件，供上层回调使用。 */
 export interface DocProgressEvent {
   docId: string
   state: "processing" | "ready" | "failed"

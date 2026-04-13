@@ -1,7 +1,6 @@
 import path from "node:path"
 import { app } from "electron"
 import { scope } from "../../core/logger"
-import type { BrowserWindow } from "electron"
 import type { DeepLinkPayload } from "./types"
 import { getMainWindow } from "../../core/window"
 import { deeplinkChannels, PROTOCOL } from "./channels"
@@ -66,7 +65,7 @@ export function extractDeepLinkFromArgv(argv: string[]): string | undefined {
 }
 
 /** 解析 URL 并推送到渲染进程，解析失败时仅记录日志。 */
-function sendPayload(win: BrowserWindow, url: string): void {
+function sendPayload(win: Electron.BrowserWindow, url: string): void {
   try {
     const parsed = new URL(url)
     const payload: DeepLinkPayload = {
@@ -81,7 +80,7 @@ function sendPayload(win: BrowserWindow, url: string): void {
 }
 
 /** 聚焦窗口，如果最小化则先还原。 */
-function focusWindow(win: BrowserWindow): void {
+function focusWindow(win: Electron.BrowserWindow): void {
   if (win.isMinimized()) win.restore()
   win.focus()
 }

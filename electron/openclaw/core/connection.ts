@@ -1,12 +1,13 @@
+import type { GatewaySocket } from "../gateway/socket"
+import type { GatewayCaller } from "../gateway/caller"
+import type { EventEmitter } from "../gateway/emitter"
 import type { GatewayConnectParams, GatewayMode, GatewayState } from "../types"
 
 import { scope } from "../../core/logger"
-import { GatewaySocket } from "../gateway/socket"
-import { GatewayCaller } from "../gateway/caller"
-import { EventEmitter } from "../gateway/emitter"
+import { createGatewayManager } from "../gateway/manager"
 import { readGatewayAuth } from "./config"
 import { detectGateway } from "./gateway"
-import { pushGatewayEvent, pushGatewayState } from "./push"
+import { pushGatewayEvent, pushGatewayState } from "../push"
 
 const gatewayLog = scope("openclaw:gateway")
 
@@ -143,51 +144,35 @@ async function connectByDetection(): Promise<void> {
 
 /** 创建 socket + caller + emitter 三件套并注册通用监听。 */
 function createGateway(url: string): void {
-  const s = new GatewaySocket()
-  const c = new GatewayCaller(s)
-  const e = new EventEmitter(s)
-
-  // 注册事件的 key 提取器（按 sessionKey 定向分发）
-  const sessionKeyExtractor = (payload: unknown) => {
-    const p = payload as { sessionKey?: string }
-    return p.sessionKey
-  }
-  e.registerKeyExtractor("chat", sessionKeyExtractor)
-  e.registerKeyExtractor("agent", sessionKeyExtractor)
-
-  s.onConnectionChange((connected) => {
-    if (connected && state.status !== "connected") {
-      setState({ status: "connected", url, error: null, nextRetryAt: null })
-    } else if (!connected && state.status === "connected") {
-      setState({ status: "disconnected", pingLatencyMs: null })
-    }
+  const manager = createGatewayManager({
+    onConnected: () => {
+      if (state.status !== "connected") {
+        setState({ status: "connected", url, error: null, nextRetryAt: null })
+      }
+    },
+    onDisconnected: () => {
+      if (state.status === "connected") {
+        setState({ status: "disconnected", pingLatencyMs: null })
+      }
+    },
+    onMetrics: (metrics) => {
+      const patch = Object.fromEntries(Object.entries(metrics).filter(([, v]) => v !== undefined))
+      if (Object.keys(patch).length > 0) setState(patch)
+    },
+    onAuthError: (message) => {
+      clearConnection()
+      gatewayLog.warn(`认证失败: ${message}`)
+      setState({ status: "auth-error", error: `认证失败: ${message}`, pingLatencyMs: null, nextRetryAt: null })
+    },
+    onError: (message) => {
+      clearConnection()
+      gatewayLog.warn(`连接错误: ${message}`)
+      setState({ status: "error", error: `连接错误: ${message}`, pingLatencyMs: null, nextRetryAt: null })
+    },
+    onEvent: (frame) => pushGatewayEvent(frame),
   })
 
-  s.onMetrics((metrics) => {
-    const patch = Object.fromEntries(Object.entries(metrics).filter(([, v]) => v !== undefined))
-    if (Object.keys(patch).length > 0) setState(patch)
-  })
-
-  s.onConnectError((err) => {
-    const msg = err.message.toLowerCase()
-    const isAuth =
-      msg.includes("auth") || msg.includes("token") || msg.includes("password") || msg.includes("mismatch") || msg.includes("unauthorized") || msg.includes("forbidden")
-
-    clearConnection()
-    const failurePatch = { pingLatencyMs: null, nextRetryAt: null }
-    if (isAuth) {
-      gatewayLog.warn(`认证失败: ${err.message}`)
-      setState({ status: "auth-error", error: `认证失败: ${err.message}`, ...failurePatch })
-    } else {
-      gatewayLog.warn(`连接错误: ${err.message}`)
-      setState({ status: "error", error: `连接错误: ${err.message}`, ...failurePatch })
-    }
-  })
-
-  // 所有 gateway event 帧推给 renderer（保持原有行为）
-  e.onAny((frame) => pushGatewayEvent(frame))
-
-  socket = s
-  caller = c
-  emitter = e
+  socket = manager.socket
+  caller = manager.caller
+  emitter = manager.emitter
 }

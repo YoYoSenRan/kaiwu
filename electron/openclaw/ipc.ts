@@ -4,6 +4,8 @@ import type { GatewayConnectParams, InvokeArgs } from "./types"
 import { agentsCreate, agentsDelete, agentsList, agentsUpdate, modelsList } from "./agent/methods"
 import { getGatewayState, requireCaller, startGatewayConnection, stopGatewayConnection } from "./core/connection"
 import { checkCompat, detect, installPlugin, invokePlugin, restartOpenclaw, startPlugin, uninstallPlugin } from "./core/lifecycle"
+import { dispatchMonitorEvent, isMonitorEvent } from "./hook/dispatcher"
+import { pushPluginEvent } from "./push"
 import type { AgentsCreateParams, AgentsDeleteParams, AgentsUpdateParams } from "./agent/contract"
 import type { ChatAbortParams, ChatSendParams, SessionCreateParams, SessionDeleteParams, SessionListParams, SessionPatchParams } from "./gateway/contract"
 
@@ -12,7 +14,14 @@ import type { ChatAbortParams, ChatSendParams, SessionCreateParams, SessionDelet
  * 必须在 app.whenReady() 之后、创建主窗口之前调用，以便事件能推到 renderer。
  */
 export function setupOpenclaw(): void {
-  void startPlugin()
+  startPlugin().then((server) => {
+    if (server) {
+      server.onEvent((event) => {
+        if (isMonitorEvent(event)) dispatchMonitorEvent(event)
+        else pushPluginEvent(event)
+      })
+    }
+  })
 
   // --- 生命周期 ---
   safeHandle(openclawChannels.lifecycle.detect, () => detect())
