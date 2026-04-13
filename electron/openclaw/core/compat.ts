@@ -3,7 +3,7 @@ import type { CompatResult } from "../types"
 import { promises as fs } from "node:fs"
 import path from "node:path"
 import semver from "semver"
-import { APP_ROOT } from "../../core/paths"
+import { appRoot } from "../../core/paths"
 
 /**
  * kaiwu 插件兼容的最低 OpenClaw 版本范围。
@@ -24,7 +24,7 @@ export const KNOWN_BREAKING_CHANGES: { version: string; change: string }[] = [
 ]
 
 /** 插件源码在 kaiwu 仓库中的目录。 */
-export const PLUGIN_SOURCE_DIR = path.join(APP_ROOT, "plugins", "kaiwu")
+export const PLUGIN_SOURCE_DIR = path.join(appRoot, "plugins", "kaiwu")
 
 /**
  * 校验 host 版本是否满足 kaiwu 插件的兼容性要求。

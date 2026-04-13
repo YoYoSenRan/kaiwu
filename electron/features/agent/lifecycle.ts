@@ -1,7 +1,7 @@
 import { scope } from "../../core/logger"
 import { nanoid } from "nanoid"
 import { agentsRepo } from "../../db/repositories/agents"
-import { resolveWorkspacePath } from "../../core/paths"
+import { resolveWorkspacePath } from "../../openclaw/paths"
 import { requireCaller } from "../../openclaw/core/connection"
 import { agentsCreate, agentsDelete, agentsUpdate } from "../../openclaw/agent/methods"
 import { saveUploadedAvatar } from "./avatar"

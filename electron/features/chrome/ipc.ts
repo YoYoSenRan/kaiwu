@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain } from "electron"
 import { chromeChannels } from "./channels"
 import { closeWindow, isMaximized, minimizeWindow, toggleMaximize } from "./service"
 import { getMainWindow } from "../../core/window"
-import { INDEX_HTML, PRELOAD_PATH, VITE_DEV_SERVER_URL } from "../../core/paths"
+import { indexHtml, preloadPath, viteDevServerUrl } from "../../core/paths"
 
 /**
  * 注册 chrome feature 的所有 IPC handler 和主窗口事件。
@@ -48,15 +48,15 @@ function bindMaximizeEvents(): void {
 function openChildWindow(targetPath: string): void {
   const child = new BrowserWindow({
     webPreferences: {
-      preload: PRELOAD_PATH,
+      preload: preloadPath,
       nodeIntegration: true,
       contextIsolation: false,
     },
   })
 
-  if (VITE_DEV_SERVER_URL) {
-    child.loadURL(`${VITE_DEV_SERVER_URL}#${targetPath}`)
+  if (viteDevServerUrl) {
+    child.loadURL(`${viteDevServerUrl}#${targetPath}`)
   } else {
-    child.loadFile(INDEX_HTML, { hash: targetPath })
+    child.loadFile(indexHtml, { hash: targetPath })
   }
 }

@@ -1,16 +1,11 @@
 import path from "node:path"
-import { BrowserWindow, shell } from "electron"
-import { isMac } from "./env"
-import { scope } from "./logger"
-import { INDEX_HTML, PRELOAD_PATH, VITE_DEV_SERVER_URL, VITE_PUBLIC } from "./paths"
 import store from "./store"
+import { isDev, isMac } from "./env"
+import { indexHtml, preloadPath, publicPath, viteDevServerUrl } from "./paths"
+import { BrowserWindow, BrowserWindowConstructorOptions, shell } from "electron"
 
 // 模块级单例：全项目共享同一个主窗口引用
 let mainWindow: BrowserWindow | null = null
-
-// 窗口最小尺寸：防止标题栏按钮被挤压
-const MIN_WIDTH = 400
-const MIN_HEIGHT = 300
 
 /**
  * 创建主窗口并持有为模块级单例。
@@ -21,29 +16,9 @@ export function createMainWindow(): BrowserWindow {
     return mainWindow
   }
 
-  const { x, y, width, height } = store.get("windowBounds")
-
-  // macOS: 隐藏标题栏但保留系统红绿灯（hiddenInset）
-  // Win/Linux: 完全无边框，由渲染进程绘制自定义按钮（frame: false）
-  const platformConfig = isMac ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 12, y: 12 } } : { frame: false }
-
-  mainWindow = new BrowserWindow({
-    title: "Main window",
-    icon: path.join(VITE_PUBLIC, "favicon.ico"),
-    x,
-    y,
-    width,
-    height,
-    minWidth: MIN_WIDTH,
-    minHeight: MIN_HEIGHT,
-    ...platformConfig,
-    webPreferences: {
-      preload: PRELOAD_PATH,
-    },
-  })
-
+  mainWindow = new BrowserWindow(resolveWindowOptions())
+  loadMainPage(mainWindow)
   bindWindowEvents(mainWindow)
-  loadContent(mainWindow)
 
   return mainWindow
 }
@@ -59,6 +34,32 @@ export function clearMainWindow(): void {
   mainWindow = null
 }
 
+/** 组装 BrowserWindow 配置。 */
+function resolveWindowOptions(): BrowserWindowConstructorOptions {
+  const { x, y, width, height } = store.get("windowBounds")
+
+  const options: BrowserWindowConstructorOptions = {
+    x,
+    y,
+    title: "Main window",
+    width,
+    height,
+    minWidth: 400,
+    minHeight: 300,
+    icon: path.join(publicPath, "favicon.ico"),
+    webPreferences: { preload: preloadPath },
+  }
+
+  if (isMac) {
+    options.titleBarStyle = "hiddenInset"
+    options.trafficLightPosition = { x: 12, y: 12 }
+  } else {
+    options.frame = false
+  }
+
+  return options
+}
+
 /**
  * 绑定窗口的核心事件（与具体 feature 无关）：
  * - resized/moved: 持久化窗口尺寸
@@ -68,14 +69,8 @@ export function clearMainWindow(): void {
  * 由 features/chrome 自己绑定，core 不引用任何 feature 通道常量。
  */
 function bindWindowEvents(win: BrowserWindow): void {
-  const saveBounds = () => {
-    // 最小化/最大化时的尺寸不代表用户真实偏好，跳过保存
-    if (!win.isMinimized() && !win.isMaximized()) {
-      store.set("windowBounds", win.getBounds())
-    }
-  }
-  win.on("resized", saveBounds)
-  win.on("moved", saveBounds)
+  win.on("moved", () => saveWindowBounds(win))
+  win.on("resized", () => saveWindowBounds(win))
 
   // 所有外链用系统浏览器打开，避免应用内加载不受控内容
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -84,16 +79,13 @@ function bindWindowEvents(win: BrowserWindow): void {
   })
 }
 
-/** 加载渲染进程内容：dev 走 Vite 服务器，prod 走本地 HTML。 */
-function loadContent(win: BrowserWindow): void {
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL)
-    win.webContents.openDevTools()
-  } else {
-    win.loadFile(INDEX_HTML)
-  }
+/** 保存窗口尺寸。最小化/最大化时的尺寸不代表用户真实偏好，跳过保存。 */
+function saveWindowBounds(win: BrowserWindow): void {
+  if (win.isMinimized() || win.isMaximized()) return
+  store.set("windowBounds", win.getBounds())
+}
 
-  win.webContents.on("did-finish-load", () => {
-    scope("window").info("主窗口加载完成")
-  })
+/** 加载主页面：dev 模式走 Vite 服务器，prod 模式走本地 HTML。 */
+function loadMainPage(win: BrowserWindow): Promise<void> {
+  return isDev ? win.loadURL(viteDevServerUrl!) : win.loadFile(indexHtml)
 }
