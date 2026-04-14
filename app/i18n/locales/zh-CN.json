@@ -37,9 +37,7 @@
   },
   "nav": {
     "dashboard": "仪表台",
-    "agent": "智能体",
     "task": "任务",
-    "chat": "对话",
     "knowledge": "知识库",
     "connect": "连接",
     "settings": "设置"
@@ -48,110 +46,23 @@
     "title": "仪表台",
     "description": "运行状态与核心指标一览",
     "stats": {
-      "agents": "智能体",
       "tasks": "任务",
-      "chats": "对话",
       "knowledge": "知识库"
     },
     "activityTitle": "最近活动",
-    "activityEmpty": "暂无活动记录"
-  },
-  "agent": {
-    "title": "智能体",
-    "description": "管理与编排你的智能体",
-    "createAgent": "新建",
-    "emptyTitle": "还没有智能体",
-    "emptyDescription": "创建第一个智能体开始编排任务",
-    "card": {
-      "busy": "运行中",
-      "orphan": "配置丢失",
-      "workspaceMissing": "工作区缺失",
-      "noModel": "默认模型"
+    "activityEmpty": "暂无活动记录",
+    "quickActions": {
+      "title": "快捷入口",
+      "newKnowledge": "新建知识库",
+      "connect": "连接管理",
+      "viewTasks": "查看任务"
     },
-    "sync": {
-      "button": "刷新",
-      "syncing": "对齐中",
-      "cleanOrphans": "清理丢失项（{{count}}）",
-      "syncFailed": "对齐失败：{{message}}"
-    },
-    "form": {
-      "hint": "创建后无法修改 ID，工作区目录名按 workspace-<ID> 规则生成",
-      "basicInfo": "基本信息",
-      "appearance": "外观",
-      "id": "ID",
-      "idHint": "唯一标识，小写字母/数字/-/_，max 64 字符",
-      "idPlaceholder": "my-agent",
-      "name": "名称",
-      "namePlaceholder": "智能体显示名称",
-      "emoji": "Emoji",
-      "emojiPlaceholder": "🤖",
-      "avatar": "头像",
-      "avatarFile": "本地文件",
-      "avatarUrl": "图片 URL",
-      "avatarPick": "选择文件",
-      "avatarUrlPlaceholder": "https://example.com/avatar.png",
-      "files": "工作区文件",
-      "filesHint": "可选。留空则使用 OpenClaw 默认 bootstrap 模板",
-      "filePlaceholder": "{{file}} 的初始内容（可留空）",
-      "submit": "创建",
-      "submitting": "创建中",
-      "cancel": "取消"
-    },
-    "tab": {
-      "overview": "概览",
-      "workspace": "工作区文件",
-      "sessions": "会话",
-      "knowledge": "知识库"
-    },
-    "detail": {
-      "back": "返回",
-      "notFound": "智能体不存在或已被删除"
-    },
-    "overview": {
-      "idLabel": "Agent ID",
-      "workspaceLabel": "工作区目录",
-      "modelLabel": "模型",
-      "modelDefault": "跟随主配置",
-      "save": "保存",
-      "saving": "保存中",
-      "idle": "空闲",
-      "startChat": "开始对话",
-      "metaTitle": "基本信息",
-      "actionsTitle": "快捷操作",
-      "editTitle": "编辑",
-      "syncedLabel": "上次同步",
-      "createdLabel": "创建时间",
-      "never": "从未"
-    },
-    "workspace": {
-      "empty": "没有文件",
-      "previewHint": "点击文本进入编辑",
-      "save": "保存",
-      "cancel": "取消"
-    },
-    "sessions": {
-      "loading": "加载中",
-      "empty": "暂无会话"
-    },
-    "delete": {
-      "title": "删除智能体",
-      "message": "确定要删除智能体 \"{{name}}\" 吗？此操作不可撤销。",
-      "removeWorkspace": "同时删除 workspace 文件",
-      "confirm": "删除",
-      "cancel": "取消",
-      "deleting": "删除中",
-      "failed": "删除失败：{{message}}"
-    },
-    "error": {
-      "idEmpty": "ID 不能为空",
-      "nameEmpty": "名称不能为空",
-      "idInvalid": "ID 格式非法（只允许小写字母、数字、下划线、短横线）",
-      "idReserved": "\"main\" 是保留名，不能使用",
-      "idTooLong": "ID 最长 64 个字符",
-      "idExists": "ID 已存在",
-      "workspaceExists": "workspace 目录已存在，请换一个 ID",
-      "notFound": "智能体不存在",
-      "unknown": "错误：{{message}}"
+    "recentKnowledge": "最近知识库",
+    "systemStatus": {
+      "title": "系统概览",
+      "tasks": "任务队列",
+      "knowledgeBases": "知识库",
+      "documents": "文档总数"
     }
   },
   "task": {
@@ -160,81 +71,10 @@
     "emptyTitle": "任务队列为空",
     "emptyDescription": "创建或派发任务后将在这里展示"
   },
-  "chat": {
-    "title": "对话",
-    "description": "与 AI Agent 对话",
-    "newChat": "新建对话",
-    "search": "搜索对话...",
-    "empty": "暂无对话",
-    "startConversation": "开始对话",
-    "inputPlaceholder": "输入消息...",
-    "inputPlaceholderRoundtable": "插入观点或引导讨论方向...",
-    "send": "发送",
-    "abort": "中断",
-    "delete": "删除对话",
-    "deleteConfirm": "确定要删除这个对话吗？所有消息将被永久删除。",
-    "mode": {
-      "single": "单 Agent",
-      "roundtable": "圆桌讨论"
-    },
-    "status": {
-      "active": "进行中",
-      "paused": "已暂停",
-      "completed": "已完成",
-      "archived": "已归档"
-    },
-    "roundtable": {
-      "round": "第 {{n}} 轮",
-      "discussing": "讨论中",
-      "speaking": "发言中...",
-      "spoken": "已发言",
-      "waiting": "待发言",
-      "start": "开始讨论",
-      "pause": "暂停",
-      "resume": "继续",
-      "stop": "停止"
-    },
-    "panel": {
-      "agent": "Agent",
-      "participants": "参与者",
-      "contextBudget": "上下文预算",
-      "history": "会话历史",
-      "knowledge": "知识库",
-      "memory": "Agent 记忆",
-      "systemReserved": "系统保留",
-      "linkedKnowledge": "关联知识库",
-      "addKnowledge": "添加知识库",
-      "addParticipant": "添加参与者",
-      "orchestration": "编排参数",
-      "turnStrategy": "轮转策略",
-      "maxRounds": "最大轮次",
-      "sharedHistory": "共享历史",
-      "stats": "统计",
-      "messageCount": "消息数",
-      "tokenUsage": "Token 消耗",
-      "estimatedCost": "预估费用"
-    },
-    "create": {
-      "title": "新建对话",
-      "chatTitle": "对话标题",
-      "selectMode": "选择模式",
-      "selectAgent": "选择 Agent",
-      "selectAgents": "选择参与者",
-      "confirm": "创建"
-    },
-    "toggle": {
-      "toolCalls": "显示工具调用",
-      "thinking": "显示推理过程"
-    },
-    "thinking": "推理过程",
-    "tool": {
-      "call": "工具调用",
-      "result": "工具结果"
-    }
-  },
   "knowledge": {
     "title": "知识库",
     "description": "向量索引与文档管理",
+    "count": "{{count}} 个知识库",
     "create": "新建知识库",
     "upload": "上传文档",
     "emptyTitle": "知识库为空",
@@ -279,6 +119,11 @@
   "connect": {
     "title": "连接",
     "description": "管理与 OpenClaw gateway 的连接",
+    "banner": {
+      "connected": "已连接到 OpenClaw Gateway",
+      "disconnected": "未连接到 OpenClaw Gateway",
+      "error": "连接出错"
+    },
     "section": {
       "status": "连接状态",
       "statusDescription": "当前 gateway 的运行与连接情况",
@@ -307,10 +152,6 @@
     "gateway": {
       "title": "网关连接",
       "description": "管理与 OpenClaw Gateway 的 WebSocket 连接"
-    },
-    "plugin": {
-      "title": "本地插件",
-      "description": "管理本机 OpenClaw 的 kaiwu 插件"
     },
     "plugin": {
       "title": "本地插件",
@@ -366,33 +207,10 @@
     "versionLabel": "版本",
     "buildLabel": "构建",
     "deviceId": "设备 ID",
+    "envLabel": "环境",
     "openclaw": {
       "title": "OpenClaw 桥接",
       "description": "监控并管理本机 OpenClaw gateway 与 kaiwu 插件的同步状态"
-    },
-    "embedding": {
-      "title": "Embedding 引擎",
-      "description": "向量化模型配置，用于知识库语义检索",
-      "providerLabel": "引擎类型",
-      "providerLocal": "本地",
-      "providerRemote": "远程",
-      "modelLabel": "模型",
-      "statusCached": "已下载",
-      "statusNotCached": "未下载",
-      "statusDownloading": "下载中",
-      "download": "下载模型",
-      "ready": "已就绪",
-      "endpointLabel": "Endpoint",
-      "apiKeyLabel": "API Key",
-      "apiKeyPlaceholder": "sk-...",
-      "remoteModelLabel": "模型名称",
-      "remoteModelPlaceholder": "text-embedding-ada-002",
-      "test": "测试连接",
-      "testing": "测试中...",
-      "testOk": "{{model}} 连接成功（{{dimensions}} 维）",
-      "testFail": "测试失败：{{error}}",
-      "save": "保存配置",
-      "saved": "配置已保存"
     }
   }
 }

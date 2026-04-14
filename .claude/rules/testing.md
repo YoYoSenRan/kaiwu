@@ -82,9 +82,9 @@ test/
 ├── e2e/                       # E2E 测试
 │   ├── startup.spec.ts        # 启动 / 主窗口 / 路由初始状态（系统级冒烟）
 │   ├── bridge.spec.ts         # contextBridge 暴露 / 各 feature 域完整性
-│   ├── chrome.spec.ts         # 对应 electron/features/chrome/
-│   ├── updater.spec.ts        # 对应 electron/features/updater/
-│   ├── deeplink.spec.ts       # 对应 electron/features/deeplink/
+│   ├── chrome.spec.ts         # 对应 electron/chrome/
+│   ├── updater.spec.ts        # 对应 electron/updater/
+│   ├── deeplink.spec.ts       # 对应 electron/deeplink/
 │   └── settings.spec.ts       # 跨 feature 的集成场景（主题/语言）
 ├── fixtures/                  # 夹具（mock 数据、假 update server 清单等）
 ├── helpers/                   # 测试工具（launch / 通用断言封装）
@@ -97,7 +97,7 @@ test/
 
 | 规则                                     | 说明                                                     |
 | ---------------------------------------- | -------------------------------------------------------- |
-| 一个 feature 一个 `.spec.ts`             | 文件名和 `electron/features/<name>/` 目录名一致          |
+| 一个 feature 一个 `.spec.ts`             | 文件名和 `electron/<name>/` 目录名一致                   |
 | 系统级冒烟单独文件                       | `startup.spec.ts` / `bridge.spec.ts`，不对应具体 feature |
 | 跨 feature 集成场景起描述性名字          | `settings.spec.ts` / `auth-flow.spec.ts`，多词用 kebab   |
 | E2E 后缀 `.spec.ts`，单测后缀 `.test.ts` | 一眼区分层级                                             |
@@ -121,7 +121,7 @@ test/
 
 | 改动类型                                              | 要求                                     |
 | ----------------------------------------------------- | ---------------------------------------- |
-| 新增 feature（`electron/features/<name>/`）           | 必须补 e2e，至少覆盖 bridge 的一条主路径 |
+| 新增 feature（`electron/<name>/`）                    | 必须补 e2e，至少覆盖 bridge 的一条主路径 |
 | 改 IPC channel 签名                                   | 必须同步更新 e2e                         |
 | 改启动顺序（`main.ts` 调用链）                        | 跑一遍 `pnpm test`，冒烟通过才合入       |
 | UI 纯视觉改动（`app/components/ui/*`）                | 不强求测试                               |
@@ -146,7 +146,7 @@ test("startup", async () => {
 
 ### 命名：`<feature>: <要验证的事>`
 
-冒号前是 feature 名（对应 `electron/features/<name>/` 或 `app/pages/<name>/`），冒号后是用自然语言描述的断言，可用中文。
+冒号前是 feature 名（对应 `electron/<name>/` 或 `app/pages/<name>/`），冒号后是用自然语言描述的断言，可用中文。
 
 ### 禁止 sleep / 固定延时
 

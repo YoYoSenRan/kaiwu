@@ -1,24 +1,18 @@
 import { app } from "electron"
 import { scope } from "./core/logger"
-import { closeDb } from "./db/client"
 import { closeVectorDb } from "./core/vector"
-import { runMigrations } from "./db/migrate"
 import { setupAppMenu } from "./core/menu"
-import { setupLog } from "./features/log/ipc"
-import { setupAgent } from "./features/agent/ipc"
-import { setupKnowledge } from "./features/knowledge/ipc"
-import { setupChat } from "./features/chat/ipc"
-import { setupEmbedding } from "./features/embedding/ipc"
+import { setupLog } from "./log/ipc"
+import { setupKnowledge } from "./knowledge/ipc"
 import { createMainWindow } from "./core/window"
-import { setupChrome } from "./features/chrome/ipc"
-import { setupUpdater } from "./features/updater/ipc"
+import { setupChrome } from "./chrome/ipc"
+import { setupUpdater } from "./updater/ipc"
 import { setupOpenclaw } from "./openclaw/ipc"
 import { stopPlugin } from "./openclaw/core/lifecycle"
-import { setupDeeplinkListeners } from "./features/deeplink/ipc"
-import { terminateWorker } from "./embedding/local"
+import { setupDeeplinkListeners } from "./deeplink/ipc"
 import { prepareApp, requestSingleInstance, setupAppLifecycle } from "./core/app"
 import { setupCSP } from "./core/security"
-import { flushPendingDeepLink, setupProtocol } from "./features/deeplink/service"
+import { flushPendingDeepLink, setupProtocol } from "./deeplink/service"
 
 const startup = scope("startup")
 
@@ -63,9 +57,6 @@ app.whenReady().then(() => {
   setupAppMenu()
   startup.info("应用菜单已接管")
 
-  // db migration 必须在 setupAgent() 注册 IPC 之前跑完，否则首次查询会打到未建表的 db
-  runMigrations()
-
   // 先创建主窗口，因为 setupChrome 需要绑定窗口的 maximize 事件
   createMainWindow()
   startup.info("主窗口已创建")
@@ -84,17 +75,8 @@ app.whenReady().then(() => {
   setupOpenclaw()
   startup.info("OpenClaw IPC 已注册")
 
-  setupAgent()
-  startup.info("Agent IPC 已注册")
-
   setupKnowledge()
   startup.info("知识库 IPC 已注册")
-
-  setupEmbedding()
-  startup.info("Embedding IPC 已注册")
-
-  setupChat()
-  startup.info("Chat IPC 已注册")
 
   // 处理 macOS 冷启动时暂存的深度链接
   flushPendingDeepLink()
@@ -102,9 +84,8 @@ app.whenReady().then(() => {
 })
 
 async function gracefulShutdown(): Promise<void> {
-  await Promise.allSettled([terminateWorker(), closeVectorDb()])
+  await Promise.allSettled([closeVectorDb()])
   await Promise.allSettled([stopPlugin()])
-  closeDb()
 }
 
 // 正常退出路径：等待异步清理完成后再真正退出

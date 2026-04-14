@@ -37,9 +37,7 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "agent": "Agent",
     "task": "Task",
-    "chat": "Chat",
     "knowledge": "Knowledge",
     "connect": "Connect",
     "settings": "Settings"
@@ -48,110 +46,23 @@
     "title": "Dashboard",
     "description": "Runtime status and core metrics at a glance",
     "stats": {
-      "agents": "Agents",
       "tasks": "Tasks",
-      "chats": "Chats",
       "knowledge": "Knowledge"
     },
     "activityTitle": "Recent Activity",
-    "activityEmpty": "No activity yet"
-  },
-  "agent": {
-    "title": "Agent",
-    "description": "Manage and orchestrate your agents",
-    "createAgent": "Create",
-    "emptyTitle": "No agents yet",
-    "emptyDescription": "Create your first agent to start orchestrating tasks",
-    "card": {
-      "busy": "Busy",
-      "orphan": "Missing in gateway",
-      "workspaceMissing": "Workspace missing",
-      "noModel": "Default model"
+    "activityEmpty": "No activity yet",
+    "quickActions": {
+      "title": "Quick Actions",
+      "newKnowledge": "New Knowledge Base",
+      "connect": "Connection",
+      "viewTasks": "View Tasks"
     },
-    "sync": {
-      "button": "Refresh",
-      "syncing": "Syncing",
-      "cleanOrphans": "Clean missing ({{count}})",
-      "syncFailed": "Sync failed: {{message}}"
-    },
-    "form": {
-      "hint": "ID cannot be changed after creation. Workspace dir is named workspace-<ID>",
-      "basicInfo": "Basic info",
-      "appearance": "Appearance",
-      "id": "ID",
-      "idHint": "Unique identifier, lowercase alphanumeric / - / _, max 64 chars",
-      "idPlaceholder": "my-agent",
-      "name": "Name",
-      "namePlaceholder": "Display name",
-      "emoji": "Emoji",
-      "emojiPlaceholder": "🤖",
-      "avatar": "Avatar",
-      "avatarFile": "Local file",
-      "avatarUrl": "Image URL",
-      "avatarPick": "Choose file",
-      "avatarUrlPlaceholder": "https://example.com/avatar.png",
-      "files": "Workspace files",
-      "filesHint": "Optional. Leaves OpenClaw default bootstrap templates if empty",
-      "filePlaceholder": "Initial content for {{file}} (optional)",
-      "submit": "Create",
-      "submitting": "Creating",
-      "cancel": "Cancel"
-    },
-    "tab": {
-      "overview": "Overview",
-      "workspace": "Workspace",
-      "sessions": "Sessions",
-      "knowledge": "Knowledge"
-    },
-    "detail": {
-      "back": "Back",
-      "notFound": "Agent not found or has been deleted"
-    },
-    "overview": {
-      "idLabel": "Agent ID",
-      "workspaceLabel": "Workspace",
-      "modelLabel": "Model",
-      "modelDefault": "Follow main config",
-      "save": "Save",
-      "saving": "Saving",
-      "idle": "Idle",
-      "startChat": "Chat",
-      "metaTitle": "Info",
-      "actionsTitle": "Actions",
-      "editTitle": "Edit",
-      "syncedLabel": "Last synced",
-      "createdLabel": "Created",
-      "never": "Never"
-    },
-    "workspace": {
-      "empty": "No files",
-      "previewHint": "Click text to edit",
-      "save": "Save",
-      "cancel": "Cancel"
-    },
-    "sessions": {
-      "loading": "Loading",
-      "empty": "No sessions yet"
-    },
-    "delete": {
-      "title": "Delete agent",
-      "message": "Are you sure you want to delete \"{{name}}\"? This cannot be undone.",
-      "removeWorkspace": "Also delete workspace files",
-      "confirm": "Delete",
-      "cancel": "Cancel",
-      "deleting": "Deleting",
-      "failed": "Delete failed: {{message}}"
-    },
-    "error": {
-      "idEmpty": "ID cannot be empty",
-      "nameEmpty": "Name cannot be empty",
-      "idInvalid": "Invalid ID format (lowercase alphanumeric / - / _ only)",
-      "idReserved": "\"main\" is reserved",
-      "idTooLong": "ID max length is 64 chars",
-      "idExists": "ID already exists",
-      "workspaceExists": "Workspace directory already exists, please pick another ID",
-      "notFound": "Agent not found",
-      "unknown": "Error: {{message}}"
+    "recentKnowledge": "Recent Knowledge Bases",
+    "systemStatus": {
+      "title": "System Overview",
+      "tasks": "Task Queue",
+      "knowledgeBases": "Knowledge Bases",
+      "documents": "Total Documents"
     }
   },
   "task": {
@@ -160,81 +71,10 @@
     "emptyTitle": "Task queue is empty",
     "emptyDescription": "Created or dispatched tasks will appear here"
   },
-  "chat": {
-    "title": "Chat",
-    "description": "Chat with AI Agents",
-    "newChat": "New Chat",
-    "search": "Search chats...",
-    "empty": "No chats yet",
-    "startConversation": "Start Conversation",
-    "inputPlaceholder": "Type a message...",
-    "inputPlaceholderRoundtable": "Share your thoughts or guide the discussion...",
-    "send": "Send",
-    "abort": "Abort",
-    "delete": "Delete Chat",
-    "deleteConfirm": "Are you sure you want to delete this chat? All messages will be permanently removed.",
-    "mode": {
-      "single": "Single Agent",
-      "roundtable": "Roundtable"
-    },
-    "status": {
-      "active": "Active",
-      "paused": "Paused",
-      "completed": "Completed",
-      "archived": "Archived"
-    },
-    "roundtable": {
-      "round": "Round {{n}}",
-      "discussing": "Discussing",
-      "speaking": "Speaking...",
-      "spoken": "Spoke",
-      "waiting": "Waiting",
-      "start": "Start Discussion",
-      "pause": "Pause",
-      "resume": "Resume",
-      "stop": "Stop"
-    },
-    "panel": {
-      "agent": "Agent",
-      "participants": "Participants",
-      "contextBudget": "Context Budget",
-      "history": "Session History",
-      "knowledge": "Knowledge Base",
-      "memory": "Agent Memory",
-      "systemReserved": "System Reserved",
-      "linkedKnowledge": "Linked Knowledge",
-      "addKnowledge": "Add Knowledge",
-      "addParticipant": "Add Participant",
-      "orchestration": "Orchestration",
-      "turnStrategy": "Turn Strategy",
-      "maxRounds": "Max Rounds",
-      "sharedHistory": "Shared History",
-      "stats": "Statistics",
-      "messageCount": "Messages",
-      "tokenUsage": "Token Usage",
-      "estimatedCost": "Estimated Cost"
-    },
-    "create": {
-      "title": "New Chat",
-      "chatTitle": "Chat Title",
-      "selectMode": "Select Mode",
-      "selectAgent": "Select Agent",
-      "selectAgents": "Select Participants",
-      "confirm": "Create"
-    },
-    "toggle": {
-      "toolCalls": "Show tool calls",
-      "thinking": "Show thinking"
-    },
-    "thinking": "Thinking",
-    "tool": {
-      "call": "Tool call",
-      "result": "Tool result"
-    }
-  },
   "knowledge": {
     "title": "Knowledge Base",
     "description": "Vector indexes and document management",
+    "count": "{{count}} knowledge bases",
     "create": "New Knowledge Base",
     "upload": "Upload Document",
     "emptyTitle": "Knowledge base is empty",
@@ -279,6 +119,11 @@
   "connect": {
     "title": "Connect",
     "description": "Manage the connection to OpenClaw gateway",
+    "banner": {
+      "connected": "Connected to OpenClaw Gateway",
+      "disconnected": "Disconnected from OpenClaw Gateway",
+      "error": "Connection error"
+    },
     "section": {
       "status": "Connection Status",
       "statusDescription": "Current gateway runtime and connection state",
@@ -307,10 +152,6 @@
     "gateway": {
       "title": "Gateway Connection",
       "description": "Manage the WebSocket connection to OpenClaw Gateway"
-    },
-    "plugin": {
-      "title": "Local Plugin",
-      "description": "Manage the local kaiwu plugin for OpenClaw"
     },
     "plugin": {
       "title": "Local Plugin",
@@ -366,33 +207,10 @@
     "versionLabel": "Version",
     "buildLabel": "Build",
     "deviceId": "Device ID",
+    "envLabel": "Environment",
     "openclaw": {
       "title": "OpenClaw Bridge",
       "description": "Monitor and manage the sync state between local OpenClaw gateway and the kaiwu plugin"
-    },
-    "embedding": {
-      "title": "Embedding Engine",
-      "description": "Vector model configuration for semantic knowledge base retrieval",
-      "providerLabel": "Engine Type",
-      "providerLocal": "Local",
-      "providerRemote": "Remote",
-      "modelLabel": "Model",
-      "statusCached": "Downloaded",
-      "statusNotCached": "Not downloaded",
-      "statusDownloading": "Downloading",
-      "download": "Download model",
-      "ready": "Ready",
-      "endpointLabel": "Endpoint",
-      "apiKeyLabel": "API Key",
-      "apiKeyPlaceholder": "sk-...",
-      "remoteModelLabel": "Model name",
-      "remoteModelPlaceholder": "text-embedding-ada-002",
-      "test": "Test connection",
-      "testing": "Testing...",
-      "testOk": "{{model}} connected ({{dimensions}} dimensions)",
-      "testFail": "Test failed: {{error}}",
-      "save": "Save config",
-      "saved": "Config saved"
     }
   }
 }

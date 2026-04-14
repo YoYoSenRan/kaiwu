@@ -14,11 +14,8 @@ export default function KnowledgeList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("knowledge.title")}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">{t("knowledge.description")}</p>
-        </div>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">{t("knowledge.count", { count: list.length })}</p>
         <Button size="sm" onClick={() => setCreateOpen(true)}>
           <Plus className="mr-1.5 size-4" />
           {t("knowledge.create")}

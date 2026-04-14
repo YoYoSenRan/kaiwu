@@ -13,65 +13,70 @@ interface Crumb {
   path?: string
 }
 
-/**
- * 根据当前路径生成面包屑层级。
- * 目前只处理 /agent/:id 这种两层结构，其他路由直接映射 NAV_ITEMS。
- */
-function useBreadcrumbs(): Crumb[] {
+interface PageMeta {
+  crumbs: Crumb[]
+  headline: string
+}
+
+function usePageMeta(): PageMeta {
   const { t } = useTranslation()
   const { pathname } = useLocation()
 
-  if (pathname.startsWith("/agent/")) {
-    return [{ label: t("nav.agent"), path: "/agent" }, { label: t("common.detail") }]
-  }
-
   if (pathname.startsWith("/knowledge/")) {
-    return [{ label: t("knowledge.title"), path: "/knowledge" }, { label: t("common.detail") }]
+    return {
+      crumbs: [{ label: "Kaiwu" }, { label: t("knowledge.title"), path: "/knowledge" }, { label: t("common.detail") }],
+      headline: t("knowledge.description"),
+    }
   }
 
   const item = NAV_ITEMS.find((n) => n.path === pathname)
   if (item) {
-    return [{ label: t(`${item.key}.title`) }]
+    return {
+      crumbs: [{ label: "Kaiwu" }, { label: t(`${item.key}.title`) }],
+      headline: t(`${item.key}.description`),
+    }
   }
 
-  return [{ label: t("common.unknownPage") }]
+  return {
+    crumbs: [{ label: "Kaiwu" }, { label: t("common.unknownPage") }],
+    headline: "",
+  }
 }
 
-/**
- * 全局头部：侧栏折叠按钮 + 分隔线 + 面包屑导航 + 右侧主题/语言切换。
- * 面包屑支持多级可点击返回，当前页仅展示不可点击。
- */
 export function Header() {
   const navigate = useNavigate()
-  const crumbs = useBreadcrumbs()
+  const { crumbs, headline } = usePageMeta()
 
   return (
-    <header className="border-border flex h-11 shrink-0 items-center gap-2 border-b px-2">
+    <header className="border-border flex h-16 shrink-0 items-center gap-2 border-b px-3">
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-4" />
-      <Breadcrumb>
-        <BreadcrumbList>
-          {crumbs.map((crumb, idx) => {
-            const isLast = idx === crumbs.length - 1
-            return (
-              <Fragment key={idx}>
-                <BreadcrumbItem>
-                  {isLast ? (
-                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink asChild>
-                      <button type="button" onClick={() => crumb.path && navigate(crumb.path)} className="cursor-pointer">
-                        {crumb.label}
-                      </button>
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-                {!isLast && <BreadcrumbSeparator />}
-              </Fragment>
-            )
-          })}
-        </BreadcrumbList>
-      </Breadcrumb>
+      <div className="flex flex-col justify-center">
+        <Breadcrumb>
+          <BreadcrumbList>
+            {crumbs.map((crumb, idx) => {
+              const isLast = idx === crumbs.length - 1
+              return (
+                <Fragment key={idx}>
+                  <BreadcrumbItem>
+                    {isLast ? (
+                      <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink asChild>
+                        <button type="button" onClick={() => crumb.path && navigate(crumb.path)} className="cursor-pointer">
+                          {crumb.label}
+                        </button>
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                  {!isLast && <BreadcrumbSeparator />}
+                </Fragment>
+              )
+            })}
+          </BreadcrumbList>
+        </Breadcrumb>
+        <div className="text-sm font-semibold tracking-tight">{headline}</div>
+      </div>
       <div className="ml-auto flex items-center gap-2">
         <ThemeToggle />
         <LanguageToggle />
@@ -80,11 +85,6 @@ export function Header() {
   )
 }
 
-/**
- * 主题选择下拉：系统 / 亮色 / 暗色 三选一。
- * 触发按钮显示当前选项的图标（system→Monitor, light→Sun, dark→Moon）。
- * 选中项由 DropdownMenuRadioGroup 自动渲染 √ 指示器。
- */
 function ThemeToggle() {
   const { t } = useTranslation()
   const theme = useSettingsStore((s) => s.theme)
@@ -117,11 +117,6 @@ function ThemeToggle() {
   )
 }
 
-/**
- * 语言选择下拉：zh-CN / en 二选一。
- * 触发按钮显示当前语言的简短徽标（"中" / "EN"）。
- * 切换时同步更新 i18next 运行时语言和 zustand store（缺一不可，见 i18n.md）。
- */
 function LanguageToggle() {
   const { t, i18n } = useTranslation()
   const lang = useSettingsStore((s) => s.lang)

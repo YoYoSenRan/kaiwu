@@ -50,7 +50,7 @@
 refactor: 重命名 IPC 桥为 electron 并将 window feature 改名为 chrome
 
 - bridge 顶层从 window.api 改为 window.electron，避免和浏览器原生 API 混淆
-- features/window/ → features/chrome/，window 在 Electron 里语义太重
+- window feature → chrome/，window 在 Electron 里语义太重
 - 同步更新 preload、所有调用点和 d.ts
 ```
 
