@@ -1,6 +1,6 @@
 import type { ComponentType } from "react"
 
-import { Bot, LayoutDashboard, Library, ListChecks, MessagesSquare, Plug, Settings } from "lucide-react"
+import { LayoutDashboard, Library, ListChecks, Plug, Settings } from "lucide-react"
 
 export interface NavItem {
   path: string
@@ -15,9 +15,7 @@ export interface NavItem {
  */
 export const NAV_ITEMS: NavItem[] = [
   { path: "/", key: "dashboard", icon: LayoutDashboard },
-  { path: "/agent", key: "agent", icon: Bot },
   { path: "/task", key: "task", icon: ListChecks },
-  { path: "/chat", key: "chat", icon: MessagesSquare },
   { path: "/knowledge", key: "knowledge", icon: Library },
   { path: "/connect", key: "connect", icon: Plug },
   { path: "/settings", key: "settings", icon: Settings },

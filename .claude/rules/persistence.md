@@ -3,7 +3,7 @@ paths:
   - "app/stores/**"
   - "app/**/*.tsx"
   - "electron/core/store.ts"
-  - "electron/features/store/**"
+  - "electron/store/**"
 ---
 
 # 本地持久化规范

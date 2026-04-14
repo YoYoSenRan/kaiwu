@@ -24,7 +24,6 @@ export default function KnowledgeDetail() {
     void refresh()
   }, [refresh])
 
-  // 订阅进度事件：中间态更新 progressMap，终态清除并 refresh 拿最终数据
   useEffect(() => {
     const unsub = window.electron.knowledge.doc.onProgress((event) => {
       if (event.state === "ready" || event.state === "failed") {
@@ -47,10 +46,12 @@ export default function KnowledgeDetail() {
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-hidden">
-      <div className="shrink-0">
-        <h1 className="text-2xl font-semibold tracking-tight">{row.name}</h1>
-        {row.description && <p className="text-muted-foreground mt-1 text-sm">{row.description}</p>}
-        <p className="text-muted-foreground mt-1 text-xs">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-base font-semibold tracking-tight">{row.name}</h1>
+          {row.description && <p className="text-muted-foreground truncate text-sm">{row.description}</p>}
+        </div>
+        <p className="text-muted-foreground shrink-0 text-xs">
           {row.doc_count} docs · {row.chunk_count} chunks · {row.embedding_model}
         </p>
       </div>

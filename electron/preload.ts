@@ -1,13 +1,10 @@
 import { contextBridge } from "electron"
-import { logBridge } from "./features/log/bridge"
-import { chatBridge } from "./features/chat/bridge"
-import { agentBridge } from "./features/agent/bridge"
-import { chromeBridge } from "./features/chrome/bridge"
-import { updaterBridge } from "./features/updater/bridge"
-import { deeplinkBridge } from "./features/deeplink/bridge"
+import { logBridge } from "./log/bridge"
+import { chromeBridge } from "./chrome/bridge"
+import { updaterBridge } from "./updater/bridge"
+import { deeplinkBridge } from "./deeplink/bridge"
 import { openclawBridge } from "./openclaw/bridge"
-import { knowledgeBridge } from "./features/knowledge/bridge"
-import { embeddingBridge } from "./features/embedding/bridge"
+import { knowledgeBridge } from "./knowledge/bridge"
 
 /** Electron API 类型，供 renderer 端通过 global.d.ts 引用 */
 export type ElectronAPI = typeof api
@@ -21,13 +18,10 @@ export type { OpenClawStatus, CompatResult, PluginEvent, MonitorEvent, GatewaySt
  */
 const api = {
   log: logBridge,
-  chat: chatBridge,
-  agent: agentBridge,
   chrome: chromeBridge,
   updater: updaterBridge,
   deeplink: deeplinkBridge,
   openclaw: openclawBridge,
-  embedding: embeddingBridge,
   knowledge: knowledgeBridge,
 } as const
 

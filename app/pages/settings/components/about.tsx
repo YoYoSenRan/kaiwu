@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 
-/** 关于信息：版本号、构建号、设备 ID。 */
+/** 关于信息：版本号、构建号、设备 ID、环境。 */
 export function AboutCard() {
   const { t } = useTranslation()
   return (
@@ -11,6 +11,8 @@ export function AboutCard() {
       <dd className="font-mono">2025.0412.1</dd>
       <dt className="text-muted-foreground">{t("settings.deviceId")}</dt>
       <dd className="font-mono">dev-1a2b3c</dd>
+      <dt className="text-muted-foreground">{t("settings.envLabel")}</dt>
+      <dd className="font-mono">DEV</dd>
     </dl>
   )
 }

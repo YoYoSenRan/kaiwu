@@ -27,7 +27,7 @@ pnpm pretest && pnpm exec vitest run test/e2e.spec.ts -t "startup"
 
 | 文件              | 覆盖范围                                                                          |
 | ----------------- | --------------------------------------------------------------------------------- |
-| `architecture.md` | 主进程目录划分（core/ vs features/）、装配方式、启动顺序                          |
+| `architecture.md` | 主进程目录划分（core/ vs IPC 能力模块）、装配方式、启动顺序                       |
 | `ipc.md`          | feature 4-5 文件模板（channels/types/service/ipc/bridge）、**禁止 barrel** 的原因 |
 | `pages.md`        | 渲染进程目录结构、`pages/` 组织、上浮规则、私有组件放哪                           |
 | `persistence.md`  | 双轨持久化：zustand persist（renderer）vs electron-store（main）的选择规则        |
@@ -51,16 +51,14 @@ electron/                      主进程 + preload
 ├── preload.ts                 聚合 feature bridge → contextBridge.exposeInMainWorld("electron", api)
 ├── core/                      Electron 基础设施层（app/window/security/menu/store/logger/paths/env/vector）
 ├── db/                        数据持久化层（schema/migrate/client/repositories，跨 feature 共用）
-├── embedding/                 嵌入引擎层（ML 推理：local ONNX + remote API，跨 feature 共用）
 ├── engine/                    对话执行引擎层（AI 编排策略：runner/context/strategy）
 ├── openclaw/                  OpenClaw 集成大模块（独立子系统：core/gateway/agent/hook）
-└── features/                  IPC 功能切片
-    └── <name>/
-        ├── channels.ts        IPC channel 常量
-        ├── types.ts           Bridge 接口类型
-        ├── service.ts         业务逻辑（可选；不 import ipcMain/BrowserWindow）
-        ├── ipc.ts             setup<Name>() 注册 ipcMain.handle
-        └── bridge.ts          preload 暴露给 renderer 的 API
+├── chrome/                    IPC 能力模块：窗口控制
+├── deeplink/                  IPC 能力模块：深度链接与协议
+├── knowledge/                 IPC 能力模块：知识库 CRUD
+├── log/                       IPC 能力模块：日志通道
+└── updater/                   IPC 能力模块：自动更新
+    每个目录固定 4-5 个文件：channels.ts / types.ts / service.ts / ipc.ts / bridge.ts
 app/                           渲染进程（React 19 + react-router HashRouter）
 ├── main.tsx / App.tsx
 ├── components/                业务组件 + ui/（shadcn 生成，kebab-case 例外）
@@ -73,17 +71,17 @@ app/                           渲染进程（React 19 + react-router HashRouter
 
 ### 装配铁律
 
-- **依赖方向**：core ← db/embedding/engine ← features；各层均不可反向依赖 features；features 之间禁止互相 import。
-- 需要跨 feature 共用的无 IPC 能力：SQLite CRUD → `db/`；ML 推理 → `embedding/`；AI 编排 → `engine/`；Electron 封装 → `core/`。
-- feature **不创建 `index.ts` barrel**：barrel 会让 rollup 沿 re-export 链把 `ipc.ts` / `service.ts` 拉进 preload bundle，导致 `node:path` 等主进程 API 进入 preload，preload 启动崩溃。`main.ts` 和 `preload.ts` 必须直接 import 具体文件（`./features/x/ipc` 或 `./features/x/bridge`）。
-- feature 通过 `setup<Name>()` 自注册，`main.ts` 在 `app.whenReady` 后统一调用。
-- renderer 调用约定：`window.electron.<feature>.<method>`（preload 在 `electron/preload.ts:21` 用 `exposeInMainWorld("electron", api)` 暴露，`window` 类型在 `app/types/window.d.ts`）。
+- **依赖方向**：core ← db/engine ← IPC 能力模块；各技术层均不可反向依赖 IPC 能力模块；IPC 能力模块之间禁止互相 import。
+- 需要跨模块共用的无 IPC 能力：SQLite CRUD → `db/`；AI 编排 → `engine/`；Electron 封装 → `core/`。
+- IPC 能力模块 **不创建 `index.ts` barrel**：barrel 会让 rollup 沿 re-export 链把 `ipc.ts` / `service.ts` 拉进 preload bundle，导致 `node:path` 等主进程 API 进入 preload，preload 启动崩溃。`main.ts` 和 `preload.ts` 必须直接 import 具体文件（`./x/ipc` 或 `./x/bridge`）。
+- IPC 能力模块通过 `setup<Name>()` 自注册，`main.ts` 在 `app.whenReady` 后统一调用。
+- renderer 调用约定：`window.electron.<name>.<method>`（preload 在 `electron/preload.ts:21` 用 `exposeInMainWorld("electron", api)` 暴露，`window` 类型在 `app/types/window.d.ts`）。
 - 启动顺序敏感：`prepareApp` → `setupProtocol` → `setupDeeplinkListeners` → `requestSingleInstance` → `setupAppLifecycle` → `whenReady` 内 `setupCSP` → `setupAppMenu` → `createMainWindow` → 各 `setup*()` IPC → `flushPendingDeepLink`。任何调整都要参照 `architecture.md` 的"主进程启动顺序"。
 
 ### 持久化双轨
 
 - **zustand persist（renderer）**：theme/lang 等首帧即需的偏好，写在 `app/stores/settings.ts`；业务状态另起独立 store，禁止往 settings 塞业务数据。**禁止组件里直接用 `localStorage`**。
-- **electron-store（main）**：窗口状态、凭证、跨进程共享数据。schema 在 `electron/core/store.ts` 强类型声明，默认值集中在 `defaults`。renderer 需要读时新建 `features/store/` 走 IPC bridge（暂未建）。
+- **electron-store（main）**：窗口状态、凭证、跨进程共享数据。schema 在 `electron/core/store.ts` 强类型声明，默认值集中在 `defaults`。renderer 需要读时新建 `store/` IPC 能力模块走 bridge（暂未建）。
 - 选不出来时按 `persistence.md` 的"模糊地带的判断"三问。
 
 ## 工程约定速查

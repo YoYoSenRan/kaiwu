@@ -26,5 +26,5 @@ export default defineConfig(
 
   eslintConfigPrettier,
 
-  { ignores: ["dist", "dist-electron", "release", "node_modules", ".vscode", "*.cjs", "scripts"] },
+  { ignores: ["dist", "dist-electron", "release", "node_modules", ".vscode", "*.cjs", "scripts", ".worktrees"] },
 )

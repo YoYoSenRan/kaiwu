@@ -1,14 +1,10 @@
-import Chat from "@/pages/chat"
 import Task from "@/pages/task"
 import Connect from "@/pages/connect"
 import Settings from "@/pages/settings"
 import Dashboard from "@/pages/dashboard"
 import KnowledgeList from "@/pages/knowledge/list"
 import KnowledgeDetail from "@/pages/knowledge/detail"
-import AgentList from "@/pages/agent/list"
-import AgentDetail from "@/pages/agent/detail"
 import { Header } from "@/components/layout/header"
-import { Footer } from "@/components/layout/footer"
 import { TitleBar } from "@/components/layout/titlebar"
 import { useGateway } from "@/hooks/use-gateway"
 import { AppSidebar } from "@/components/layout/sidebar"
@@ -26,7 +22,6 @@ function App() {
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useSettingsStore((s) => s.setSidebarCollapsed)
 
-  // bootstrap: 应用启动后自动扫描本机 gateway。主进程 startGatewayConnection 自身幂等。
   useEffect(() => {
     void window.electron.openclaw.gateway.connect()
   }, [])
@@ -44,17 +39,14 @@ function App() {
                 <motion.div
                   key={location.pathname}
                   className="flex h-full flex-col"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
                 >
                   <Routes location={location}>
                     <Route path="/" element={<Dashboard />} />
-                    <Route path="/agent" element={<AgentList />} />
-                    <Route path="/agent/:id" element={<AgentDetail />} />
                     <Route path="/task" element={<Task />} />
-                    <Route path="/chat" element={<Chat />} />
                     <Route path="/knowledge" element={<KnowledgeList />} />
                     <Route path="/knowledge/:id" element={<KnowledgeDetail />} />
                     <Route path="/connect" element={<Connect />} />
@@ -63,7 +55,6 @@ function App() {
                 </motion.div>
               </AnimatePresence>
             </main>
-            <Footer />
           </SidebarInset>
         </SidebarProvider>
       </div>

@@ -66,7 +66,7 @@ function resolveWindowOptions(): BrowserWindowConstructorOptions {
  * - setWindowOpenHandler: 外链用系统浏览器打开
  *
  * 注意：chrome feature 特有的 maximize/unmaximize 事件推送
- * 由 features/chrome 自己绑定，core 不引用任何 feature 通道常量。
+ * 由 chrome 自己绑定，core 不引用任何 feature 通道常量。
  */
 function bindWindowEvents(win: BrowserWindow): void {
   win.on("moved", () => saveWindowBounds(win))

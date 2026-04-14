@@ -24,8 +24,7 @@ export default defineConfig(({ command }) => {
       electron({
         main: {
           // Shortcut of `build.lib.entry`
-          // worker.ts 是 embedding 的 Worker 线程入口，必须作为独立 entry 打包
-          entry: { main: "electron/main.ts", worker: "electron/embedding/worker.ts" },
+          entry: "electron/main.ts",
           onstart(args) {
             if (process.env.VSCODE_DEBUG) {
               console.log(/* For `.vscode/.debug.script.mjs` */ "[startup] Electron App")

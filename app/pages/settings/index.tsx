@@ -1,14 +1,12 @@
-import { Palette, Cpu, Info } from "lucide-react"
+import { Info, Palette } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Separator } from "@/components/ui/separator"
 import { AboutCard } from "./components/about"
 import { AppearanceCard } from "./components/appearance"
-import { EmbeddingCard } from "./components/embedding"
 
 /** 设置模块定义。 */
 const MODULES = [
   { key: "appearance", icon: Palette, labelKey: "settings.appearanceTitle", descKey: "settings.appearanceDescription" },
-  { key: "embedding", icon: Cpu, labelKey: "settings.embedding.title", descKey: "settings.embedding.description" },
   { key: "about", icon: Info, labelKey: "settings.aboutTitle", descKey: "" },
 ] as const
 
@@ -48,7 +46,6 @@ export default function Settings() {
         </div>
         <Separator className="mb-6" />
         {active === "appearance" && <AppearanceCard />}
-        {active === "embedding" && <EmbeddingCard />}
         {active === "about" && <AboutCard />}
       </div>
     </div>
