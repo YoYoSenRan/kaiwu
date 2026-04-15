@@ -61,3 +61,44 @@ export const MAX_RETRY = 3
 - 内部代码信任框架和上游契约，不做防御性 if
 - 不添加掩盖错误的 fallback —— 错误应在最早位置暴露
 - 跨进程错误必须在 main 侧记录完整堆栈（IPC 跨进程会丢堆栈）
+
+## 命名规则
+
+| 类型      | 规则                     | 例子                               |
+| --------- | ------------------------ | ---------------------------------- |
+| 文件名    | 小写 + 单个单词          | `service.ts` `bridge.ts`           |
+| 目录名    | 小写 + 单个单词          | `updater/` `deeplink/`             |
+| 函数名    | camelCase + 动词开头     | `createWindow` `checkUpdate`       |
+| 类型/接口 | PascalCase + 名词        | `UpdateInfo` `WindowBridge`        |
+| Boolean   | is/has/can/should 前缀   | `isDev` `hasUpdate` `canQuit`      |
+| Hook 文件 | `use-` 前缀 + kebab-case | `use-theme-effect.ts` `use-now.ts` |
+
+- React 组件文件名小写单词（`titlebar.tsx`），组件本身仍 PascalCase
+- 样式文件与组件同名 + `.css`（`modal.tsx` + `modal.css`）
+- `app/components/ui/` 是 shadcn CLI 生成的，保持工具默认，不受此规则约束
+
+## Import 规则
+
+- **单块不分组**，所有 import 合并成一个代码块，不用空行分隔
+- **按行长度升序排序**，短的在上，长的在下
+- **side-effect 导入**有严格顺序要求时保留在顶部，不参与长度排序
+- 对象字面量的键也按**行长度升序**排列
+- 直接 import 具体文件，**禁止 barrel**
+
+## 注释规则
+
+- 导出函数必须有 JSDoc（一句话描述 + `@param`）
+- 行内注释解释"为什么"不是"做什么"
+- 不写 `@file` `@description` 文件头注释
+- magic number、hack/workaround、平台差异分支、跨进程边界**必须加注释**
+
+## Git 提交
+
+格式：`<type>: <中文描述>`（Conventional Commits），描述写"为什么"不写"做了什么"，整行 ≤ 72 字符。一次提交只做一件事。
+
+## 设计原则
+
+- **正交性**：两个正交的功能应该互不影响。改 A 导致 B 异常 = 正交性被破坏，要拆
+- **迪米特法则**：只调用直接依赖对象的方法，禁止 `a.b.c.internal` 跨层访问
+- **禁止重复机制互掐**：下层已有重连/轮询/缓存，上层不要再套同类型机制
+- **开闭原则**：加新能力应该是新增文件 + 注册，而不是改十个现有文件

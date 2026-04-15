@@ -6,7 +6,7 @@ paths:
 
 # 前端目录与页面结构
 
-`electron/` 那半边由 `architecture.md` / `ipc.md` 管。这份只管 `app/`（渲染进程）。
+这份规则只管 `app/`（渲染进程）。
 
 ## 顶层目录
 
@@ -29,7 +29,7 @@ app/
 - `App.tsx` 只做"挂 TitleBar + 装配路由"，不写业务、不写数据
 - `pages/` 之间禁止互相 import；要共用就上浮到 `components/` `hooks/` `lib/` `stores/`
 - `lib/` 里禁止 import React/组件，只放纯函数
-- `components/ui/` 是 shadcn 工具区，命名规则不受约束（见 `naming.md`）
+- `components/ui/` 是 shadcn 工具区，命名规则不受约束（见 `quality.md`）
 
 ## pages/ 组织
 
@@ -99,7 +99,7 @@ pages/
 3. **父目录不能有自己的 `index.tsx`**——否则两个子路由 + 一个父入口会冲突。父目录纯粹是命名空间
 4. **适用门槛**：同业务至少 2 个独立路由才启用这种结构，单路由仍然用平铺目录。ipc 层面也应该配套提供独立入口（如 `agent.detail(id)`），避免 detail 页依赖 list 页的 store 状态，支持 deep link
 
-和 `ipc.md` 里"大型 feature 的子目录例外"是同一个思路：领域边界优于严格的扁平规则。
+核心思路：领域边界优于严格的扁平规则。
 
 ### 路由注册
 
@@ -137,7 +137,7 @@ import Hero from "@/pages/demo/components/hero"
 2. **页面内部跨子目录用相对路径**：`import { useNow } from "../hooks/use-now"`
 3. **跨页面或引用全局**：用 `@/` 别名
 4. **禁止 barrel**：不在 `pages/<name>/` 或其子目录创建 `index.ts` 聚合导出（`index.tsx` 是页面本体，不是桶）。子组件直接从文件 import
-5. 其他规则继承 `imports.md`（单块、按行长升序、side-effect 顶部）
+5. 其他规则继承 `quality.md`（单块、按行长升序、side-effect 顶部）
 
 ```tsx
 // ✅ pages/demo/index.tsx
@@ -150,13 +150,7 @@ import { STATS } from "./data"
 import { Hero, Stats } from "./components"
 ```
 
-## 命名补充（继承 `naming.md`）
-
-- 页面目录：小写单词（`demo` / `settings` / `about`）
-- 页面入口：固定 `index.tsx`
-- 私有组件：小写单词（`header.tsx` / `hero.tsx`），组件本身仍 PascalCase
-- 私有 hook：`use-` 前缀 + kebab-case（`use-now.ts`），与 `app/hooks/` 一致
-- 数据/常量：`data.ts` / `constants.ts`
+> 命名规则见 `quality.md`。页面入口固定 `index.tsx`，数据/常量文件用 `data.ts` / `constants.ts`。
 
 ## 反模式
 
@@ -165,7 +159,7 @@ import { Hero, Stats } from "./components"
 | 在 `App.tsx` 里写业务逻辑                  | 它只是路由壳                                                         |
 | `pages/foo/` import `pages/bar/*`          | 页面之间应通过全局组件/store 解耦                                    |
 | 一上来就把所有子组件塞进 `app/components/` | 私有组件应留在 page 内，被复用了再上浮                               |
-| 在 page 子目录建 `index.ts` barrel         | 同 `ipc.md`：徒增 import 链且没收益                                  |
+| 在 page 子目录建 `index.ts` barrel         | 徒增 import 链且没收益                                               |
 | 页面 < 100 行还硬开 `components/` 子目录   | 过度组织，单文件就行                                                 |
 | `lib/` 里 import React 或组件              | `lib/` 必须保持纯函数无 React 依赖                                   |
 | `pages/<name>/` 下放 `xxx.css` 全局样式    | 全局样式只放 `app/styles/`；页面私有样式可以同名 `hero.css` 紧贴组件 |
