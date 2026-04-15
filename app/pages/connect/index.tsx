@@ -39,14 +39,22 @@ function StatusBanner({ status, url, error, ping, onDisconnect, onScan }: Status
   const { t } = useTranslation()
   const busy = status === "connecting" || status === "detecting"
 
-  const bannerText = status === "connected" ? t("connect.banner.connected") : status === "error" || status === "auth-error" ? t("connect.banner.error") : t("connect.banner.disconnected")
-  const bgClass = status === "connected" ? "bg-primary/10 border-primary/20" : status === "error" || status === "auth-error" ? "bg-destructive/10 border-destructive/20" : "bg-muted border-border"
+  const bannerText =
+    status === "connected" ? t("connect.banner.connected") : status === "error" || status === "auth-error" ? t("connect.banner.error") : t("connect.banner.disconnected")
+  const bgClass =
+    status === "connected"
+      ? "bg-primary/10 border-primary/20"
+      : status === "error" || status === "auth-error"
+        ? "bg-destructive/10 border-destructive/20"
+        : "bg-muted border-border"
 
   return (
     <div className={`flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between ${bgClass}`}>
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-sm font-medium">
-          <span className={`size-2 rounded-full ${status === "connected" ? "bg-primary" : status === "error" || status === "auth-error" ? "bg-destructive" : "bg-muted-foreground"}`} />
+          <span
+            className={`size-2 rounded-full ${status === "connected" ? "bg-primary" : status === "error" || status === "auth-error" ? "bg-destructive" : "bg-muted-foreground"}`}
+          />
           {bannerText}
         </div>
         <div className="text-muted-foreground font-mono text-xs">

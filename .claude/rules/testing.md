@@ -101,7 +101,7 @@ test/
 | 系统级冒烟单独文件                       | `startup.spec.ts` / `bridge.spec.ts`，不对应具体 feature |
 | 跨 feature 集成场景起描述性名字          | `settings.spec.ts` / `auth-flow.spec.ts`，多词用 kebab   |
 | E2E 后缀 `.spec.ts`，单测后缀 `.test.ts` | 一眼区分层级                                             |
-| 文件名遵循 `naming.md` 的小写单词规则    | 例外只有多词 kebab                                       |
+| 文件名遵循 `quality.md` 的小写单词规则   | 例外只有多词 kebab                                       |
 
 ### 拆分触发条件（任一满足即动手）
 
@@ -111,7 +111,7 @@ test/
 
 ### helpers 抽取时机
 
-遵循 `quality.md` 的 "重复 2 次才抽" 原则。第一个 spec 里写内联启动代码是对的，第二个 spec 要写时再抽 `helpers/launch.ts`。helpers 里的函数仍然要遵循 JSDoc 规范（见 `comments.md`）。
+遵循 `quality.md` 的 "重复 2 次才抽" 原则。第一个 spec 里写内联启动代码是对的，第二个 spec 要写时再抽 `helpers/launch.ts`。helpers 里的导出函数仍然要有 JSDoc（见 `quality.md`）。
 
 ### 产物目录与 gitignore
 
@@ -150,11 +150,11 @@ test("startup", async () => {
 
 ### 禁止 sleep / 固定延时
 
-用 playwright 的 `waitFor` / `expect().toHaveText()` 等带轮询的断言，不要 `setTimeout(3000)`。
+用 playwright 的 `page.waitForSelector()` 等带轮询的 API，不要 `setTimeout(3000)`。
 
 ```ts
 // ✅
-await expect(page.locator("#root")).toBeVisible()
+await page.waitForSelector("#root")
 
 // ❌
 await new Promise((r) => setTimeout(r, 3000))

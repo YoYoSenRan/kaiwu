@@ -39,7 +39,7 @@ export default function Dashboard() {
                     key={kb.id}
                     type="button"
                     onClick={() => navigate(`/knowledge/${kb.id}`)}
-                    className="flex items-center justify-between rounded-md border p-3 text-left transition-colors hover:bg-muted/50"
+                    className="hover:bg-muted/50 flex items-center justify-between rounded-md border p-3 text-left transition-colors"
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{kb.name}</p>
