@@ -1,7 +1,7 @@
 import type { CompatResult, InvokeArgs, InvokeResult, OpenClawStatus } from "./types"
 import type { PluginServer } from "./plugin/transport"
 import type { OpenclawEmitter } from "./push"
-import type { GatewayRuntime } from "./gateway/connection"
+import type { GatewayClient } from "./gateway/client"
 import { spawn } from "node:child_process"
 import { isWin } from "../../infra/env"
 import { scope } from "../../infra/logger"
@@ -11,7 +11,7 @@ import { checkCompatibility } from "./plugin/compat"
 import { removeHandshake, writeHandshake } from "./plugin/handshake"
 import { detectPluginInstall, removePluginFiles, syncPlugin } from "./plugin/sync"
 
-const openclawLog = scope("openclaw")
+const log = scope("openclaw")
 
 /** 调用 `openclaw gateway restart` 的超时（ms）。 */
 const RESTART_TIMEOUT_MS = 10_000
@@ -32,7 +32,7 @@ export class OpenclawRuntime {
 
   constructor(
     private readonly push: OpenclawEmitter,
-    private readonly gateway: GatewayRuntime,
+    private readonly gateway: GatewayClient,
   ) {}
 
   /** 已启动的 bridge 插件服务器，未启动时返回 null。invokePlugin 等需要鉴权 token 时使用。 */
@@ -49,18 +49,18 @@ export class OpenclawRuntime {
     if (this.pluginServer) return this.pluginServer
     try {
       this.pluginServer = await startPluginServer()
-      openclawLog.info(`桥接服务启动于 127.0.0.1:${this.pluginServer.info.port}`)
+      log.info(`桥接服务启动于 127.0.0.1:${this.pluginServer.info.port}`)
       await this.refreshHandshakeIfInstalled()
       return this.pluginServer
     } catch (err) {
-      openclawLog.error(`桥接服务启动失败: ${(err as Error).message}`)
+      log.error(`桥接服务启动失败: ${(err as Error).message}`)
       return null
     }
   }
 
   /** 关闭 bridge server 和 gateway 连接（kaiwu 退出时调用）。 */
   async stopBridge(): Promise<void> {
-    this.gateway.stop()
+    this.gateway.disconnect()
     if (!this.pluginServer) return
     await this.pluginServer.close()
     this.pluginServer = null
@@ -107,7 +107,7 @@ export class OpenclawRuntime {
         pid: this.pluginServer.info.pid,
       })
     } else {
-      openclawLog.warn("安装插件时桥接服务未运行，插件将处于空闲状态")
+      log.warn("安装插件时桥接服务未运行，插件将处于空闲状态")
     }
     return await this.detect()
   }
@@ -197,9 +197,9 @@ export class OpenclawRuntime {
         token: this.pluginServer.info.token,
         pid: this.pluginServer.info.pid,
       })
-      openclawLog.info("握手信息已刷新")
+      log.info("握手信息已刷新")
     } catch (err) {
-      openclawLog.warn(`刷新握手信息失败: ${(err as Error).message}`)
+      log.warn(`刷新握手信息失败: ${(err as Error).message}`)
     }
   }
 }
