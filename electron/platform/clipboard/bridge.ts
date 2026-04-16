@@ -3,7 +3,7 @@ import type { ClipboardBridge } from "./types"
 
 const bridge = createBridge("clipboard")
 
-export const clipboardBridge: ClipboardBridge = {
+export const clipboard: ClipboardBridge = {
   readText: () => bridge.invoke("read-text"),
   writeText: (text) => bridge.invoke("write-text", text),
   readImage: () => bridge.invoke("read-image"),

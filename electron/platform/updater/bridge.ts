@@ -3,7 +3,7 @@ import type { UpdaterBridge, UpdaterEvents } from "./types"
 
 const bridge = createBridge<UpdaterEvents>("updater")
 
-export const updaterBridge: UpdaterBridge = {
+export const updater: UpdaterBridge = {
   check: () => bridge.invoke("action:check"),
   download: () => bridge.invoke("action:download"),
   install: () => bridge.invoke("action:install"),
