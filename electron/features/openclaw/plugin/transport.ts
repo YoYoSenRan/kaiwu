@@ -1,8 +1,7 @@
-import type { PluginEvent } from "../types"
 import type { WebSocket } from "ws"
-
-import { WebSocketServer } from "ws"
+import type { PluginEvent } from "../types"
 import { scope } from "../../../infra/logger"
+import { WebSocketServer } from "ws"
 import { extractTokenFromUrl, generateBridgeToken, verifyToken } from "./security"
 
 const channelLog = scope("openclaw:channel")

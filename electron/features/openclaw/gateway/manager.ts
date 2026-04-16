@@ -52,9 +52,10 @@ export function createGatewayManager(hooks: GatewayManagerHooks): GatewayManager
   s.onMetrics((metrics) => hooks.onMetrics(metrics))
 
   s.onConnectError((err) => {
-    const msg = err.message.toLowerCase()
-    const isAuth =
-      msg.includes("auth") || msg.includes("token") || msg.includes("password") || msg.includes("mismatch") || msg.includes("unauthorized") || msg.includes("forbidden")
+    // 优先用 gateway 结构化 error code 判断（AUTH_ / DEVICE_AUTH_ 前缀），
+    // 无 code 时降级字符串匹配兼容旧版 gateway
+    const code = (err as Error & { code?: string }).code ?? ""
+    const isAuth = code.startsWith("AUTH_") || code.startsWith("DEVICE_AUTH_") || (!code && /auth|token|password|unauthorized|forbidden/i.test(err.message))
 
     if (isAuth) hooks.onAuthError(err.message)
     else hooks.onError(err.message)

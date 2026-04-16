@@ -15,7 +15,10 @@ import { integer, text } from "drizzle-orm/sqlite-core"
  */
 
 /** 文本主键。默认用 nanoid() 生成 21 字符 URL-safe id。 */
-export const pk = () => text("id").primaryKey().$defaultFn(() => nanoid())
+export const pk = () =>
+  text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid())
 
 /** 创建时间：毫秒时间戳。insert 时默认 Date.now()。 */
 export const createdAt = () =>

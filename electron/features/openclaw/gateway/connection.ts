@@ -1,13 +1,13 @@
-import type { GatewaySocket } from "../gateway/socket"
-import type { GatewayCaller } from "../gateway/caller"
-import type { EventEmitter } from "../gateway/emitter"
+import type { GatewaySocket } from "./socket"
+import type { GatewayCaller } from "./caller"
+import type { EventEmitter } from "./emitter"
 import type { GatewayConnectParams, GatewayMode, GatewayState } from "../types"
 import type { OpenclawEmitter } from "../push"
 
 import { scope } from "../../../infra/logger"
-import { createGatewayManager } from "../gateway/manager"
+import { createGatewayManager } from "./manager"
 import { readGatewayAuth } from "./config"
-import { detectGateway } from "./gateway"
+import { detectGateway } from "./detection"
 
 const gatewayLog = scope("openclaw:gateway")
 
@@ -91,17 +91,22 @@ export class GatewayRuntime {
     this.push.gatewayState(this.state)
   }
 
-  /** 清理 socket / caller / emitter / pollTimer / isConnecting 标记，但不动 state。 */
-  private clear(): void {
+  /** 只清 socket 三件套，保留 pollTimer（transient error 时 scan 模式继续重试）。 */
+  private clearSocket(): void {
     this.isConnecting = false
-    if (this.pollTimer) {
-      clearInterval(this.pollTimer)
-      this.pollTimer = null
-    }
     this.socket?.disconnect()
     this.socket = null
     this.caller = null
     this.emitter = null
+  }
+
+  /** 完全清理：socket + pollTimer。auth error 或用户主动 stop 时使用。 */
+  private clear(): void {
+    this.clearSocket()
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer)
+      this.pollTimer = null
+    }
   }
 
   /** 手动模式：直连指定地址，失败直接报错不轮询。 */
@@ -116,7 +121,7 @@ export class GatewayRuntime {
     } catch (err) {
       gatewayLog.warn(`手动连接失败: ${(err as Error).message}`)
       this.setState({ status: "error", error: `连接失败: ${(err as Error).message}` })
-      this.clear()
+      this.clearSocket()
     }
   }
 
@@ -125,6 +130,8 @@ export class GatewayRuntime {
     const gateway = await detectGateway()
     if (!gateway.running || !gateway.gatewayPort) {
       gatewayLog.debug("服务未运行，稍后重试")
+      // 回落到 idle，避免 "detecting" 状态长期挂着
+      if (this.state.status === "detecting") this.setState({ status: "idle" })
       return
     }
 
@@ -140,7 +147,7 @@ export class GatewayRuntime {
     } catch (err) {
       gatewayLog.warn(`扫描连接失败: ${(err as Error).message}`)
       this.setState({ status: "error", url, error: `连接失败: ${(err as Error).message}` })
-      this.clear()
+      this.clearSocket()
     }
   }
 
@@ -167,7 +174,8 @@ export class GatewayRuntime {
         this.setState({ status: "auth-error", error: `认证失败: ${message}`, pingLatencyMs: null, nextRetryAt: null })
       },
       onError: (message) => {
-        this.clear()
+        // transient error：只清 socket，保留 pollTimer 继续重试
+        this.clearSocket()
         gatewayLog.warn(`连接错误: ${message}`)
         this.setState({ status: "error", error: `连接错误: ${message}`, pingLatencyMs: null, nextRetryAt: null })
       },
