@@ -3,6 +3,7 @@ import { menuModule } from "./menu"
 import { trayModule } from "../platform/tray"
 import { ipcModule } from "./ipc"
 import { mainWindowModule } from "./window"
+import { migrateModule } from "../database/migrate"
 import { shortcutsModule } from "../platform/shortcuts"
 import { deeplinkFlushModule, deeplinkSetupModule } from "../platform/deeplink/service"
 import { appLifecycleModule, platformPrepModule, singleInstanceModule } from "./app"
@@ -20,6 +21,7 @@ export const modules: AppModule[] = [
   singleInstanceModule, // 单实例锁
   deeplinkSetupModule, // 注册 URL 协议 + 绑 open-url/second-instance
   appLifecycleModule, // activate / window-all-closed
+  migrateModule, // SQLite 打开 + 跑 drizzle migrations
 
   // ===== Phase.Ready —— whenReady 之后 =====
   cspModule, // Content-Security-Policy
