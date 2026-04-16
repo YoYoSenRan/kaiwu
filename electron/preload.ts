@@ -1,16 +1,16 @@
 import { contextBridge } from "electron"
-import { logBridge } from "./platform/logger/bridge"
-import { themeBridge } from "./platform/theme/bridge"
-import { powerBridge } from "./platform/power/bridge"
-import { shellBridge } from "./platform/shell/bridge"
-import { chromeBridge } from "./platform/chrome/bridge"
-import { dialogBridge } from "./platform/dialog/bridge"
-import { updaterBridge } from "./platform/updater/bridge"
-import { deeplinkBridge } from "./platform/deeplink/bridge"
-import { clipboardBridge } from "./platform/clipboard/bridge"
-import { notificationBridge } from "./platform/notification/bridge"
-import { openclawBridge } from "./features/openclaw/bridge"
-import { knowledgeBridge } from "./features/knowledge/bridge"
+import { log } from "./platform/logger/bridge"
+import { theme } from "./platform/theme/bridge"
+import { power } from "./platform/power/bridge"
+import { shell } from "./platform/shell/bridge"
+import { chrome } from "./platform/chrome/bridge"
+import { dialog } from "./platform/dialog/bridge"
+import { updater } from "./platform/updater/bridge"
+import { deeplink } from "./platform/deeplink/bridge"
+import { clipboard } from "./platform/clipboard/bridge"
+import { notification } from "./platform/notification/bridge"
+import { openclaw } from "./features/openclaw/bridge"
+import { knowledge } from "./features/knowledge/bridge"
 
 /** Electron API 类型，供 renderer 端通过 global.d.ts 引用 */
 export type ElectronAPI = typeof api
@@ -23,20 +23,18 @@ export type { OpenClawStatus, CompatResult, PluginEvent, MonitorEvent, GatewaySt
  * 按 feature 分域，渲染进程通过 window.electron.xxx 调用。
  */
 const api = {
-  // platform
-  log: logBridge,
-  theme: themeBridge,
-  power: powerBridge,
-  shell: shellBridge,
-  chrome: chromeBridge,
-  dialog: dialogBridge,
-  updater: updaterBridge,
-  deeplink: deeplinkBridge,
-  clipboard: clipboardBridge,
-  notification: notificationBridge,
-  // features
-  openclaw: openclawBridge,
-  knowledge: knowledgeBridge,
+  log,
+  theme,
+  power,
+  shell,
+  chrome,
+  dialog,
+  updater,
+  deeplink,
+  clipboard,
+  notification,
+  openclaw,
+  knowledge,
 } as const
 
 contextBridge.exposeInMainWorld("electron", api)

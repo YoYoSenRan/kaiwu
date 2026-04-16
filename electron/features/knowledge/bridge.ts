@@ -3,7 +3,7 @@ import type { KnowledgeBridge, KnowledgeEvents } from "./types"
 
 const bridge = createBridge<KnowledgeEvents>("knowledge")
 
-export const knowledgeBridge: KnowledgeBridge = {
+export const knowledge: KnowledgeBridge = {
   base: {
     list: () => bridge.invoke("base:list"),
     create: (input) => bridge.invoke("base:create", input),
