@@ -1,4 +1,4 @@
-import type { OpenClawStatus } from "../types"
+import type { GatewayStatus } from "./types"
 
 import { spawn } from "node:child_process"
 import fsSync from "node:fs"
@@ -7,10 +7,10 @@ import net from "node:net"
 import os from "node:os"
 import path from "node:path"
 import { isWin } from "../../../infra/env"
-import { findLiveLock } from "./lock"
+import { findLiveLock, type LiveLockInfo } from "./lock"
+import { inferDeployment, computeCapabilities } from "./deployment"
+import { resolveActualPort } from "./port"
 
-/** OpenClaw gateway 默认端口，来自 openclaw/src/config/paths.ts。 */
-export const DEFAULT_GATEWAY_PORT = 18789
 /** TCP 探测超时（ms）。 */
 const PORT_PROBE_TIMEOUT_MS = 500
 /** CLI 调用超时（ms），避免用户机器上 CLI 卡死影响 kaiwu 启动。 */
@@ -20,30 +20,28 @@ const OPENCLAW_DIRNAME = ".openclaw"
 /** OpenClaw 旧版 state 目录名（rebrand 前）。 */
 const LEGACY_OPENCLAW_DIRNAME = ".clawdbot"
 
-/** gateway 探测结果：不包含 kaiwu 插件相关字段，由 plugin 层单独补齐。 */
-export type GatewayStatus = Omit<OpenClawStatus, "bridgeInstalled" | "installedBridgeVersion">
-
 /** 缓存 TTL（ms）。3 秒内的重复调用直接返回缓存，减少文件系统和端口探测开销。 */
 const CACHE_TTL_MS = 3_000
 
-let cachedResult: GatewayStatus | null = null
-let cachedAt = 0
+/** 探测结果的 TTL 缓存:模块级单例,多个 controller 共享一次文件系统/端口探测。 */
+const cache: { value: GatewayStatus | null; writtenAt: number } = { value: null, writtenAt: 0 }
 
 /**
  * 多层侦测本机 OpenClaw gateway。
  * 编排四层探测：运行时（lock + port）→ 路径存在性 → CLI → 版本回填。
  * 任一层命中即继续后续字段补齐，未命中继续下一层。
- * 不涉及 kaiwu 插件状态——插件检测由 plugin.ts 的 detectPluginInstall 负责。
+ * 不涉及 kaiwu 插件状态——插件检测由 plugin/sync.ts 的 detectPluginInstall 负责。
  *
  * @param skipCache 强制跳过缓存（用户主动刷新时传 true）
  */
 export async function detectGateway(skipCache = false): Promise<GatewayStatus> {
-  if (!skipCache && cachedResult && Date.now() - cachedAt < CACHE_TTL_MS) {
-    return cachedResult
+  if (!skipCache && cache.value && Date.now() - cache.writtenAt < CACHE_TTL_MS) {
+    return cache.value
   }
   const configDir = resolveConfigDir()
   const dirExists = await pathExists(configDir)
-  const base = await runtimeProbe(configDir)
+  const liveLock = await findLiveLock()
+  const base = await runtimeProbe(configDir, liveLock)
 
   if (!base.installed && dirExists) {
     base.installed = true
@@ -60,8 +58,12 @@ export async function detectGateway(skipCache = false): Promise<GatewayStatus> {
   if (base.installed && !base.version) {
     base.version = await readInstalledVersion(configDir)
   }
-  cachedResult = base
-  cachedAt = Date.now()
+
+  base.deployment = inferDeployment(base, liveLock)
+  base.capabilities = computeCapabilities(base.deployment)
+
+  cache.value = base
+  cache.writtenAt = Date.now()
   return base
 }
 
@@ -69,7 +71,8 @@ export async function detectGateway(skipCache = false): Promise<GatewayStatus> {
  * 运行时探测：构造初始 status 并依次跑 lock / port 两层强证据。
  * lock 文件最权威（有存活 pid 能确定是 OpenClaw 进程），port 探测兜底并能拿到端口号。
  */
-async function runtimeProbe(configDir: string): Promise<GatewayStatus> {
+async function runtimeProbe(configDir: string, liveLock: LiveLockInfo | null): Promise<GatewayStatus> {
+  const actualPort = resolveActualPort(configDir)
   const base: GatewayStatus = {
     installed: false,
     running: false,
@@ -78,20 +81,28 @@ async function runtimeProbe(configDir: string): Promise<GatewayStatus> {
     extensionsDir: path.join(configDir, "extensions"),
     gatewayPort: null,
     detectedBy: null,
+    deployment: "unknown",
+    capabilities: {
+      gatewayRpc: false,
+      pluginBridge: false,
+      pluginSync: false,
+      pluginInvoke: false,
+      agentWorkspaceLocal: false,
+      canRestart: false,
+    },
   }
 
-  const liveLock = await findLiveLock()
   if (liveLock) {
     base.installed = true
     base.running = true
     base.detectedBy = "lock"
   }
 
-  const portAlive = await probePort(DEFAULT_GATEWAY_PORT)
+  const portAlive = await probePort(actualPort)
   if (portAlive) {
     base.installed = true
     base.running = true
-    base.gatewayPort = DEFAULT_GATEWAY_PORT
+    base.gatewayPort = actualPort
     if (!base.detectedBy) base.detectedBy = "port"
   }
 

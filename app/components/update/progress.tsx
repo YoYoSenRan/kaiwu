@@ -1,13 +1,10 @@
 import "./progress.css"
-import React from "react"
 
-const Progress: React.FC<
-  React.PropsWithChildren<{
-    percent?: number
-  }>
-> = (props) => {
-  const { percent = 0 } = props
+interface ProgressProps {
+  percent?: number
+}
 
+export default function Progress({ percent = 0 }: ProgressProps) {
   return (
     <div className="update-progress">
       <div className="update-progress-pr">
@@ -17,5 +14,3 @@ const Progress: React.FC<
     </div>
   )
 }
-
-export default Progress

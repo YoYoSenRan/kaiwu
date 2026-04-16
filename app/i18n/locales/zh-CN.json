@@ -29,6 +29,7 @@
   "update": {
     "checkUpdate": "检查更新",
     "checking": "检查中...",
+    "update": "更新",
     "newVersion": "最新版本: v{{version}}",
     "downloadError": "下载最新版本出错",
     "updateProgress": "更新进度:",

@@ -1,25 +1,30 @@
+import { Controller, Handle, IpcController } from "../../framework"
 import type { IpcLifecycle } from "../../framework"
-import type { EmitEvent, GatewayConnectParams, InvokeArgs, OpenclawEvents } from "./types"
-import type { AgentsCreateParams, AgentsDeleteParams, AgentsUpdateParams } from "./agent/contract"
-import type { ChatAbortParams, ChatSendParams } from "./chat/contract"
-import type { SessionCreateParams, SessionDeleteParams, SessionListParams, SessionPatchParams } from "./session/contract"
+import * as agent from "./agent/methods"
+import * as chat from "./chat/methods"
+import * as model from "./model/methods"
+import * as session from "./session/methods"
 import { GatewayClient } from "./gateway/client"
 import { PluginHost } from "./plugin/host"
-import * as ops from "./plugin/ops"
-import * as chat from "./chat/methods"
-import * as session from "./session/methods"
-import * as agent from "./agent/methods"
-import { Controller, Handle, IpcController } from "../../framework"
+import { detectGateway } from "./gateway/detection"
+import { invoke } from "./plugin/invoke"
 import { toMonitorEvent } from "./plugin/dispatcher"
+import { checkCompatibility, detectStatus, installBridge, restartGateway, uninstallBridge } from "./plugin/lifecycle"
+import type { ChatAbortParams, ChatSendParams } from "./chat/contract"
+import type { SessionCreateParams, SessionDeleteParams, SessionListParams, SessionPatchParams } from "./session/contract"
+import type { AgentsCreateParams, AgentsDeleteParams, AgentsUpdateParams } from "./agent/contract"
+import type { GatewayConnectParams } from "./gateway/types"
+import type { InvokeArgs } from "./plugin/types"
+import type { EmitEvent, OpenclawEvents } from "./types"
 
 /**
  * OpenClaw feature：gateway 连接、插件管理、Agent/Session/Chat RPC、模型列表。
  *
  * 本类是 IPC 门面，业务逻辑下沉到两个协作对象：
- * - `gateway`:gateway 连接运行时,owns socket/caller/emitter/state
+ * - `gateway`:gateway 连接运行时,owns socket/caller/emitter/state,未连接时 call 抛错
  * - `host`:本地 bridge WS server 生命周期,owns pluginServer
  *
- * 插件 install/uninstall/detect/invoke/restart/checkCompatibility 是 plugin/ops.ts 里的纯函数,
+ * 插件 install/uninstall/detect/invoke/restart/checkCompatibility 是 plugin/lifecycle.ts 里的纯函数,
  * 由本 service 的 @Handle 方法直接调用,不再封装成类。
  *
  * `emitEvent` 是类型化的 `this.emit` 包装,注入给协作者使用。
@@ -49,34 +54,42 @@ export class OpenclawService extends IpcController<OpenclawEvents> implements Ip
 
   @Handle("lifecycle:detect")
   detect() {
-    return ops.detect(this.emitEvent)
+    return detectStatus(this.emitEvent)
   }
 
   @Handle("lifecycle:check")
-  checkCompatibility() {
-    return ops.checkCompatibility()
+  check() {
+    return checkCompatibility()
   }
 
   @Handle("lifecycle:restart")
   restart() {
-    return ops.restart()
+    return restartGateway()
+  }
+
+  @Handle("lifecycle:capabilities")
+  capabilities() {
+    return detectGateway().then((g) => g.capabilities)
   }
 
   // --- 插件管理 ---
 
   @Handle("plugin:install")
   install() {
-    return ops.install(this.host.getServer(), this.emitEvent)
+    const server = this.host.getServer()
+    const creds = server ? { port: server.info.port, token: server.info.token, pid: server.info.pid } : null
+    return installBridge(creds, this.emitEvent)
   }
 
   @Handle("plugin:uninstall")
   uninstall() {
-    return ops.uninstall(this.emitEvent)
+    return uninstallBridge(this.emitEvent)
   }
 
   @Handle("plugin:invoke")
   invoke(args: InvokeArgs) {
-    return ops.invoke(this.host.getServer(), args)
+    const token = this.host.getServer()?.info.token ?? null
+    return invoke(token, args)
   }
 
   // --- gateway ---
@@ -100,72 +113,69 @@ export class OpenclawService extends IpcController<OpenclawEvents> implements Ip
 
   @Handle("chat:send")
   send(params: ChatSendParams) {
-    return chat.send(this.gateway.getCaller(), params)
+    return chat.send(this.gateway, params)
   }
 
   @Handle("chat:abort")
   abort(params: ChatAbortParams) {
-    return chat.abort(this.gateway.getCaller(), params)
+    return chat.abort(this.gateway, params)
   }
 
   // --- session ---
 
   @Handle("session:create")
   createSession(params: SessionCreateParams) {
-    return session.create(this.gateway.getCaller(), params)
+    return session.create(this.gateway, params)
   }
 
   @Handle("session:list")
   listSessions(params: SessionListParams) {
-    return session.list(this.gateway.getCaller(), params)
+    return session.list(this.gateway, params)
   }
 
   @Handle("session:patch")
   updateSession(params: SessionPatchParams) {
-    return session.update(this.gateway.getCaller(), params)
+    return session.update(this.gateway, params)
   }
 
   @Handle("session:delete")
   deleteSession(params: SessionDeleteParams) {
-    return session.remove(this.gateway.getCaller(), params)
+    return session.remove(this.gateway, params)
   }
 
   // --- agents ---
 
   @Handle("agents:list")
   listAgents() {
-    return agent.listAgents(this.gateway.getCaller())
+    return agent.list(this.gateway)
   }
 
   @Handle("agents:create")
   createAgent(params: AgentsCreateParams) {
-    return agent.createAgent(this.gateway.getCaller(), params)
+    return agent.create(this.gateway, params)
   }
 
   @Handle("agents:update")
   updateAgent(params: AgentsUpdateParams) {
-    return agent.updateAgent(this.gateway.getCaller(), params)
+    return agent.update(this.gateway, params)
   }
 
   @Handle("agents:delete")
   deleteAgent(params: AgentsDeleteParams) {
-    return agent.deleteAgent(this.gateway.getCaller(), params)
+    return agent.remove(this.gateway, params)
   }
 
   // --- models ---
 
   @Handle("models:list")
   listModels() {
-    return agent.listModels(this.gateway.getCaller())
+    return model.list(this.gateway)
   }
 
   /** 应用退出前停止本地 WS server 和 gateway 连接。 */
   async onShutdown(): Promise<void> {
     this.gateway.disconnect()
-    await Promise.race([this.host.stop(), wait(2000)])
+    // 2s 上限避免阻塞 before-quit;plugin WS server 卡住也能放行。
+    await Promise.race([this.host.stop(), new Promise<void>((resolve) => setTimeout(resolve, 2000))])
   }
-}
-
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }

@@ -1,8 +1,8 @@
 import { Controller, Handle, IpcController, type IpcLifecycle } from "../../framework"
 import { closeVectorDb } from "../../infra/vector"
+import { listBindings, setBindings } from "./bindings"
 import { createKnowledge, deleteKnowledge, detailKnowledge, listKnowledges, searchKnowledge, updateKnowledge } from "./base"
 import { deleteDocument, listChunks, listDocuments, retryDocument, uploadDocuments } from "./document"
-import { listBindings, setBindings } from "./bindings"
 import type { DocProgressEvent, KbCreateInput, KbUpdateInput, KnowledgeEvents, SearchInput } from "./types"
 
 /**
@@ -36,42 +36,42 @@ export class KnowledgeService extends IpcController<KnowledgeEvents> implements 
   }
 
   @Handle("doc:list")
-  docList(kbId: string) {
+  listDocuments(kbId: string) {
     return listDocuments(kbId)
   }
 
   @Handle("doc:upload")
-  docUpload(kbId: string) {
+  uploadDocuments(kbId: string) {
     return uploadDocuments(kbId, (ev) => this.pushProgress(ev))
   }
 
   @Handle("doc:delete")
-  docDelete(docId: string) {
+  deleteDocument(docId: string) {
     return deleteDocument(docId)
   }
 
   @Handle("doc:retry")
-  docRetry(docId: string) {
+  retryDocument(docId: string) {
     return retryDocument(docId, (ev) => this.pushProgress(ev))
   }
 
   @Handle("doc:chunks")
-  docChunks(docId: string) {
+  listChunks(docId: string) {
     return listChunks(docId)
   }
 
   @Handle("search:query")
-  searchQuery(input: SearchInput) {
+  search(input: SearchInput) {
     return searchKnowledge(input)
   }
 
   @Handle("bind:list")
-  bindList(agentId: string) {
+  listBindings(agentId: string) {
     return listBindings(agentId)
   }
 
   @Handle("bind:set")
-  bindSet(agentId: string, kbIds: string[]) {
+  setBindings(agentId: string, kbIds: string[]) {
     return setBindings(agentId, kbIds)
   }
 
