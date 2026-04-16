@@ -4,7 +4,7 @@ import type { AgentsCreateParams, AgentsDeleteParams, AgentsUpdateParams } from 
 import type { ChatAbortParams, ChatSendParams } from "./gateway/contract"
 import type { SessionCreateParams, SessionDeleteParams, SessionListParams, SessionPatchParams } from "./gateway/contract"
 import { scope } from "../../infra/logger"
-import { GatewayRuntime } from "./gateway/connection"
+import { GatewayClient } from "./gateway/client"
 import { OpenclawEmitter } from "./push"
 import { OpenclawRuntime } from "./runtime"
 import { chatSend, chatAbort } from "./chat/methods"
@@ -28,7 +28,7 @@ const log = scope("openclaw")
 @Controller("openclaw")
 export class OpenclawService extends IpcController<OpenclawEvents> implements IpcLifecycle {
   private readonly push = new OpenclawEmitter((ch, payload) => this.emit(ch, payload))
-  private readonly gateway = new GatewayRuntime(this.push)
+  private readonly gateway = new GatewayClient(this.push)
   private readonly runtime = new OpenclawRuntime(this.push, this.gateway)
 
   /**
@@ -92,75 +92,75 @@ export class OpenclawService extends IpcController<OpenclawEvents> implements Ip
 
   @Handle("gateway:connect")
   gatewayConnect(params?: GatewayConnectParams) {
-    return this.gateway.start(params)
+    return this.gateway.connect(params)
   }
 
   @Handle("gateway:disconnect")
   gatewayDisconnect() {
-    this.gateway.stop()
+    this.gateway.disconnect()
   }
 
   // --- chat ---
 
   @Handle("chat:send")
   sendChat(params: ChatSendParams) {
-    return chatSend(this.gateway.requireCaller(), params)
+    return chatSend(this.gateway.getCaller(), params)
   }
 
   @Handle("chat:abort")
   abortChat(params: ChatAbortParams) {
-    return chatAbort(this.gateway.requireCaller(), params)
+    return chatAbort(this.gateway.getCaller(), params)
   }
 
   // --- session ---
 
   @Handle("session:create")
   createSession(params: SessionCreateParams) {
-    return sessionCreate(this.gateway.requireCaller(), params)
+    return sessionCreate(this.gateway.getCaller(), params)
   }
 
   @Handle("session:list")
   listSessions(params: SessionListParams) {
-    return sessionList(this.gateway.requireCaller(), params)
+    return sessionList(this.gateway.getCaller(), params)
   }
 
   @Handle("session:patch")
   patchSession(params: SessionPatchParams) {
-    return sessionPatch(this.gateway.requireCaller(), params)
+    return sessionPatch(this.gateway.getCaller(), params)
   }
 
   @Handle("session:delete")
   deleteSession(params: SessionDeleteParams) {
-    return sessionDelete(this.gateway.requireCaller(), params)
+    return sessionDelete(this.gateway.getCaller(), params)
   }
 
   // --- agents ---
 
   @Handle("agents:list")
   agentsList() {
-    return agentsList(this.gateway.requireCaller())
+    return agentsList(this.gateway.getCaller())
   }
 
   @Handle("agents:create")
   agentsCreate(params: AgentsCreateParams) {
-    return agentsCreate(this.gateway.requireCaller(), params)
+    return agentsCreate(this.gateway.getCaller(), params)
   }
 
   @Handle("agents:update")
   agentsUpdate(params: AgentsUpdateParams) {
-    return agentsUpdate(this.gateway.requireCaller(), params)
+    return agentsUpdate(this.gateway.getCaller(), params)
   }
 
   @Handle("agents:delete")
   agentsDelete(params: AgentsDeleteParams) {
-    return agentsDelete(this.gateway.requireCaller(), params)
+    return agentsDelete(this.gateway.getCaller(), params)
   }
 
   // --- models ---
 
   @Handle("models:list")
   modelsList() {
-    return modelsList(this.gateway.requireCaller())
+    return modelsList(this.gateway.getCaller())
   }
 
   /** 应用退出前停止 OpenClaw 插件进程和 gateway 连接。 */

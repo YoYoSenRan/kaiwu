@@ -2,7 +2,7 @@
  * openclaw agents.* / models.list 的 RPC 便捷包装。
  *
  * 用纯函数 + 显式 caller 参数的形式，新增 RPC 不需要改 gateway 层代码（开闭原则）。
- * 调用端：`agentsList(requireCaller())`。
+ * 调用端：`agentsList(gateway.getCaller())`。
  */
 
 import type { GatewayCaller } from "../gateway/caller"
