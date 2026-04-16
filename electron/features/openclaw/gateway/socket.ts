@@ -87,6 +87,11 @@ export class GatewaySocket {
     }
     this.ws = null
     this.setConnected(false)
+    // 防止多次 createGateway 累积旧 listeners
+    this.frameListeners.clear()
+    this.connectionListeners.clear()
+    this.connectErrorListeners.clear()
+    this.metricsListeners.clear()
   }
 
   /** 当前是否已连接。 */
@@ -200,7 +205,12 @@ export class GatewaySocket {
           clearTimeout(timer)
           unsub()
           if (frame.ok) resolve(frame.payload)
-          else reject(new Error(frame.error?.message ?? "handshake error"))
+          else {
+            const err = new Error(frame.error?.message ?? "handshake error")
+            // 携带 gateway error code，供 manager 判断错误类型（避免字符串匹配）
+            ;(err as Error & { code?: string }).code = frame.error?.code
+            reject(err)
+          }
         }
       })
       this.send({ type: "req", id, method, params })

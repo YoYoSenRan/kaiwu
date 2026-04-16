@@ -20,13 +20,24 @@ const OPENCLAW_DIRNAME = ".openclaw"
 /** gateway 探测结果：不包含 kaiwu 插件相关字段，由 plugin 层单独补齐。 */
 export type GatewayStatus = Omit<OpenClawStatus, "bridgeInstalled" | "installedBridgeVersion">
 
+/** 缓存 TTL（ms）。3 秒内的重复调用直接返回缓存，减少文件系统和端口探测开销。 */
+const CACHE_TTL_MS = 3_000
+
+let cachedResult: GatewayStatus | null = null
+let cachedAt = 0
+
 /**
  * 多层侦测本机 OpenClaw gateway。
  * 编排四层探测：运行时（lock + port）→ 路径存在性 → CLI → 版本回填。
  * 任一层命中即继续后续字段补齐，未命中继续下一层。
  * 不涉及 kaiwu 插件状态——插件检测由 plugin.ts 的 detectPluginInstall 负责。
+ *
+ * @param skipCache 强制跳过缓存（用户主动刷新时传 true）
  */
-export async function detectGateway(): Promise<GatewayStatus> {
+export async function detectGateway(skipCache = false): Promise<GatewayStatus> {
+  if (!skipCache && cachedResult && Date.now() - cachedAt < CACHE_TTL_MS) {
+    return cachedResult
+  }
   const configDir = resolveConfigDir()
   const dirExists = await pathExists(configDir)
   const base = await runtimeProbe(configDir)
@@ -46,6 +57,8 @@ export async function detectGateway(): Promise<GatewayStatus> {
   if (base.installed && !base.version) {
     base.version = await readInstalledVersion(configDir)
   }
+  cachedResult = base
+  cachedAt = Date.now()
   return base
 }
 

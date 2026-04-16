@@ -1,16 +1,15 @@
-import type { CompatResult, InvokeArgs, InvokeResult, OpenClawStatus } from "../types"
-import type { PluginServer } from "./transport"
-import type { OpenclawEmitter } from "../push"
-import type { GatewayRuntime } from "./connection"
-
+import type { CompatResult, InvokeArgs, InvokeResult, OpenClawStatus } from "./types"
+import type { PluginServer } from "./plugin/transport"
+import type { OpenclawEmitter } from "./push"
+import type { GatewayRuntime } from "./gateway/connection"
 import { spawn } from "node:child_process"
-import { isWin } from "../../../infra/env"
-import { scope } from "../../../infra/logger"
-import { checkCompatibility } from "./compat"
-import { detectGateway } from "./gateway"
-import { removeHandshake, writeHandshake } from "./handshake"
-import { detectPluginInstall, removePluginFiles, syncPlugin } from "./plugin"
-import { startPluginServer } from "./transport"
+import { isWin } from "../../infra/env"
+import { scope } from "../../infra/logger"
+import { detectGateway } from "./gateway/detection"
+import { startPluginServer } from "./plugin/transport"
+import { checkCompatibility } from "./plugin/compat"
+import { removeHandshake, writeHandshake } from "./plugin/handshake"
+import { detectPluginInstall, removePluginFiles, syncPlugin } from "./plugin/sync"
 
 const openclawLog = scope("openclaw")
 
@@ -67,9 +66,9 @@ export class OpenclawRuntime {
     this.pluginServer = null
   }
 
-  /** 探测 OpenClaw gateway + kaiwu 插件安装状态，并推送给 renderer。 */
+  /** 探测 OpenClaw gateway + kaiwu 插件安装状态，并推送给 renderer。用户主动触发，跳过缓存。 */
   async detect(): Promise<OpenClawStatus> {
-    const gateway = await detectGateway()
+    const gateway = await detectGateway(true)
     const pluginInfo = gateway.extensionsDir ? await detectPluginInstall(gateway.extensionsDir) : { installed: false, version: null }
     const status: OpenClawStatus = {
       ...gateway,

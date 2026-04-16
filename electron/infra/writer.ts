@@ -46,7 +46,10 @@ export class LogWriter {
       this.lines = 0
       return
     }
-    const logs = fs.readdirSync(dir).filter((f) => /^\d+\.log$/.test(f)).sort()
+    const logs = fs
+      .readdirSync(dir)
+      .filter((f) => /^\d+\.log$/.test(f))
+      .sort()
     if (logs.length === 0) {
       this.seq = 1
       this.lines = 0
