@@ -1,8 +1,7 @@
 import type { GatewaySocket } from "./socket"
 import type { GatewayCaller } from "./caller"
 import type { EventEmitter } from "./emitter"
-import type { GatewayConnectParams, GatewayMode, GatewayState } from "../types"
-import type { OpenclawEmitter } from "../push"
+import type { EmitEvent, GatewayConnectParams, GatewayMode, GatewayState } from "../types"
 
 import { scope } from "../../../infra/logger"
 import { createGatewayManager } from "./manager"
@@ -31,7 +30,7 @@ export class GatewayClient {
   private isConnecting = false
   private state: GatewayState = { status: "idle", mode: null, url: null, error: null, pingLatencyMs: null, nextRetryAt: null }
 
-  constructor(private readonly push: OpenclawEmitter) {}
+  constructor(private readonly emitEvent: EmitEvent) {}
 
   /** 获取当前 gateway 连接状态。 */
   getState(): GatewayState {
@@ -65,12 +64,12 @@ export class GatewayClient {
       if (params) {
         await this.connectManual(params)
       } else {
-        await this.connectByScan()
+        await this.autoConnect()
         // 扫描模式 pollTimer 只守"gateway 进程尚未启动"的等待期：
         // 一旦 socket 创建，WS 层的断线重连完全交给 GatewaySocket 内部的 scheduleReconnect
         this.pollTimer = setInterval(() => {
           if (this.socket) return
-          void this.connectByScan()
+          void this.autoConnect()
         }, POLL_INTERVAL_MS)
       }
     } finally {
@@ -80,7 +79,7 @@ export class GatewayClient {
 
   /** 断开 gateway 连接并停止轮询，状态回到 idle。 */
   disconnect(): void {
-    this.dispose()
+    this.close()
     this.setState({ status: "idle", mode: null, url: null, error: null, pingLatencyMs: null, nextRetryAt: null })
   }
 
@@ -88,11 +87,11 @@ export class GatewayClient {
 
   private setState(patch: Partial<GatewayState>): void {
     this.state = { ...this.state, ...patch }
-    this.push.gatewayState(this.state)
+    this.emitEvent("gateway:status", this.state)
   }
 
-  /** 只拆 socket 三件套，保留 pollTimer（transient error 时 scan 模式继续重试）。 */
-  private disposeSocket(): void {
+  /** 只拆 socket 三件套,保留 pollTimer(transient error 时 scan 模式继续重试)。 */
+  private closeSocket(): void {
     this.isConnecting = false
     this.socket?.disconnect()
     this.socket = null
@@ -100,9 +99,9 @@ export class GatewayClient {
     this.emitter = null
   }
 
-  /** 完全清理：socket + pollTimer。auth error 或用户主动 disconnect 时使用。 */
-  private dispose(): void {
-    this.disposeSocket()
+  /** 完全清理:socket + pollTimer。auth error 或用户主动 disconnect 时使用。 */
+  private close(): void {
+    this.closeSocket()
     if (this.pollTimer) {
       clearInterval(this.pollTimer)
       this.pollTimer = null
@@ -116,17 +115,17 @@ export class GatewayClient {
     this.setState({ status: "connecting", url })
 
     try {
-      this.setupTransport(url)
+      this.setupSocket(url)
       await this.socket!.connect(url, { token: params.token, password: params.password })
     } catch (err) {
       gatewayLog.warn(`手动连接失败: ${(err as Error).message}`)
       this.setState({ status: "error", error: `连接失败: ${(err as Error).message}` })
-      this.disposeSocket()
+      this.closeSocket()
     }
   }
 
   /** 扫描模式：探测本机 gateway + 读配置文件 auth + 连接。 */
-  private async connectByScan(): Promise<void> {
+  private async autoConnect(): Promise<void> {
     const gateway = await detectGateway()
     if (!gateway.running || !gateway.gatewayPort) {
       gatewayLog.debug("服务未运行，稍后重试")
@@ -142,17 +141,17 @@ export class GatewayClient {
     this.setState({ status: "connecting", url })
 
     try {
-      this.setupTransport(url)
+      this.setupSocket(url)
       await this.socket!.connect(url, { token: auth.token ?? undefined, password: auth.password ?? undefined })
     } catch (err) {
       gatewayLog.warn(`扫描连接失败: ${(err as Error).message}`)
       this.setState({ status: "error", url, error: `连接失败: ${(err as Error).message}` })
-      this.disposeSocket()
+      this.closeSocket()
     }
   }
 
   /** 装配 socket + caller + emitter 三件套并注册通用监听。 */
-  private setupTransport(url: string): void {
+  private setupSocket(url: string): void {
     const manager = createGatewayManager({
       onConnected: () => {
         if (this.state.status !== "connected") {
@@ -169,17 +168,17 @@ export class GatewayClient {
         if (Object.keys(patch).length > 0) this.setState(patch)
       },
       onAuthError: (message) => {
-        this.dispose()
+        this.close()
         gatewayLog.warn(`认证失败: ${message}`)
         this.setState({ status: "auth-error", error: `认证失败: ${message}`, pingLatencyMs: null, nextRetryAt: null })
       },
       onError: (message) => {
         // transient error：只拆 socket，保留 pollTimer 继续重试
-        this.disposeSocket()
+        this.closeSocket()
         gatewayLog.warn(`连接错误: ${message}`)
         this.setState({ status: "error", error: `连接错误: ${message}`, pingLatencyMs: null, nextRetryAt: null })
       },
-      onEvent: (frame) => this.push.gatewayEvent(frame),
+      onEvent: (frame) => this.emitEvent("gateway:event", frame),
     })
 
     this.socket = manager.socket

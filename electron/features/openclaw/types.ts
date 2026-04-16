@@ -1,3 +1,17 @@
+/**
+ * Openclaw feature 顶层类型聚合。
+ *
+ * 域本地类型下沉到 plugin/types.ts 和 gateway/types.ts,
+ * 本文件只放:
+ *   1. 跨域事件表 `OpenclawEvents`
+ *   2. 类型化 emit 回调 `EmitEvent`
+ *   3. renderer 侧桥接接口 `OpenClawBridge`
+ *
+ * 域本地类型通过 re-export 暴露,使外部 import 路径保持稳定。
+ */
+
+import type { OpenClawStatus, CompatResult, InvokeArgs, InvokeResult, PluginEvent, MonitorEvent } from "./plugin/types"
+import type { GatewayState, GatewayConnectParams, GatewayEventFrame } from "./gateway/types"
 import type {
   ModelsListResult,
   AgentsListResult,
@@ -9,102 +23,8 @@ import type {
   AgentsUpdateResult,
 } from "./agent/contract"
 
-/** OpenClaw 本机侦测状态。 */
-export interface OpenClawStatus {
-  /** 是否检测到 OpenClaw 安装（目录存在 / CLI 可用 / lock 文件 / 端口监听）。 */
-  installed: boolean
-  /** 是否正在运行（lock 文件有效 pid 或端口可连）。 */
-  running: boolean
-  /** host 版本号，拿不到时为 null。 */
-  version: string | null
-  /** OpenClaw 配置根目录（~/.openclaw 或 %APPDATA%\.openclaw）。 */
-  configDir: string | null
-  /** extensions 根目录，等于 <configDir>/extensions。 */
-  extensionsDir: string | null
-  /** gateway 监听端口，正在运行时非 null。 */
-  gatewayPort: number | null
-  /** 触发成功探测的层级。 */
-  detectedBy: "lock" | "port" | "path" | "cli" | null
-  /** 插件是否已同步到 extensionsDir。 */
-  bridgeInstalled: boolean
-  /** 已安装插件的版本（读 目标路径 package.json）。 */
-  installedBridgeVersion: string | null
-}
-
-/** 兼容性检查结果。 */
-export interface CompatResult {
-  compatible: boolean
-  /** host 版本。 */
-  hostVersion: string | null
-  /** 插件声明的 pluginApi 范围。 */
-  pluginApiRange: string
-  /** 不兼容时的人类可读原因。 */
-  reason?: string
-  /** 已知会影响第三方插件的 breaking change 列表。 */
-  knownBreaking: { version: string; change: string }[]
-}
-
-/** gateway 连接状态枚举。 */
-export type GatewayStatus = "idle" | "detecting" | "connecting" | "connected" | "disconnected" | "auth-error" | "error"
-
-/** gateway 连接模式。 */
-export type GatewayMode = "scan" | "manual"
-
-/** gateway 连接状态快照。 */
-export interface GatewayState {
-  status: GatewayStatus
-  mode: GatewayMode | null
-  url: string | null
-  error: string | null
-  /** 最近一次 ping/pong 往返延迟（ms）。null 表示尚未完成首次心跳测量。 */
-  pingLatencyMs: number | null
-  /** 下次重连的绝对时间戳（ms since epoch）。null 表示当前没有排期的重连。 */
-  nextRetryAt: number | null
-}
-
-/** 手动连接参数。无参数时走本机扫描模式。 */
-export interface GatewayConnectParams {
-  url: string
-  token?: string
-  password?: string
-}
-
-/** 调用 /kaiwu/invoke 的参数。 */
-export interface InvokeArgs {
-  action: string
-  params?: unknown
-}
-
-/** /kaiwu/invoke 的响应。 */
-export interface InvokeResult {
-  ok: boolean
-  result?: unknown
-  error?: { message: string; code?: string }
-}
-
-/** 来自 kaiwu 插件的事件（镜像 plugins/kaiwu/src/protocol.ts）。 */
-export interface PluginEvent {
-  type: string
-  id?: string
-  ts: number
-  payload: unknown
-}
-
-/** 插件采集的运行时监控事件，镜像 plugins/kaiwu/src/monitor/contract.ts 的 MonitorEvent。 */
-export interface MonitorEvent {
-  hookName: string
-  event: unknown
-  ctx: { sessionKey?: string; agentId?: string; runId?: string }
-  ts: number
-}
-
-/** gateway event 帧（镜像 gateway/contract.ts 的 EventFrame）。 */
-export interface GatewayEventFrame {
-  type: "event"
-  event: string
-  payload?: unknown
-  seq?: number
-}
+export type { OpenClawStatus, CompatResult, InvokeArgs, InvokeResult, PluginEvent, MonitorEvent } from "./plugin/types"
+export type { GatewayStatus, GatewayMode, GatewayState, GatewayConnectParams, GatewayEventFrame } from "./gateway/types"
 
 /** Openclaw controller 可推送的事件。 */
 export interface OpenclawEvents {
@@ -115,9 +35,17 @@ export interface OpenclawEvents {
   "gateway:event": GatewayEventFrame
 }
 
+/**
+ * 类型化的事件发送回调。
+ *
+ * OpenclawService 把 `this.emit` 包成此类型,注入给 gateway / plugin host 等协作者。
+ * 替代原来的 `OpenclawEmitter` 薄包装层 —— 去一层抽象,channel 名直接写在调用点。
+ */
+export type EmitEvent = <K extends keyof OpenclawEvents & string>(channel: K, payload: OpenclawEvents[K]) => void
+
 /** renderer ↔ main 的 openclaw feature 桥接接口。7 个能力域对齐 channels.ts。 */
 export interface OpenClawBridge {
-  /** 生命周期：探测安装 / 兼容性检查 / 重启 gateway。 */
+  /** 生命周期:探测安装 / 兼容性检查 / 重启 gateway。 */
   lifecycle: {
     detect: () => Promise<OpenClawStatus>
     check: () => Promise<CompatResult>
@@ -128,7 +56,7 @@ export interface OpenClawBridge {
     }
   }
 
-  /** 插件：kaiwu bridge plugin 的同步 / 卸载 / 远程调用。 */
+  /** 插件:kaiwu bridge plugin 的同步 / 卸载 / 远程调用。 */
   plugin: {
     install: () => Promise<OpenClawStatus>
     uninstall: () => Promise<OpenClawStatus>
@@ -136,14 +64,14 @@ export interface OpenClawBridge {
     on: {
       /** 来自插件的桥接事件。 */
       event: (listener: (event: PluginEvent) => void) => () => void
-      /** 运行时监控事件（llm_input/output、tool_call 等）。 */
+      /** 运行时监控事件(llm_input/output、tool_call 等)。 */
       monitor: (listener: (event: MonitorEvent) => void) => () => void
     }
   }
 
   /** gateway 连接管理。 */
   gateway: {
-    state: () => Promise<GatewayState>
+    getState: () => Promise<GatewayState>
     connect: (params?: GatewayConnectParams) => Promise<void>
     disconnect: () => Promise<void>
     on: {
@@ -164,11 +92,11 @@ export interface OpenClawBridge {
   session: {
     create: (params: { agentId?: string; label?: string; model?: string; key?: string }) => Promise<unknown>
     list: (params?: { limit?: number; agentId?: string; search?: string }) => Promise<unknown>
-    patch: (params: { key: string; label?: string | null; model?: string | null }) => Promise<unknown>
+    update: (params: { key: string; label?: string | null; model?: string | null }) => Promise<unknown>
     delete: (params: { key: string }) => Promise<unknown>
   }
 
-  /** Agent 管理（agents.* RPC 的类型化包装）。 */
+  /** Agent 管理(agents.* RPC 的类型化包装)。 */
   agents: {
     list: () => Promise<AgentsListResult>
     create: (params: AgentsCreateParams) => Promise<AgentsCreateResult>

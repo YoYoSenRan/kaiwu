@@ -5,19 +5,19 @@
  */
 
 import type { GatewayCaller } from "../gateway/caller"
-import type { ChatSendParams, ChatAbortParams, ChatHistoryParams, ChatHistoryMessage } from "../gateway/contract"
+import type { ChatSendParams, ChatAbortParams, ChatHistoryParams, ChatHistoryMessage } from "./contract"
 
 /** 发送消息并触发 AI 回复。流式事件通过 gateway event 帧推送。 */
-export function chatSend(caller: GatewayCaller, params: ChatSendParams): Promise<unknown> {
+export function send(caller: GatewayCaller, params: ChatSendParams): Promise<unknown> {
   return caller.call("chat.send", params)
 }
 
 /** 中止正在进行的 AI 回复。 */
-export function chatAbort(caller: GatewayCaller, params: ChatAbortParams): Promise<unknown> {
+export function abort(caller: GatewayCaller, params: ChatAbortParams): Promise<unknown> {
   return caller.call("chat.abort", params)
 }
 
 /** 获取会话历史消息。 */
-export function chatHistory(caller: GatewayCaller, params: ChatHistoryParams): Promise<ChatHistoryMessage[]> {
+export function getHistory(caller: GatewayCaller, params: ChatHistoryParams): Promise<ChatHistoryMessage[]> {
   return caller.call("chat.history", params) as Promise<ChatHistoryMessage[]>
 }

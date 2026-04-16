@@ -24,7 +24,7 @@ export const openclaw: OpenClawBridge = {
   },
 
   gateway: {
-    state: () => bridge.invoke("gateway:state"),
+    getState: () => bridge.invoke("gateway:state"),
     connect: (params?: GatewayConnectParams) => bridge.invoke("gateway:connect", params),
     disconnect: () => bridge.invoke("gateway:disconnect"),
     on: {
@@ -41,7 +41,7 @@ export const openclaw: OpenClawBridge = {
   session: {
     create: (params) => bridge.invoke("session:create", params),
     list: (params) => bridge.invoke("session:list", params),
-    patch: (params) => bridge.invoke("session:patch", params),
+    update: (params) => bridge.invoke("session:patch", params),
     delete: (params) => bridge.invoke("session:delete", params),
   },
 
