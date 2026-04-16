@@ -1,15 +1,19 @@
-import { Controller, Handle, IpcController, type IpcLifecycle } from "../../framework"
-import { scope } from "../../infra/logger"
-import { agentsCreate, agentsDelete, agentsList, agentsUpdate, modelsList } from "./agent/methods"
-import { GatewayRuntime } from "./core/connection"
-import { OpenclawRuntime } from "./core/runtime"
-import { dispatchMonitorEvent, isMonitorEvent } from "./hook/dispatcher"
-import { OpenclawEmitter } from "./push"
+import type { IpcLifecycle } from "../../framework"
 import type { GatewayConnectParams, InvokeArgs, OpenclawEvents } from "./types"
 import type { AgentsCreateParams, AgentsDeleteParams, AgentsUpdateParams } from "./agent/contract"
-import type { ChatAbortParams, ChatSendParams, SessionCreateParams, SessionDeleteParams, SessionListParams, SessionPatchParams } from "./gateway/contract"
+import type { ChatAbortParams, ChatSendParams } from "./gateway/contract"
+import type { SessionCreateParams, SessionDeleteParams, SessionListParams, SessionPatchParams } from "./gateway/contract"
+import { scope } from "../../infra/logger"
+import { GatewayRuntime } from "./gateway/connection"
+import { OpenclawEmitter } from "./push"
+import { OpenclawRuntime } from "./runtime"
+import { chatSend, chatAbort } from "./chat/methods"
+import { Controller, Handle, IpcController } from "../../framework"
+import { dispatchMonitorEvent, isMonitorEvent } from "./plugin/dispatcher"
+import { sessionCreate, sessionDelete, sessionList, sessionPatch } from "./session/methods"
+import { agentsCreate, agentsDelete, agentsList, agentsUpdate, modelsList } from "./agent/methods"
 
-const openclawLog = scope("openclaw")
+const log = scope("openclaw")
 
 /**
  * OpenClaw feature：gateway 连接、插件管理、Agent/Session/Chat RPC、模型列表。
@@ -34,13 +38,14 @@ export class OpenclawService extends IpcController<OpenclawEvents> implements Ip
   async onReady(): Promise<void> {
     try {
       const server = await this.runtime.startBridge()
-      if (!server) return
-      server.onEvent((event) => {
-        if (isMonitorEvent(event)) dispatchMonitorEvent(event, this.push)
-        else this.push.pluginEvent(event)
-      })
+      if (server) {
+        server.onEvent((event) => {
+          if (isMonitorEvent(event)) dispatchMonitorEvent(event, this.push)
+          else this.push.pluginEvent(event)
+        })
+      }
     } catch (err) {
-      openclawLog.error("startBridge 失败", err)
+      log.error("startBridge 失败", err)
     }
   }
 
@@ -98,35 +103,35 @@ export class OpenclawService extends IpcController<OpenclawEvents> implements Ip
   // --- chat ---
 
   @Handle("chat:send")
-  chatSend(params: ChatSendParams) {
-    return this.gateway.requireCaller().call("chat.send", params)
+  sendChat(params: ChatSendParams) {
+    return chatSend(this.gateway.requireCaller(), params)
   }
 
   @Handle("chat:abort")
-  chatAbort(params: ChatAbortParams) {
-    return this.gateway.requireCaller().call("chat.abort", params)
+  abortChat(params: ChatAbortParams) {
+    return chatAbort(this.gateway.requireCaller(), params)
   }
 
   // --- session ---
 
   @Handle("session:create")
-  sessionCreate(params: SessionCreateParams) {
-    return this.gateway.requireCaller().call("sessions.create", params)
+  createSession(params: SessionCreateParams) {
+    return sessionCreate(this.gateway.requireCaller(), params)
   }
 
   @Handle("session:list")
-  sessionList(params: SessionListParams) {
-    return this.gateway.requireCaller().call("sessions.list", params)
+  listSessions(params: SessionListParams) {
+    return sessionList(this.gateway.requireCaller(), params)
   }
 
   @Handle("session:patch")
-  sessionPatch(params: SessionPatchParams) {
-    return this.gateway.requireCaller().call("sessions.patch", params)
+  patchSession(params: SessionPatchParams) {
+    return sessionPatch(this.gateway.requireCaller(), params)
   }
 
   @Handle("session:delete")
-  sessionDelete(params: SessionDeleteParams) {
-    return this.gateway.requireCaller().call("sessions.delete", params)
+  deleteSession(params: SessionDeleteParams) {
+    return sessionDelete(this.gateway.requireCaller(), params)
   }
 
   // --- agents ---

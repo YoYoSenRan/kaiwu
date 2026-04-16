@@ -3,9 +3,7 @@ import path from "node:path"
 import { app } from "electron"
 import { LogWriter } from "./writer"
 
-const basePath = app.isPackaged
-  ? path.join(app.getPath("userData"), "logs")
-  : path.join(app.getAppPath(), "logs")
+const basePath = app.isPackaged ? path.join(app.getPath("userData"), "logs") : path.join(app.getAppPath(), "logs")
 
 const writer = new LogWriter(basePath)
 
