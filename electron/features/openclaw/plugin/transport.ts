@@ -1,5 +1,5 @@
 import WebSocket, { type WebSocket as WebSocketType } from "ws"
-import type { PluginEvent } from "../types"
+import type { PluginEvent } from "./types"
 import { scope } from "../../../infra/logger"
 import { WebSocketServer } from "ws"
 import { extractTokenFromUrl, generateBridgeToken, verifyToken } from "./security"
@@ -59,9 +59,11 @@ export async function startPluginServer(): Promise<PluginServer> {
 
     socket.on("message", (raw) => {
       try {
-        const parsed = JSON.parse(raw.toString("utf-8")) as PluginEvent
-        if (typeof parsed?.type !== "string") return
-        for (const fn of listeners) fn(parsed)
+        const parsed = JSON.parse(raw.toString("utf-8")) as unknown
+        if (!parsed || typeof parsed !== "object" || !("type" in parsed) || (parsed.type !== "custom" && parsed.type !== "lifecycle")) {
+          return
+        }
+        for (const fn of listeners) fn(parsed as PluginEvent)
       } catch (err) {
         channelLog.warn(`无效消息: ${(err as Error).message}`)
       }

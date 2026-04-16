@@ -1,30 +1,18 @@
 /**
  * Openclaw feature 顶层类型聚合。
  *
- * 域本地类型下沉到 plugin/types.ts 和 gateway/types.ts,
- * 本文件只放:
+ * 只放跨域类型:
  *   1. 跨域事件表 `OpenclawEvents`
  *   2. 类型化 emit 回调 `EmitEvent`
  *   3. renderer 侧桥接接口 `OpenClawBridge`
  *
- * 域本地类型通过 re-export 暴露,使外部 import 路径保持稳定。
+ * 域本地类型各自在 plugin/types.ts 和 gateway/types.ts,消费者直接 import 子域文件,不经此处 barrel。
  */
 
-import type { OpenClawStatus, CompatResult, InvokeArgs, InvokeResult, PluginEvent, MonitorEvent } from "./plugin/types"
-import type { GatewayState, GatewayConnectParams, GatewayEventFrame } from "./gateway/types"
-import type {
-  ModelsListResult,
-  AgentsListResult,
-  AgentsCreateParams,
-  AgentsCreateResult,
-  AgentsDeleteParams,
-  AgentsDeleteResult,
-  AgentsUpdateParams,
-  AgentsUpdateResult,
-} from "./agent/contract"
-
-export type { OpenClawStatus, CompatResult, InvokeArgs, InvokeResult, PluginEvent, MonitorEvent } from "./plugin/types"
-export type { GatewayStatus, GatewayMode, GatewayState, GatewayConnectParams, GatewayEventFrame } from "./gateway/types"
+import type { OpenClawStatus, CompatibilityResult, InvokeArgs, InvokeResult, PluginEvent, MonitorEvent } from "./plugin/types"
+import type { GatewayState, GatewayConnectParams, GatewayEventFrame, OpenClawCapabilities } from "./gateway/types"
+import type { ModelsListResult } from "./model/contract"
+import type { AgentsListResult, AgentsCreateParams, AgentsCreateResult, AgentsDeleteParams, AgentsDeleteResult, AgentsUpdateParams, AgentsUpdateResult } from "./agent/contract"
 
 /** Openclaw controller 可推送的事件。 */
 export interface OpenclawEvents {
@@ -48,8 +36,9 @@ export interface OpenClawBridge {
   /** 生命周期:探测安装 / 兼容性检查 / 重启 gateway。 */
   lifecycle: {
     detect: () => Promise<OpenClawStatus>
-    check: () => Promise<CompatResult>
+    check: () => Promise<CompatibilityResult>
     restart: () => Promise<{ ok: boolean; error?: string }>
+    capabilities: () => Promise<OpenClawCapabilities>
     on: {
       /** OpenClaw 安装 / 运行状态变化。 */
       status: (listener: (status: OpenClawStatus) => void) => () => void

@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process"
+import fsSync from "node:fs"
 import { promises as fs } from "node:fs"
 import os from "node:os"
 import path from "node:path"
@@ -22,6 +24,8 @@ export interface LiveLockInfo {
   configPath: string
   createdAt: string
   lockPath: string
+  /** 进程命令行是否匹配 OpenClaw gateway 特征。false 时可能是 PID 回收。 */
+  isGateway: boolean
 }
 
 /**
@@ -37,11 +41,13 @@ export async function findLiveLock(): Promise<LiveLockInfo | null> {
     const payload = await readLockPayload(entry)
     if (!payload) continue
     if (!isPidAlive(payload.pid)) continue
+    const args = readProcessCmdline(payload.pid)
     return {
       pid: payload.pid,
       configPath: payload.configPath,
       createdAt: payload.createdAt,
       lockPath: entry,
+      isGateway: args ? isGatewayProcess(args) : false,
     }
   }
   return null
@@ -103,4 +109,62 @@ function isPidAlive(pid: number): boolean {
     const code = (err as NodeJS.ErrnoException).code
     return code === "EPERM"
   }
+}
+
+const CMDLINE_TIMEOUT_MS = 1000
+
+function readLinuxCmdline(pid: number): string[] | null {
+  try {
+    const raw = fsSync.readFileSync(`/proc/${pid}/cmdline`, "utf8")
+    return raw.split("\0").filter(Boolean)
+  } catch {
+    return null
+  }
+}
+
+function readWindowsCmdline(pid: number): string[] | null {
+  try {
+    const buf = execFileSync("wmic", ["process", "where", `processid=${pid}`, "get", "CommandLine", "/value"], {
+      timeout: CMDLINE_TIMEOUT_MS,
+      windowsHide: true,
+      stdio: ["ignore", "pipe", "ignore"],
+    }) as Buffer
+    const raw = buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xfe ? buf.toString("utf16le") : buf.toString("utf8")
+    const match = raw.match(/CommandLine=(.+)/)
+    if (!match) return null
+    return match[1].trim().split(/\s+/).filter(Boolean)
+  } catch {
+    return null
+  }
+}
+
+function readDarwinCmdline(pid: number): string[] | null {
+  try {
+    const raw = execFileSync("ps", ["-p", String(pid), "-o", "command="], {
+      encoding: "utf8",
+      timeout: CMDLINE_TIMEOUT_MS,
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+    const line = raw.trim()
+    if (!line) return null
+    return line.split(/\s+/).filter(Boolean)
+  } catch {
+    return null
+  }
+}
+
+/** 跨平台读取进程命令行参数。 */
+export function readProcessCmdline(pid: number): string[] | null {
+  const platform = process.platform
+  if (platform === "linux") return readLinuxCmdline(pid)
+  if (platform === "win32") return readWindowsCmdline(pid)
+  if (platform === "darwin") return readDarwinCmdline(pid)
+  return null
+}
+
+/** 判断命令行参数是否匹配 OpenClaw / Node 运行时特征。 */
+export function isGatewayProcess(args: string[]): boolean {
+  if (args.length === 0) return false
+  const cmdline = args.join(" ").toLowerCase()
+  return /openclaw|clawdbot|node/.test(cmdline)
 }

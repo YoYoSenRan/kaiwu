@@ -1,4 +1,4 @@
-import type { CompatResult } from "../types"
+import type { CompatibilityResult } from "./types"
 
 import { promises as fs } from "node:fs"
 import path from "node:path"
@@ -30,8 +30,8 @@ export const PLUGIN_SOURCE_DIR = path.join(appRoot, "plugins", "kaiwu")
  * 校验 host 版本是否满足 kaiwu 插件的兼容性要求。
  * @param hostVersion OpenClaw 当前版本，null 表示未探测到
  */
-export function checkCompatibility(hostVersion: string | null): CompatResult {
-  const base: CompatResult = {
+export function checkCompatibility(hostVersion: string | null): CompatibilityResult {
+  const base: CompatibilityResult = {
     compatible: false,
     hostVersion,
     pluginApiRange: SUPPORTED_OPENCLAW_RANGE,

@@ -7,7 +7,7 @@
  * renderer 不用从混杂的 pluginEvent 里自己过滤。
  */
 
-import type { MonitorEvent, PluginEvent } from "../types"
+import type { MonitorEvent, PluginEvent } from "./types"
 
 /** monitor 事件在 custom 通道中的 channel 标识,与插件侧 MONITOR_CHANNEL 一致。 */
 const MONITOR_CHANNEL = "monitor"
@@ -20,8 +20,13 @@ const MONITOR_CHANNEL = "monitor"
  *   `if (monitor) emit("plugin:monitor", monitor) else emit("plugin:event", event)`
  */
 export function toMonitorEvent(event: PluginEvent): MonitorEvent | null {
-  if (event.type !== "custom") return null
-  const payload = event.payload as { channel?: string; data?: MonitorEvent } | undefined
-  if (payload?.channel !== MONITOR_CHANNEL) return null
-  return payload.data ?? null
+  switch (event.type) {
+    case "custom": {
+      const payload = event.payload as { channel?: string; data?: MonitorEvent } | undefined
+      if (payload?.channel !== MONITOR_CHANNEL) return null
+      return payload.data ?? null
+    }
+    case "lifecycle":
+      return null
+  }
 }

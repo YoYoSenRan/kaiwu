@@ -1,9 +1,9 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-type Lang = "zh-CN" | "en"
-type Theme = "light" | "dark" | "system"
-type ResolvedTheme = "dark" | "light"
+export type Lang = "zh-CN" | "en"
+export type Theme = "light" | "dark" | "system"
+export type ResolvedTheme = "dark" | "light"
 
 interface SettingsState {
   lang: Lang

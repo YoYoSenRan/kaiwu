@@ -1,7 +1,8 @@
 import type { GatewaySocket } from "./socket"
 import type { GatewayCaller } from "./caller"
 import type { EventEmitter } from "./emitter"
-import type { EmitEvent, GatewayConnectParams, GatewayMode, GatewayState } from "../types"
+import type { EmitEvent } from "../types"
+import type { GatewayConnectParams, GatewayMode, GatewayState } from "./types"
 
 import { scope } from "../../../infra/logger"
 import { createGatewayManager } from "./manager"
@@ -13,11 +14,22 @@ const gatewayLog = scope("openclaw:gateway")
 /** 扫描模式轮询间隔（ms）。10 秒平衡响应速度和资源消耗。 */
 const POLL_INTERVAL_MS = 10_000
 
+/** GatewayClient 内部状态机动作。TS 不允许 type 别名做 class 成员,此处挂 module-level 但不 export。 */
+type GatewayAction =
+  | { type: "startDetect"; mode: GatewayMode; url: string | null }
+  | { type: "startConnect"; url: string }
+  | { type: "connected" }
+  | { type: "disconnected" }
+  | { type: "error"; message: string }
+  | { type: "authError"; message: string }
+  | { type: "metrics"; pingLatencyMs?: number | null; nextRetryAt?: number | null }
+  | { type: "reset" }
+
 /**
  * Gateway 客户端。
  *
  * 封装 socket / caller / emitter 三件套 + 状态机 + 扫描轮询，对外暴露
- * connect / disconnect / getState / getCaller / getEmitter。
+ * connect / disconnect / getState / call / getEmitter。
  *
  * 每个 OpenclawService 实例持有一个 GatewayClient 实例。以前这里是模块级
  * `let socket / caller / state` 等全局变量，改类化之后状态显式封装。
@@ -37,15 +49,16 @@ export class GatewayClient {
     return this.state
   }
 
-  /** 获取已连接的 RPC 调用器。未连接时抛错。 */
-  getCaller(): GatewayCaller {
+  /**
+   * 发起 RPC 调用。未连接时直接抛错,让 IPC 层冒泡给 renderer,避免各调用点重复 guard。
+   */
+  call<T = unknown>(method: string, params?: unknown): Promise<T> {
     if (!this.caller) throw new Error("gateway 未连接")
-    return this.caller
+    return this.caller.call<T>(method, params)
   }
 
-  /** 获取已连接的事件路由器。未连接时抛错。 */
-  getEmitter(): EventEmitter {
-    if (!this.emitter) throw new Error("gateway 未连接")
+  /** 获取已连接的事件路由器。未连接时返回 null。 */
+  getEmitter(): EventEmitter | null {
     return this.emitter
   }
 
@@ -59,14 +72,12 @@ export class GatewayClient {
 
     try {
       const mode: GatewayMode = params ? "manual" : "scan"
-      this.setState({ status: "detecting", mode, url: params?.url ?? null, error: null })
+      this.dispatch({ type: "startDetect", mode, url: params?.url ?? null })
 
       if (params) {
         await this.connectManual(params)
       } else {
         await this.autoConnect()
-        // 扫描模式 pollTimer 只守"gateway 进程尚未启动"的等待期：
-        // 一旦 socket 创建，WS 层的断线重连完全交给 GatewaySocket 内部的 scheduleReconnect
         this.pollTimer = setInterval(() => {
           if (this.socket) return
           void this.autoConnect()
@@ -80,14 +91,42 @@ export class GatewayClient {
   /** 断开 gateway 连接并停止轮询，状态回到 idle。 */
   disconnect(): void {
     this.close()
-    this.setState({ status: "idle", mode: null, url: null, error: null, pingLatencyMs: null, nextRetryAt: null })
+    this.dispatch({ type: "reset" })
   }
 
   // ---------- 内部 ----------
 
-  private setState(patch: Partial<GatewayState>): void {
-    this.state = { ...this.state, ...patch }
-    this.emitEvent("gateway:status", this.state)
+  private dispatch(action: GatewayAction): void {
+    const next = this.reduce(this.state, action)
+    if (next !== this.state) {
+      this.state = next
+      this.emitEvent("gateway:status", this.state)
+    }
+  }
+
+  private reduce(state: GatewayState, action: GatewayAction): GatewayState {
+    switch (action.type) {
+      case "startDetect":
+        return { status: "detecting", mode: action.mode, url: action.url, error: null, pingLatencyMs: null, nextRetryAt: null }
+      case "startConnect":
+        return { ...state, status: "connecting", url: action.url }
+      case "connected":
+        return { ...state, status: "connected", error: null, nextRetryAt: null }
+      case "disconnected":
+        return state.status === "connected" ? { ...state, status: "disconnected", pingLatencyMs: null } : state
+      case "error":
+        return { ...state, status: "error", error: action.message, pingLatencyMs: null, nextRetryAt: null }
+      case "authError":
+        return { status: "auth-error", error: `认证失败: ${action.message}`, pingLatencyMs: null, nextRetryAt: null, mode: null, url: null }
+      case "metrics": {
+        const next: GatewayState = { ...state }
+        if (action.pingLatencyMs !== undefined) next.pingLatencyMs = action.pingLatencyMs
+        if (action.nextRetryAt !== undefined) next.nextRetryAt = action.nextRetryAt
+        return next
+      }
+      case "reset":
+        return { status: "idle", mode: null, url: null, error: null, pingLatencyMs: null, nextRetryAt: null }
+    }
   }
 
   /** 只拆 socket 三件套,保留 pollTimer(transient error 时 scan 模式继续重试)。 */
@@ -112,14 +151,14 @@ export class GatewayClient {
   private async connectManual(params: GatewayConnectParams): Promise<void> {
     const { url } = params
     gatewayLog.info(`手动连接至 ${url}`)
-    this.setState({ status: "connecting", url })
+    this.dispatch({ type: "startConnect", url })
 
     try {
-      this.setupSocket(url)
+      this.setupSocket()
       await this.socket!.connect(url, { token: params.token, password: params.password })
     } catch (err) {
       gatewayLog.warn(`手动连接失败: ${(err as Error).message}`)
-      this.setState({ status: "error", error: `连接失败: ${(err as Error).message}` })
+      this.dispatch({ type: "error", message: `连接失败: ${(err as Error).message}` })
       this.closeSocket()
     }
   }
@@ -129,8 +168,7 @@ export class GatewayClient {
     const gateway = await detectGateway()
     if (!gateway.running || !gateway.gatewayPort) {
       gatewayLog.debug("服务未运行，稍后重试")
-      // 回落到 idle，避免 "detecting" 状态长期挂着
-      if (this.state.status === "detecting") this.setState({ status: "idle" })
+      if (this.state.status === "detecting") this.dispatch({ type: "reset" })
       return
     }
 
@@ -138,45 +176,43 @@ export class GatewayClient {
     const url = `ws://127.0.0.1:${gateway.gatewayPort}/ws`
 
     gatewayLog.info(`扫描连接至 ${url}`)
-    this.setState({ status: "connecting", url })
+    this.dispatch({ type: "startConnect", url })
 
     try {
-      this.setupSocket(url)
+      this.setupSocket()
       await this.socket!.connect(url, { token: auth.token ?? undefined, password: auth.password ?? undefined })
     } catch (err) {
       gatewayLog.warn(`扫描连接失败: ${(err as Error).message}`)
-      this.setState({ status: "error", url, error: `连接失败: ${(err as Error).message}` })
+      this.dispatch({ type: "error", message: `连接失败: ${(err as Error).message}` })
       this.closeSocket()
     }
   }
 
   /** 装配 socket + caller + emitter 三件套并注册通用监听。 */
-  private setupSocket(url: string): void {
+  private setupSocket(): void {
     const manager = createGatewayManager({
       onConnected: () => {
         if (this.state.status !== "connected") {
-          this.setState({ status: "connected", url, error: null, nextRetryAt: null })
+          this.dispatch({ type: "connected" })
         }
       },
       onDisconnected: () => {
         if (this.state.status === "connected") {
-          this.setState({ status: "disconnected", pingLatencyMs: null })
+          this.dispatch({ type: "disconnected" })
         }
       },
       onMetrics: (metrics) => {
-        const patch = Object.fromEntries(Object.entries(metrics).filter(([, v]) => v !== undefined))
-        if (Object.keys(patch).length > 0) this.setState(patch)
+        this.dispatch({ type: "metrics", ...metrics })
       },
       onAuthError: (message) => {
         this.close()
         gatewayLog.warn(`认证失败: ${message}`)
-        this.setState({ status: "auth-error", error: `认证失败: ${message}`, pingLatencyMs: null, nextRetryAt: null })
+        this.dispatch({ type: "authError", message })
       },
       onError: (message) => {
-        // transient error：只拆 socket，保留 pollTimer 继续重试
         this.closeSocket()
         gatewayLog.warn(`连接错误: ${message}`)
-        this.setState({ status: "error", error: `连接错误: ${message}`, pingLatencyMs: null, nextRetryAt: null })
+        this.dispatch({ type: "error", message })
       },
       onEvent: (frame) => this.emitEvent("gateway:event", frame),
     })

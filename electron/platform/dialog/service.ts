@@ -7,18 +7,24 @@ import { Controller, Handle, IpcController } from "../../framework"
  */
 @Controller("dialog")
 export class DialogService extends IpcController {
+  private getWindow(): Electron.BrowserWindow {
+    const win = this.ctx.mainWindow.get()
+    if (!win) throw new Error("dialog: 主窗口未创建")
+    return win
+  }
+
   @Handle("open-file")
   openFile(options: OpenDialogOptions) {
-    return dialog.showOpenDialog(this.ctx.mainWindow.get()!, options)
+    return dialog.showOpenDialog(this.getWindow(), options)
   }
 
   @Handle("save-file")
   saveFile(options: SaveDialogOptions) {
-    return dialog.showSaveDialog(this.ctx.mainWindow.get()!, options)
+    return dialog.showSaveDialog(this.getWindow(), options)
   }
 
   @Handle("message-box")
   messageBox(options: MessageBoxOptions) {
-    return dialog.showMessageBox(this.ctx.mainWindow.get()!, options)
+    return dialog.showMessageBox(this.getWindow(), options)
   }
 }

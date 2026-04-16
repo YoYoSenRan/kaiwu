@@ -37,19 +37,19 @@ export class GatewayCaller {
   }
 
   /**
-   * 发送 RPC 请求并等待响应。
+   * 发送 RPC 请求并等待响应。类型 T 由调用点指定,内部不校验结构。
    * @param method RPC 方法名
    * @param params 请求参数
    * @param timeoutMs 超时时间（ms）
    */
-  call(method: string, params?: unknown, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<unknown> {
-    return new Promise((resolve, reject) => {
+  call<T = unknown>(method: string, params?: unknown, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
       const id = `k${++this.idCounter}`
       const timer = setTimeout(() => {
         this.pending.delete(id)
         reject(new Error(`RPC timeout: ${method}`))
       }, timeoutMs)
-      this.pending.set(id, { resolve, reject, timer })
+      this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject, timer })
       try {
         this.socket.send({ type: "req", id, method, params })
       } catch (err) {
