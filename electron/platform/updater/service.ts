@@ -31,7 +31,10 @@ export class UpdaterService extends IpcController<UpdaterEvents> implements IpcL
       await autoUpdater.checkForUpdatesAndNotify()
       return null
     } catch (error) {
-      return { message: "Network error", error: error as Error }
+      return {
+        message: "Network error",
+        error: error instanceof Error ? error : new Error(String(error)),
+      }
     }
   }
 

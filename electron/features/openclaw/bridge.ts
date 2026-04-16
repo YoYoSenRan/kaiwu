@@ -1,5 +1,7 @@
 import { createBridge } from "../../app/bridge"
-import type { GatewayConnectParams, InvokeArgs, OpenClawBridge, OpenclawEvents } from "./types"
+import type { GatewayConnectParams } from "./gateway/types"
+import type { InvokeArgs } from "./plugin/types"
+import type { OpenClawBridge, OpenclawEvents } from "./types"
 
 const bridge = createBridge<OpenclawEvents>("openclaw")
 
@@ -8,6 +10,7 @@ export const openclaw: OpenClawBridge = {
     detect: () => bridge.invoke("lifecycle:detect"),
     check: () => bridge.invoke("lifecycle:check"),
     restart: () => bridge.invoke("lifecycle:restart"),
+    capabilities: () => bridge.invoke("lifecycle:capabilities"),
     on: {
       status: (listener) => bridge.on("plugin:status", listener),
     },

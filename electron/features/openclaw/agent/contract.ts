@@ -1,12 +1,12 @@
 /**
- * openclaw agents.* / models.list RPC 契约类型。
+ * openclaw agents.* RPC 契约类型。
  *
  * 对齐源码：
  * - `openclaw/src/gateway/protocol/schema/agents-models-skills.ts`
  * - `openclaw/src/shared/session-types.ts`（GatewayAgentRow）
+ *
+ * models.list 在 model/contract.ts,agents 与 models 是独立 RPC 名字空间。
  */
-
-// ---------- agents.* ----------
 
 /** agent 身份信息（嵌套在 GatewayAgentRow.identity 下）。 */
 export interface AgentIdentity {
@@ -85,19 +85,4 @@ export interface AgentsDeleteResult {
   ok: true
   agentId: string
   removedBindings: number
-}
-
-// ---------- models.list ----------
-
-/** 单个可选模型。 */
-export interface ModelChoice {
-  id: string
-  name: string
-  provider: string
-  contextWindow?: number
-  reasoning?: boolean
-}
-
-export interface ModelsListResult {
-  models: ModelChoice[]
 }

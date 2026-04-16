@@ -1,5 +1,5 @@
-import type { EmitEvent, CompatResult, InvokeArgs, InvokeResult, OpenClawStatus } from "../types"
-import type { PluginServer } from "./transport"
+import type { EmitEvent } from "../types"
+import type { CompatibilityResult, OpenClawStatus } from "./types"
 import { spawn } from "node:child_process"
 import { isWin } from "../../../infra/env"
 import { scope } from "../../../infra/logger"
@@ -12,11 +12,16 @@ const log = scope("openclaw:ops")
 
 /** 调用 `openclaw gateway restart` 的超时(ms)。 */
 const RESTART_TIMEOUT_MS = 10_000
-/** fetch 插件 HTTP 路由的超时(ms)。 */
-const INVOKE_TIMEOUT_MS = 8_000
+
+/** 桥接服务鉴权所需的凭证片段。 */
+export interface BridgeCredentials {
+  port: number
+  token: string
+  pid: number
+}
 
 /** 探测 OpenClaw gateway + kaiwu 插件安装状态, 并推送给 renderer。用户主动触发, 跳过缓存。 */
-export async function detect(emitEvent: EmitEvent): Promise<OpenClawStatus> {
+export async function detectStatus(emitEvent: EmitEvent): Promise<OpenClawStatus> {
   const gateway = await detectGateway(true)
   const pluginInfo = gateway.extensionsDir ? await detectPluginInstall(gateway.extensionsDir) : { installed: false, version: null }
   const status: OpenClawStatus = {
@@ -29,7 +34,7 @@ export async function detect(emitEvent: EmitEvent): Promise<OpenClawStatus> {
 }
 
 /** 校验 kaiwu 对当前 OpenClaw 的兼容性。 */
-export async function checkCompatibility(): Promise<CompatResult> {
+export async function checkCompatibility(): Promise<CompatibilityResult> {
   const gateway = await detectGateway()
   return computeCompatibility(gateway.version)
 }
@@ -38,43 +43,59 @@ export async function checkCompatibility(): Promise<CompatResult> {
  * 同步插件源码到 OpenClaw extensions 目录并写入 handshake。
  * 先做兼容性校验,不兼容直接抛错。
  */
-export async function install(server: PluginServer | null, emitEvent: EmitEvent): Promise<OpenClawStatus> {
+export async function installBridge(creds: BridgeCredentials | null, emitEvent: EmitEvent): Promise<OpenClawStatus> {
   const gateway = await detectGateway()
   if (!gateway.installed || !gateway.extensionsDir) {
     throw new Error("未检测到 OpenClaw 安装(configDir 不存在),请先安装 OpenClaw")
+  }
+  if (gateway.deployment === "remote") {
+    throw new Error("远程部署不支持插件自动同步，请手动配置")
   }
   const compat = computeCompatibility(gateway.version)
   if (!compat.compatible) {
     throw new Error(compat.reason ?? "kaiwu 与当前 OpenClaw 版本不兼容")
   }
-  await syncPlugin(gateway.extensionsDir)
-  if (server) {
+  try {
+    await syncPlugin(gateway.extensionsDir)
+  } catch (err) {
+    if (gateway.deployment === "docker") {
+      throw new Error(`Docker 部署下插件同步失败，请确认已卷映射 extensions 目录: ${(err as Error).message}`, { cause: err })
+    }
+    throw err
+  }
+  if (creds) {
     await writeHandshake({
       extensionsDir: gateway.extensionsDir,
-      port: server.info.port,
-      token: server.info.token,
-      pid: server.info.pid,
+      port: creds.port,
+      token: creds.token,
+      pid: creds.pid,
     })
   } else {
     log.warn("安装插件时桥接服务未运行, 插件将处于空闲状态")
   }
-  return await detect(emitEvent)
+  return await detectStatus(emitEvent)
 }
 
 /** 卸载已同步的插件和 handshake 文件。 */
-export async function uninstall(emitEvent: EmitEvent): Promise<OpenClawStatus> {
+export async function uninstallBridge(emitEvent: EmitEvent): Promise<OpenClawStatus> {
   const gateway = await detectGateway()
+  if (gateway.deployment === "remote") {
+    return await detectStatus(emitEvent)
+  }
   if (gateway.extensionsDir) {
     await removeHandshake(gateway.extensionsDir)
     await removePluginFiles(gateway.extensionsDir)
   }
-  return await detect(emitEvent)
+  return await detectStatus(emitEvent)
 }
 
 /** 调用 `openclaw gateway restart` 重启 gateway 进程。 */
-export async function restart(): Promise<{ ok: boolean; error?: string }> {
+export async function restartGateway(): Promise<{ ok: boolean; error?: string }> {
+  const gateway = await detectGateway()
+  if (gateway.deployment !== "local") {
+    return { ok: false, error: "仅本地进程部署支持重启" }
+  }
   return await new Promise((resolve) => {
-    // Windows 上 spawn 默认不会解析 .cmd/.bat, 用 shell 模式确保能找到 openclaw 入口
     const child = spawn("openclaw", ["gateway", "restart"], {
       stdio: ["ignore", "pipe", "pipe"],
       shell: isWin,
@@ -95,39 +116,4 @@ export async function restart(): Promise<{ ok: boolean; error?: string }> {
       else resolve({ ok: false, error: stderr || `exit ${code}` })
     })
   })
-}
-
-/**
- * 通过 OpenClaw gateway 调用 kaiwu 插件的 HTTP 路由。
- * kaiwu → OpenClaw → 插件 的入站通道。
- */
-export async function invoke(server: PluginServer | null, args: InvokeArgs): Promise<InvokeResult> {
-  const gateway = await detectGateway()
-  if (!gateway.running || !gateway.gatewayPort) {
-    return { ok: false, error: { message: "OpenClaw gateway 未运行" } }
-  }
-  if (!server) {
-    return { ok: false, error: { message: "bridge server 未启动, 无法鉴权" } }
-  }
-  const url = `http://127.0.0.1:${gateway.gatewayPort}/kaiwu/invoke`
-  try {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), INVOKE_TIMEOUT_MS)
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${server.info.token}`,
-        },
-        body: JSON.stringify(args),
-      })
-      return (await res.json()) as InvokeResult
-    } finally {
-      clearTimeout(timer)
-    }
-  } catch (err) {
-    return { ok: false, error: { message: (err as Error).message } }
-  }
 }

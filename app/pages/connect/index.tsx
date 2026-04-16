@@ -8,6 +8,8 @@ import { useGatewayStore } from "@/stores/gateway"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PluginCard } from "./components/plugin-card"
+import { gatewayBannerClass, gatewayDotClass } from "@/utils/gateway"
+import type { GatewayStatus } from "@/stores/gateway"
 
 type AuthMode = "token" | "password"
 
@@ -41,20 +43,12 @@ function StatusBanner({ status, url, error, ping, onDisconnect, onScan }: Status
 
   const bannerText =
     status === "connected" ? t("connect.banner.connected") : status === "error" || status === "auth-error" ? t("connect.banner.error") : t("connect.banner.disconnected")
-  const bgClass =
-    status === "connected"
-      ? "bg-primary/10 border-primary/20"
-      : status === "error" || status === "auth-error"
-        ? "bg-destructive/10 border-destructive/20"
-        : "bg-muted border-border"
 
   return (
-    <div className={`flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between ${bgClass}`}>
+    <div className={`flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between ${gatewayBannerClass(status as GatewayStatus)}`}>
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-sm font-medium">
-          <span
-            className={`size-2 rounded-full ${status === "connected" ? "bg-primary" : status === "error" || status === "auth-error" ? "bg-destructive" : "bg-muted-foreground"}`}
-          />
+          <span className={`size-2 rounded-full ${gatewayDotClass(status as GatewayStatus)}`} />
           {bannerText}
         </div>
         <div className="text-muted-foreground font-mono text-xs">

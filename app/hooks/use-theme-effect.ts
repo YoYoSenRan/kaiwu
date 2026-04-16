@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 
 import { applyThemeClass, getSystemTheme, useSettingsStore } from "@/stores/settings"
+import type { Theme } from "@/stores/settings"
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
 
@@ -10,6 +11,12 @@ function isEditableTarget(target: EventTarget | null): boolean {
   if (target.isContentEditable) return true
   if (target.closest("input, textarea, select, [contenteditable='true']")) return true
   return false
+}
+
+function toggleTheme(current: Theme): Theme {
+  if (current === "dark") return "light"
+  if (current === "light") return "dark"
+  return getSystemTheme() === "dark" ? "light" : "dark"
 }
 
 /**
@@ -41,8 +48,7 @@ export function useThemeEffect(): void {
       if (event.key.toLowerCase() !== "d") return
 
       const current = useSettingsStore.getState().theme
-      const next: Parameters<typeof setTheme>[0] = current === "dark" ? "light" : current === "light" ? "dark" : getSystemTheme() === "dark" ? "light" : "dark"
-      setTheme(next)
+      setTheme(toggleTheme(current))
     }
 
     window.addEventListener("keydown", handler)

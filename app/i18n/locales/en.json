@@ -29,6 +29,7 @@
   "update": {
     "checkUpdate": "Check update",
     "checking": "Checking...",
+    "update": "Update",
     "newVersion": "The latest version is: v{{version}}",
     "downloadError": "Error downloading the latest version",
     "updateProgress": "Update progress:",
