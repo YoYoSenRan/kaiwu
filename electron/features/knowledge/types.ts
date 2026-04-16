@@ -23,7 +23,7 @@ export interface SearchResult {
   metadata: string
 }
 
-/** 知识库行类型（原 db/repositories/knowledges 的简化版）。 */
+/** 知识库行类型。 */
 export interface KnowledgeRow {
   id: string
   name: string
@@ -35,7 +35,7 @@ export interface KnowledgeRow {
   updated_at: number
 }
 
-/** 文档行类型（原 db/repositories/documents 的简化版）。 */
+/** 文档行类型。 */
 export interface KnowledgeDocRow {
   id: string
   kb_id: string

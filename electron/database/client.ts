@@ -5,7 +5,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3"
 import { scope } from "../infra/logger"
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3"
 
-const dbLog = scope("db")
+const log = scope("db")
 
 let drizzleInstance: BetterSQLite3Database | null = null
 let sqliteInstance: Database.Database | null = null
@@ -16,7 +16,7 @@ let sqliteInstance: Database.Database | null = null
  * DB 文件：`<userData>/kaiwu.db`，和 LanceDB 的 `<userData>/vector/` 同级。
  * 开启 WAL 提升桌面端读写并发，开启外键约束。
  */
-export function getDb(): BetterSQLite3Database {
+export function database(): BetterSQLite3Database {
   if (drizzleInstance) return drizzleInstance
 
   const dbPath = path.join(app.getPath("userData"), "kaiwu.db")
@@ -24,12 +24,12 @@ export function getDb(): BetterSQLite3Database {
   sqliteInstance.pragma("journal_mode = WAL")
   sqliteInstance.pragma("foreign_keys = ON")
   drizzleInstance = drizzle(sqliteInstance)
-  dbLog.info(`SQLite opened at ${dbPath}`)
+  log.info(`SQLite opened at ${dbPath}`)
   return drizzleInstance
 }
 
 /** 关闭 SQLite 连接。只在应用关停时调用。 */
-export function closeDb(): void {
+export function closeDatabase(): void {
   sqliteInstance?.close()
   sqliteInstance = null
   drizzleInstance = null

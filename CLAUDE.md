@@ -34,6 +34,7 @@ electron/              主进程
 ├── main.ts            12 行，仅做 bootstrap + 顶层错误兜底
 ├── framework/         基础设施（无业务）：AppModule / Phase / IpcController / 装饰器 / 注册中心
 ├── infra/             技术底座：logger / env / paths / security / store / vector
+├── database/          数据层：drizzle schema + client + migrate + migrations/
 ├── app/               应用编排：bootstrap · context · modules 清单 · 主窗口 · 菜单 · ipc 模块
 ├── platform/          OS 能力：IPC 三件套（chrome/clipboard/…/updater）或单文件 AppModule（tray · shortcuts）
 ├── features/          业务能力（带 IPC）：openclaw · knowledge
@@ -48,7 +49,7 @@ app/                   渲染进程（React + Vite）
 
 | Phase | 时机 | 典型模块 |
 |---|---|---|
-| Starting | whenReady 之前 | platform-prep / single-instance / deeplink-setup / app-lifecycle |
+| Starting | whenReady 之前 | platform-prep / single-instance / deeplink-setup / app-lifecycle / db:migrate |
 | Ready | whenReady 之后 | csp / menu / main-window / tray / shortcuts |
 | AfterWindowOpen | 主窗口创建后 | ipc / deeplink-flush |
 | Eventually | 应用进入稳态 | —— |
