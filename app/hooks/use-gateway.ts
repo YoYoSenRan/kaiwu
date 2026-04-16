@@ -17,7 +17,7 @@ export function useGateway() {
   useEffect(() => {
     const off = window.electron.openclaw.gateway.on.status(set)
     // 订阅后立即同步一次：hook 挂载前主进程可能已推送过状态
-    window.electron.openclaw.gateway.state().then(set)
+    window.electron.openclaw.gateway.getState().then(set)
     return off
   }, [set])
 

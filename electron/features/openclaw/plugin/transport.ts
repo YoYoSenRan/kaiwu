@@ -1,4 +1,4 @@
-import type { WebSocket } from "ws"
+import WebSocket, { type WebSocket as WebSocketType } from "ws"
 import type { PluginEvent } from "../types"
 import { scope } from "../../../infra/logger"
 import { WebSocketServer } from "ws"
@@ -44,7 +44,7 @@ export async function startPluginServer(): Promise<PluginServer> {
   const port = address.port
 
   const listeners = new Set<(event: PluginEvent) => void>()
-  let pluginSocket: WebSocket | null = null
+  let pluginSocket: WebSocketType | null = null
 
   wss.on("connection", (socket, req) => {
     const provided = extractTokenFromUrl(req.url ?? "")
@@ -88,7 +88,7 @@ export async function startPluginServer(): Promise<PluginServer> {
       return () => listeners.delete(listener)
     },
     sendToPlugin(payload) {
-      if (!pluginSocket || pluginSocket.readyState !== pluginSocket.OPEN) return false
+      if (!pluginSocket || pluginSocket.readyState !== WebSocket.OPEN) return false
       try {
         pluginSocket.send(JSON.stringify(payload))
         return true

@@ -103,14 +103,15 @@ export const chromeBridge: ChromeBridge = {
 
 OpenClaw 是独立运行时，kaiwu 和它通过 WebSocket gateway 通讯 + 文件系统同步插件源码：
 
-- `features/openclaw/service.ts` —— IPC 门面，组合 `push + gateway + runtime` 三个协作者
-  - `OpenclawEmitter` (`push.ts`) —— 事件推送门面，包 this.emit
+- `features/openclaw/service.ts` —— IPC 门面，字段组合 `gateway + host` 两个协作对象 + 内联 `emitEvent` 回调
+  - `emitEvent: EmitEvent` —— 类型化 `this.emit` 包装(原 `OpenclawEmitter/push.ts` 薄包装层已删除)
   - `GatewayClient` (`gateway/client.ts`) —— owns WS socket/caller/emitter/state，扫描 + 手动两种连接模式
-  - `OpenclawRuntime` (`runtime.ts`) —— owns 本地 bridge WS server pluginServer，负责 install/uninstall/detect/invoke
-- openclaw 内部按功能域分子目录：
-  - `gateway/` —— 连接 + 协议 + 探测（socket/caller/emitter/detection/lock/config/auth/…）
-  - `plugin/` —— 插件桥接（sync/transport/security/handshake/compat/dispatcher）
-  - `agent/` `chat/` `session/` —— RPC 方法封装，与 gateway/contract.ts 的类型对齐
+  - `PluginHost` (`plugin/host.ts`) —— owns 本地 bridge WS server pluginServer，管启动/停止/handshake 刷新
+  - `plugin/ops.ts` —— 纯函数集:install/uninstall/detect/invoke/restart/checkCompatibility，由 service @Handle 直调
+- openclaw 内部按功能域分子目录（2 级扁平，单词文件名）：
+  - `gateway/` —— 连接 + 协议 + 探测 + 域本地 types（socket/caller/emitter/manager/client/detection/lock/config/auth/handshake/contract/types）
+  - `plugin/` —— 插件桥接 + 域本地 types（host/ops/sync/transport/handshake/compat/dispatcher/security/types）
+  - `agent/` `chat/` `session/` —— RPC 方法 + 各自 `contract.ts`（业务 RPC 契约），methods 函数走动词前置命名（listAgents / createSession / send / abort 等）
 - `plugins/kaiwu/` —— kaiwu 作为 OpenClaw extension 的插件源码，通过 `pnpm plugin:sync` 同步到 OpenClaw 的 extensions 目录
 - `scripts/plugin-dev.mjs` —— 监听插件源码变化自动同步的开发脚手架
 

@@ -47,7 +47,6 @@ export class GatewaySocket {
   private pingTimer: ReturnType<typeof setInterval> | null = null
   private lastPongAt = 0
   private lastPingSentAt = 0
-  private challengeResolver: ((c: ConnectChallenge) => void) | null = null
 
   private readonly frameListeners = new Set<FrameListener>()
   private readonly connectionListeners = new Set<ConnectionListener>()
@@ -220,7 +219,6 @@ export class GatewaySocket {
   private waitForChallenge(): Promise<ConnectChallenge> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        this.challengeResolver = null
         reject(new Error("challenge timeout"))
       }, CHALLENGE_TIMEOUT_MS)
 
@@ -240,6 +238,16 @@ export class GatewaySocket {
     this.ws = null
     this.setConnected(false)
     if (this.stopped) return
+
+    if (code === 4001) {
+      log.warn("gateway auth changed (4001), 停止重连")
+      this.stopped = true
+      const err = new Error("gateway auth changed") as Error & { code?: string }
+      err.code = "4001"
+      for (const fn of this.connectErrorListeners) fn(err)
+      return
+    }
+
     log.info(`断开连接, code=${code}`)
     this.scheduleReconnect()
   }

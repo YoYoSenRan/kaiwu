@@ -1,51 +1,47 @@
 import type { IpcLifecycle } from "../../framework"
-import type { GatewayConnectParams, InvokeArgs, OpenclawEvents } from "./types"
+import type { EmitEvent, GatewayConnectParams, InvokeArgs, OpenclawEvents } from "./types"
 import type { AgentsCreateParams, AgentsDeleteParams, AgentsUpdateParams } from "./agent/contract"
-import type { ChatAbortParams, ChatSendParams } from "./gateway/contract"
-import type { SessionCreateParams, SessionDeleteParams, SessionListParams, SessionPatchParams } from "./gateway/contract"
-import { scope } from "../../infra/logger"
+import type { ChatAbortParams, ChatSendParams } from "./chat/contract"
+import type { SessionCreateParams, SessionDeleteParams, SessionListParams, SessionPatchParams } from "./session/contract"
 import { GatewayClient } from "./gateway/client"
-import { OpenclawEmitter } from "./push"
-import { OpenclawRuntime } from "./runtime"
-import { chatSend, chatAbort } from "./chat/methods"
+import { PluginHost } from "./plugin/host"
+import * as ops from "./plugin/ops"
+import * as chat from "./chat/methods"
+import * as session from "./session/methods"
+import * as agent from "./agent/methods"
 import { Controller, Handle, IpcController } from "../../framework"
-import { dispatchMonitorEvent, isMonitorEvent } from "./plugin/dispatcher"
-import { sessionCreate, sessionDelete, sessionList, sessionPatch } from "./session/methods"
-import { agentsCreate, agentsDelete, agentsList, agentsUpdate, modelsList } from "./agent/methods"
-
-const log = scope("openclaw")
+import { toMonitorEvent } from "./plugin/dispatcher"
 
 /**
  * OpenClaw feature：gateway 连接、插件管理、Agent/Session/Chat RPC、模型列表。
  *
- * 本类是 IPC 门面，所有业务逻辑下沉到三个协作对象：
- * - `push`：事件推送门面，包装 this.emit
- * - `gateway`：gateway 连接运行时，owns socket/caller/emitter/state
- * - `runtime`：OpenClaw 运行时门面，owns bridge pluginServer，提供 install/detect/invoke 等
+ * 本类是 IPC 门面，业务逻辑下沉到两个协作对象：
+ * - `gateway`:gateway 连接运行时,owns socket/caller/emitter/state
+ * - `host`:本地 bridge WS server 生命周期,owns pluginServer
  *
- * 三者用字段初始化组合，不写显式构造器 —— 与其他 Controller 保持"零构造器"的形状一致。
+ * 插件 install/uninstall/detect/invoke/restart/checkCompatibility 是 plugin/ops.ts 里的纯函数,
+ * 由本 service 的 @Handle 方法直接调用,不再封装成类。
+ *
+ * `emitEvent` 是类型化的 `this.emit` 包装,注入给协作者使用。
  */
 @Controller("openclaw")
 export class OpenclawService extends IpcController<OpenclawEvents> implements IpcLifecycle {
-  private readonly push = new OpenclawEmitter((ch, payload) => this.emit(ch, payload))
-  private readonly gateway = new GatewayClient(this.push)
-  private readonly runtime = new OpenclawRuntime(this.push, this.gateway)
+  private readonly emitEvent: EmitEvent = (channel, payload) => this.emit(channel, payload)
+  private readonly gateway = new GatewayClient(this.emitEvent)
+  private readonly host = new PluginHost()
 
   /**
-   * 启动本地 bridge WS server，接收插件事件并分发到 renderer。
-   * 放在 onReady 而非构造器：让注册顺序与异步启动解耦，错误由 IpcRegistry 统一 fail-fast。
+   * 启动本地 bridge WS server,接收插件事件并分发到 renderer。
+   * 放在 onReady 而非构造器:让注册顺序与异步启动解耦,错误由 IpcRegistry 统一 fail-fast。
    */
   async onReady(): Promise<void> {
-    try {
-      const server = await this.runtime.startBridge()
-      if (server) {
-        server.onEvent((event) => {
-          if (isMonitorEvent(event)) dispatchMonitorEvent(event, this.push)
-          else this.push.pluginEvent(event)
-        })
-      }
-    } catch (err) {
-      log.error("startBridge 失败", err)
+    const server = await this.host.start()
+    if (server) {
+      server.onEvent((event) => {
+        const monitor = toMonitorEvent(event)
+        if (monitor) this.emit("plugin:monitor", monitor)
+        else this.emit("plugin:event", event)
+      })
     }
   }
 
@@ -53,34 +49,34 @@ export class OpenclawService extends IpcController<OpenclawEvents> implements Ip
 
   @Handle("lifecycle:detect")
   detect() {
-    return this.runtime.detect()
+    return ops.detect(this.emitEvent)
   }
 
   @Handle("lifecycle:check")
-  check() {
-    return this.runtime.checkCompat()
+  checkCompatibility() {
+    return ops.checkCompatibility()
   }
 
   @Handle("lifecycle:restart")
   restart() {
-    return this.runtime.restart()
+    return ops.restart()
   }
 
   // --- 插件管理 ---
 
   @Handle("plugin:install")
   install() {
-    return this.runtime.installPlugin()
+    return ops.install(this.host.getServer(), this.emitEvent)
   }
 
   @Handle("plugin:uninstall")
   uninstall() {
-    return this.runtime.uninstallPlugin()
+    return ops.uninstall(this.emitEvent)
   }
 
   @Handle("plugin:invoke")
   invoke(args: InvokeArgs) {
-    return this.runtime.invoke(args)
+    return ops.invoke(this.host.getServer(), args)
   }
 
   // --- gateway ---
@@ -103,68 +99,73 @@ export class OpenclawService extends IpcController<OpenclawEvents> implements Ip
   // --- chat ---
 
   @Handle("chat:send")
-  sendChat(params: ChatSendParams) {
-    return chatSend(this.gateway.getCaller(), params)
+  send(params: ChatSendParams) {
+    return chat.send(this.gateway.getCaller(), params)
   }
 
   @Handle("chat:abort")
-  abortChat(params: ChatAbortParams) {
-    return chatAbort(this.gateway.getCaller(), params)
+  abort(params: ChatAbortParams) {
+    return chat.abort(this.gateway.getCaller(), params)
   }
 
   // --- session ---
 
   @Handle("session:create")
   createSession(params: SessionCreateParams) {
-    return sessionCreate(this.gateway.getCaller(), params)
+    return session.create(this.gateway.getCaller(), params)
   }
 
   @Handle("session:list")
   listSessions(params: SessionListParams) {
-    return sessionList(this.gateway.getCaller(), params)
+    return session.list(this.gateway.getCaller(), params)
   }
 
   @Handle("session:patch")
-  patchSession(params: SessionPatchParams) {
-    return sessionPatch(this.gateway.getCaller(), params)
+  updateSession(params: SessionPatchParams) {
+    return session.update(this.gateway.getCaller(), params)
   }
 
   @Handle("session:delete")
   deleteSession(params: SessionDeleteParams) {
-    return sessionDelete(this.gateway.getCaller(), params)
+    return session.remove(this.gateway.getCaller(), params)
   }
 
   // --- agents ---
 
   @Handle("agents:list")
-  agentsList() {
-    return agentsList(this.gateway.getCaller())
+  listAgents() {
+    return agent.listAgents(this.gateway.getCaller())
   }
 
   @Handle("agents:create")
-  agentsCreate(params: AgentsCreateParams) {
-    return agentsCreate(this.gateway.getCaller(), params)
+  createAgent(params: AgentsCreateParams) {
+    return agent.createAgent(this.gateway.getCaller(), params)
   }
 
   @Handle("agents:update")
-  agentsUpdate(params: AgentsUpdateParams) {
-    return agentsUpdate(this.gateway.getCaller(), params)
+  updateAgent(params: AgentsUpdateParams) {
+    return agent.updateAgent(this.gateway.getCaller(), params)
   }
 
   @Handle("agents:delete")
-  agentsDelete(params: AgentsDeleteParams) {
-    return agentsDelete(this.gateway.getCaller(), params)
+  deleteAgent(params: AgentsDeleteParams) {
+    return agent.deleteAgent(this.gateway.getCaller(), params)
   }
 
   // --- models ---
 
   @Handle("models:list")
-  modelsList() {
-    return modelsList(this.gateway.getCaller())
+  listModels() {
+    return agent.listModels(this.gateway.getCaller())
   }
 
-  /** 应用退出前停止 OpenClaw 插件进程和 gateway 连接。 */
+  /** 应用退出前停止本地 WS server 和 gateway 连接。 */
   async onShutdown(): Promise<void> {
-    await this.runtime.stopBridge()
+    this.gateway.disconnect()
+    await Promise.race([this.host.stop(), wait(2000)])
   }
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
