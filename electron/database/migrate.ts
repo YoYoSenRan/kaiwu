@@ -4,14 +4,14 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator"
 import { Phase } from "../framework/lifecycle"
 import { appRoot } from "../infra/paths"
 import { scope } from "../infra/logger"
-import { closeDb, getDb } from "./client"
+import { closeDatabase, database } from "./client"
 import type { AppModule } from "../framework/module"
 
 const migrateLog = scope("db:migrate")
 
-// dev/打包后 migrations 目录都随源码走 electron/db/migrations/。
+// dev/打包后 migrations 目录都随源码走 electron/database/migrations/。
 // 生产打包需要在 electron-builder files 里显式包含此目录（后续加业务表时再处理）。
-const MIGRATIONS_DIR = path.join(appRoot, "electron/db/migrations")
+const MIGRATIONS_DIR = path.join(appRoot, "electron/database/migrations")
 const JOURNAL_FILE = path.join(MIGRATIONS_DIR, "meta/_journal.json")
 
 /**
@@ -28,10 +28,10 @@ export const migrateModule: AppModule = {
       migrateLog.info("no migrations journal yet, skipping migrator")
       return
     }
-    migrate(getDb(), { migrationsFolder: MIGRATIONS_DIR })
+    migrate(database(), { migrationsFolder: MIGRATIONS_DIR })
     migrateLog.info("migrations applied")
   },
   dispose() {
-    closeDb()
+    closeDatabase()
   },
 }
