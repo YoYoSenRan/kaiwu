@@ -1,33 +1,57 @@
 import log from "electron-log/main"
 import path from "node:path"
 import { app } from "electron"
+import { LogWriter } from "./writer"
+
+const basePath = app.isPackaged
+  ? path.join(app.getPath("userData"), "logs")
+  : path.join(app.getAppPath(), "logs")
+
+const writer = new LogWriter(basePath)
 
 if (app.isPackaged) {
-  // 生产：写用户数据目录，不输出控制台，5MB 单文件上限
-  log.transports.file.maxSize = 5 * 1024 * 1024
+  // 生产：写文件，不输出控制台
   log.transports.file.level = "info"
   log.transports.console.level = false
 } else {
-  // 开发：写 logs/dev.log（项目根目录下，已在 .gitignore 排除）
-  // 512KB 上限：大约够 4-5 次调试会话，AI 读取不会超限
-  log.transports.file.maxSize = 512 * 1024
+  // 开发：文件 + 控制台都输出
   log.transports.file.level = "debug"
-  log.transports.file.resolvePathFn = () => path.join(app.getAppPath(), "logs", "dev.log")
   log.transports.console.level = "debug"
 }
 
-log.transports.file.format = "[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] [{scope}] {text}"
+log.transports.console.format = "[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] [{scope}] {text}"
 
-// 必须在 app.whenReady() 之前调用
+// 拦截所有 transport：只写一次自定义文件，阻止 electron-log 的 file transport 写入。
+// electron-log 的 hooks 对每个活跃 transport 都触发，用 WeakSet 去重保证 writer 只写一次。
+const written = new WeakSet<object>()
+log.hooks.push((message, _transport, transportName) => {
+  if (!written.has(message)) {
+    written.add(message)
+    writer.write(formatMessage(message))
+  }
+  if (transportName === "file") return false
+  return message
+})
+
 log.initialize()
-
-// 捕获未处理的异常和 Promise rejection，写入日志文件
 log.errorHandler.startCatching()
-
-// 写入 session 分隔线，方便在 dev.log 中区分不同启动周期
 log.info("════════════════════════ SESSION START ════════════════════════")
 
+/** 创建 scoped logger。 */
 export const scope = (name: string) => log.scope(name)
 
 export default log
 export type Logger = typeof log
+
+/** 将 electron-log 消息格式化为单行文本。 */
+function formatMessage(msg: { date: Date; level: string; scope?: string; data: unknown[] }): string {
+  const d = msg.date
+  const ts = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, "0")}`
+  const scope = msg.scope ? ` (${msg.scope})` : ""
+  const text = msg.data.map((v) => (typeof v === "object" ? JSON.stringify(v) : String(v))).join(" ")
+  return `[${ts}] ${`[${msg.level}]`.padEnd(8)}[${scope.padEnd(26)}] ${text}`
+}
+
+function p(n: number): string {
+  return String(n).padStart(2, "0")
+}
