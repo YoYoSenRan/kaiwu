@@ -15,15 +15,15 @@ const gatewayLog = scope("openclaw:gateway")
 const POLL_INTERVAL_MS = 10_000
 
 /**
- * Gateway 连接运行时。
+ * Gateway 客户端。
  *
  * 封装 socket / caller / emitter 三件套 + 状态机 + 扫描轮询，对外暴露
- * start / stop / getState / requireCaller / requireEmitter。
+ * connect / disconnect / getState / getCaller / getEmitter。
  *
- * 每个 OpenclawService 实例持有一个 GatewayRuntime 实例。以前这里是模块级
+ * 每个 OpenclawService 实例持有一个 GatewayClient 实例。以前这里是模块级
  * `let socket / caller / state` 等全局变量，改类化之后状态显式封装。
  */
-export class GatewayRuntime {
+export class GatewayClient {
   private socket: GatewaySocket | null = null
   private caller: GatewayCaller | null = null
   private emitter: EventEmitter | null = null
@@ -39,22 +39,22 @@ export class GatewayRuntime {
   }
 
   /** 获取已连接的 RPC 调用器。未连接时抛错。 */
-  requireCaller(): GatewayCaller {
+  getCaller(): GatewayCaller {
     if (!this.caller) throw new Error("gateway 未连接")
     return this.caller
   }
 
   /** 获取已连接的事件路由器。未连接时抛错。 */
-  requireEmitter(): EventEmitter {
+  getEmitter(): EventEmitter {
     if (!this.emitter) throw new Error("gateway 未连接")
     return this.emitter
   }
 
   /**
-   * 启动 gateway 连接。
+   * 连接 gateway。
    * 无 params 走扫描模式（探测本机 + 轮询），有 params 走手动模式（直连，失败不轮询）。
    */
-  async start(params?: GatewayConnectParams): Promise<void> {
+  async connect(params?: GatewayConnectParams): Promise<void> {
     if (this.isConnecting || this.pollTimer || this.socket?.isConnected()) return
     this.isConnecting = true
 
@@ -63,14 +63,14 @@ export class GatewayRuntime {
       this.setState({ status: "detecting", mode, url: params?.url ?? null, error: null })
 
       if (params) {
-        await this.connectDirect(params)
+        await this.connectManual(params)
       } else {
-        await this.connectByDetection()
+        await this.connectByScan()
         // 扫描模式 pollTimer 只守"gateway 进程尚未启动"的等待期：
         // 一旦 socket 创建，WS 层的断线重连完全交给 GatewaySocket 内部的 scheduleReconnect
         this.pollTimer = setInterval(() => {
           if (this.socket) return
-          void this.connectByDetection()
+          void this.connectByScan()
         }, POLL_INTERVAL_MS)
       }
     } finally {
@@ -78,9 +78,9 @@ export class GatewayRuntime {
     }
   }
 
-  /** 停止 gateway 连接与轮询，状态回到 idle。 */
-  stop(): void {
-    this.clear()
+  /** 断开 gateway 连接并停止轮询，状态回到 idle。 */
+  disconnect(): void {
+    this.dispose()
     this.setState({ status: "idle", mode: null, url: null, error: null, pingLatencyMs: null, nextRetryAt: null })
   }
 
@@ -91,8 +91,8 @@ export class GatewayRuntime {
     this.push.gatewayState(this.state)
   }
 
-  /** 只清 socket 三件套，保留 pollTimer（transient error 时 scan 模式继续重试）。 */
-  private clearSocket(): void {
+  /** 只拆 socket 三件套，保留 pollTimer（transient error 时 scan 模式继续重试）。 */
+  private disposeSocket(): void {
     this.isConnecting = false
     this.socket?.disconnect()
     this.socket = null
@@ -100,9 +100,9 @@ export class GatewayRuntime {
     this.emitter = null
   }
 
-  /** 完全清理：socket + pollTimer。auth error 或用户主动 stop 时使用。 */
-  private clear(): void {
-    this.clearSocket()
+  /** 完全清理：socket + pollTimer。auth error 或用户主动 disconnect 时使用。 */
+  private dispose(): void {
+    this.disposeSocket()
     if (this.pollTimer) {
       clearInterval(this.pollTimer)
       this.pollTimer = null
@@ -110,23 +110,23 @@ export class GatewayRuntime {
   }
 
   /** 手动模式：直连指定地址，失败直接报错不轮询。 */
-  private async connectDirect(params: GatewayConnectParams): Promise<void> {
+  private async connectManual(params: GatewayConnectParams): Promise<void> {
     const { url } = params
     gatewayLog.info(`手动连接至 ${url}`)
     this.setState({ status: "connecting", url })
 
     try {
-      this.createGateway(url)
+      this.setupTransport(url)
       await this.socket!.connect(url, { token: params.token, password: params.password })
     } catch (err) {
       gatewayLog.warn(`手动连接失败: ${(err as Error).message}`)
       this.setState({ status: "error", error: `连接失败: ${(err as Error).message}` })
-      this.clearSocket()
+      this.disposeSocket()
     }
   }
 
   /** 扫描模式：探测本机 gateway + 读配置文件 auth + 连接。 */
-  private async connectByDetection(): Promise<void> {
+  private async connectByScan(): Promise<void> {
     const gateway = await detectGateway()
     if (!gateway.running || !gateway.gatewayPort) {
       gatewayLog.debug("服务未运行，稍后重试")
@@ -142,17 +142,17 @@ export class GatewayRuntime {
     this.setState({ status: "connecting", url })
 
     try {
-      this.createGateway(url)
+      this.setupTransport(url)
       await this.socket!.connect(url, { token: auth.token ?? undefined, password: auth.password ?? undefined })
     } catch (err) {
       gatewayLog.warn(`扫描连接失败: ${(err as Error).message}`)
       this.setState({ status: "error", url, error: `连接失败: ${(err as Error).message}` })
-      this.clearSocket()
+      this.disposeSocket()
     }
   }
 
-  /** 创建 socket + caller + emitter 三件套并注册通用监听。 */
-  private createGateway(url: string): void {
+  /** 装配 socket + caller + emitter 三件套并注册通用监听。 */
+  private setupTransport(url: string): void {
     const manager = createGatewayManager({
       onConnected: () => {
         if (this.state.status !== "connected") {
@@ -169,13 +169,13 @@ export class GatewayRuntime {
         if (Object.keys(patch).length > 0) this.setState(patch)
       },
       onAuthError: (message) => {
-        this.clear()
+        this.dispose()
         gatewayLog.warn(`认证失败: ${message}`)
         this.setState({ status: "auth-error", error: `认证失败: ${message}`, pingLatencyMs: null, nextRetryAt: null })
       },
       onError: (message) => {
-        // transient error：只清 socket，保留 pollTimer 继续重试
-        this.clearSocket()
+        // transient error：只拆 socket，保留 pollTimer 继续重试
+        this.disposeSocket()
         gatewayLog.warn(`连接错误: ${message}`)
         this.setState({ status: "error", error: `连接错误: ${message}`, pingLatencyMs: null, nextRetryAt: null })
       },
