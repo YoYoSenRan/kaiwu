@@ -35,9 +35,8 @@ electron/              主进程
 ├── framework/         基础设施（无业务）：AppModule / Phase / IpcController / 装饰器 / 注册中心
 ├── infra/             技术底座：logger / env / paths / security / store / vector
 ├── app/               应用编排：bootstrap · context · modules 清单 · 主窗口 · 菜单 · ipc 模块
-├── platform/          OS 能力（带 IPC）：chrome/clipboard/deeplink/dialog/…/updater
+├── platform/          OS 能力：IPC 三件套（chrome/clipboard/…/updater）或单文件 AppModule（tray · shortcuts）
 ├── features/          业务能力（带 IPC）：openclaw · knowledge
-├── shell/             副 OS 表面（无 IPC）：tray · shortcuts
 └── preload.ts         汇总所有 bridge，contextBridge 暴露到 renderer
 
 app/                   渲染进程（React + Vite）
@@ -60,7 +59,7 @@ app/                   渲染进程（React + Vite）
 
 ### IPC 框架：`@Controller` + `@Handle` / `@On`
 
-每个 platform/feature 三件套：`service.ts`（Controller）+ `bridge.ts`（preload）+ `types.ts`（共享）。
+带 IPC 的 platform/feature 三件套：`service.ts`（Controller）+ `bridge.ts`（preload）+ `types.ts`（共享）。`platform/` 下纯副作用的 AppModule（如 `tray.ts` / `shortcuts.ts`）直接单文件即可，不需要 bridge/types。
 
 **主进程侧**：
 ```ts
