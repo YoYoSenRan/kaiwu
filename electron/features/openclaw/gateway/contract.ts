@@ -3,6 +3,9 @@
  *
  * 帧格式对齐 openclaw/src/gateway/protocol/schema/frames.ts（PROTOCOL_VERSION = 3）。
  * 自定义帧协议，非标准 JSON-RPC：三种帧类型 req / res / event。
+ *
+ * 仅放协议帧 + 握手类型。chat / sessions 等业务 RPC 契约按域下沉到:
+ *   chat/contract.ts、session/contract.ts、agent/contract.ts。
  */
 
 // ---------- 协议版本 ----------
@@ -34,6 +37,7 @@ export interface EventFrame {
   event: string
   payload?: unknown
   seq?: number
+  stateVersion?: number
 }
 
 export interface ErrorShape {
@@ -104,118 +108,4 @@ export interface HelloOk {
     role?: string
     scopes?: string[]
   }
-}
-
-// ---------- chat ----------
-
-/** chat.send 的请求参数。 */
-export interface ChatSendParams {
-  sessionKey: string
-  message: string
-  thinking?: string
-  attachments?: unknown[]
-  timeoutMs?: number
-  idempotencyKey?: string
-}
-
-/** chat.send 返回后，通过 event 帧推送的流式事件。 */
-export interface ChatEvent {
-  runId: string
-  sessionKey: string
-  seq: number
-  state: "delta" | "final" | "aborted" | "error"
-  /** assistant 消息对象，delta/final 时为 { role, content: [{type:"text", text}], timestamp }。 */
-  message?: ChatEventMessage
-  errorMessage?: string
-  usage?: {
-    input?: number
-    output?: number
-    cacheRead?: number
-    cacheWrite?: number
-    total?: number
-  }
-  stopReason?: string
-}
-
-/** gateway 推送的 chat 事件中的 message 结构。 */
-export interface ChatEventMessage {
-  role: string
-  content: Array<{ type: string; text?: string }>
-  timestamp?: number
-  model?: string
-  provider?: string
-  usage?: {
-    input?: number
-    output?: number
-    cacheRead?: number
-    cacheWrite?: number
-    totalTokens?: number
-    cost?: { total?: number }
-  }
-  stopReason?: string
-}
-
-// ---------- sessions ----------
-
-export interface SessionCreateParams {
-  key?: string
-  agentId?: string
-  label?: string
-  model?: string
-  parentSessionKey?: string
-  task?: string
-  message?: string
-}
-
-export interface SessionListParams {
-  limit?: number
-  agentId?: string
-  search?: string
-  includeGlobal?: boolean
-  includeDerivedTitles?: boolean
-  includeLastMessage?: boolean
-}
-
-export interface SessionPatchParams {
-  key: string
-  label?: string | null
-  model?: string | null
-  thinkingLevel?: string | null
-}
-
-export interface SessionDeleteParams {
-  key: string
-}
-
-/** chat.abort 的请求参数。 */
-export interface ChatAbortParams {
-  sessionKey: string
-  runId?: string
-}
-
-/** chat.history 的请求参数。 */
-export interface ChatHistoryParams {
-  sessionKey: string
-  limit?: number
-  maxChars?: number
-}
-
-/** chat.history 返回的消息条目。 */
-export interface ChatHistoryMessage {
-  role: string
-  content: unknown
-  timestamp?: number
-  model?: string
-  provider?: string
-  stopReason?: string
-  usage?: {
-    input?: number
-    output?: number
-    cacheRead?: number
-    cacheWrite?: number
-    totalTokens?: number
-    cost?: { total?: number }
-  }
-  /** OpenClaw 附加的元数据。 */
-  __openclaw?: { id?: string; seq?: number }
 }

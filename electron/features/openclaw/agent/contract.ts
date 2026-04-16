@@ -46,6 +46,7 @@ export interface AgentsListResult {
 export interface AgentsCreateParams {
   name: string
   workspace: string
+  model?: string
   emoji?: string
   avatar?: string
 }
@@ -65,6 +66,7 @@ export interface AgentsUpdateParams {
   workspace?: string
   /** 格式 `"provider/model-id"`，如 `"anthropic/claude-sonnet-4-5"`。 */
   model?: string
+  emoji?: string
   avatar?: string
 }
 

@@ -1,6 +1,7 @@
 import type { OpenClawStatus } from "../types"
 
 import { spawn } from "node:child_process"
+import fsSync from "node:fs"
 import { promises as fs } from "node:fs"
 import net from "node:net"
 import os from "node:os"
@@ -16,6 +17,8 @@ const PORT_PROBE_TIMEOUT_MS = 500
 const CLI_TIMEOUT_MS = 3000
 /** `.openclaw` 目录在 Windows 上位于 %APPDATA%，其他平台位于 $HOME。 */
 const OPENCLAW_DIRNAME = ".openclaw"
+/** OpenClaw 旧版 state 目录名（rebrand 前）。 */
+const LEGACY_OPENCLAW_DIRNAME = ".clawdbot"
 
 /** gateway 探测结果：不包含 kaiwu 插件相关字段，由 plugin 层单独补齐。 */
 export type GatewayStatus = Omit<OpenClawStatus, "bridgeInstalled" | "installedBridgeVersion">
@@ -95,16 +98,27 @@ async function runtimeProbe(configDir: string): Promise<GatewayStatus> {
   return base
 }
 
-/** 拿配置根目录，跨平台实现。 */
+/** 拿配置根目录，跨平台实现。镜像 openclaw/src/config/paths.ts 的 resolveStateDir 逻辑。 */
 function resolveConfigDir(): string {
-  const override = process.env.OPENCLAW_HOME
-  if (override && override.length > 0) return override
+  const stateDirOverride = process.env.OPENCLAW_STATE_DIR?.trim()
+  if (stateDirOverride) return stateDirOverride
+  const homeOverride = process.env.OPENCLAW_HOME?.trim()
+  if (homeOverride) return homeOverride
+
   if (isWin) {
     const appData = process.env.APPDATA
-    if (appData) return path.join(appData, OPENCLAW_DIRNAME)
-    return path.join(os.homedir(), "AppData", "Roaming", OPENCLAW_DIRNAME)
+    const base = appData ? path.join(appData, OPENCLAW_DIRNAME) : path.join(os.homedir(), "AppData", "Roaming", OPENCLAW_DIRNAME)
+    if (fsSync.existsSync(base)) return base
+    const legacy = appData ? path.join(appData, LEGACY_OPENCLAW_DIRNAME) : path.join(os.homedir(), "AppData", "Roaming", LEGACY_OPENCLAW_DIRNAME)
+    if (fsSync.existsSync(legacy)) return legacy
+    return base
   }
-  return path.join(os.homedir(), OPENCLAW_DIRNAME)
+
+  const base = path.join(os.homedir(), OPENCLAW_DIRNAME)
+  if (fsSync.existsSync(base)) return base
+  const legacy = path.join(os.homedir(), LEGACY_OPENCLAW_DIRNAME)
+  if (fsSync.existsSync(legacy)) return legacy
+  return base
 }
 
 async function pathExists(p: string): Promise<boolean> {
