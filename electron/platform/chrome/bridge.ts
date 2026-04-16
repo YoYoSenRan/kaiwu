@@ -3,7 +3,7 @@ import type { ChromeBridge, ChromeEvents } from "./types"
 
 const bridge = createBridge<ChromeEvents>("chrome")
 
-export const chromeBridge: ChromeBridge = {
+export const chrome: ChromeBridge = {
   minimize: () => bridge.invoke("window:minimize"),
   maximize: () => bridge.invoke("window:maximize"),
   close: () => bridge.invoke("window:close"),

@@ -3,7 +3,7 @@ import type { LogBridge, ScopedLog } from "./types"
 
 const bridge = createBridge("log")
 
-export const logBridge: LogBridge = {
+export const log: LogBridge = {
   info: (...args) => bridge.send("output:write", "info", ...args),
   warn: (...args) => bridge.send("output:write", "warn", ...args),
   error: (...args) => bridge.send("output:write", "error", ...args),

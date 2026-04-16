@@ -3,6 +3,6 @@ import type { PowerBridge, PowerEvents } from "./types"
 
 const bridge = createBridge<PowerEvents>("power")
 
-export const powerBridge: PowerBridge = {
+export const power: PowerBridge = {
   onChange: (listener) => bridge.on("change", listener),
 }

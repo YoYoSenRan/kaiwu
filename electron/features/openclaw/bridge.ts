@@ -3,7 +3,7 @@ import type { GatewayConnectParams, InvokeArgs, OpenClawBridge, OpenclawEvents }
 
 const bridge = createBridge<OpenclawEvents>("openclaw")
 
-export const openclawBridge: OpenClawBridge = {
+export const openclaw: OpenClawBridge = {
   lifecycle: {
     detect: () => bridge.invoke("lifecycle:detect"),
     check: () => bridge.invoke("lifecycle:check"),
