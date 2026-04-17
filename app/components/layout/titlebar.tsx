@@ -19,14 +19,22 @@ export function TitleBar() {
 
   return (
     // -webkit-app-region: drag 使整个标题栏可拖拽移动窗口
-    <div className="titlebar" style={{ WebkitAppRegion: "drag" } as React.CSSProperties}>
+    <div
+      className="titlebar"
+      style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+      onDoubleClick={() => window.electron.chrome.maximize()}
+    >
       {/* macOS: 左侧留白给系统红绿灯按钮（约 70px） */}
       {isMac && <div className="titlebar-macos-spacer" />}
 
       {/* Win/Linux: 右侧自定义窗口控制按钮 */}
       {!isMac && (
         // no-drag: 按钮区域不参与拖拽，否则点击事件会被吞掉
-        <div className="titlebar-controls" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+        <div
+          className="titlebar-controls"
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+          onDoubleClick={(e) => e.stopPropagation()}
+        >
           <button className="titlebar-btn" onClick={() => window.electron.chrome.minimize()} aria-label="最小化">
             <Minus size={14} />
           </button>
