@@ -48,10 +48,10 @@ export function Header() {
   const { crumbs, headline } = usePageMeta()
 
   return (
-    <header className="border-border flex h-16 shrink-0 items-center gap-2 border-b px-3">
+    <header className="border-border flex h-14 shrink-0 items-center gap-3 border-b px-3">
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-4" />
-      <div className="flex flex-col justify-center">
+      <div className="flex items-center gap-3">
         <Breadcrumb>
           <BreadcrumbList>
             {crumbs.map((crumb, idx) => {
@@ -75,7 +75,12 @@ export function Header() {
             })}
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="text-sm font-semibold tracking-tight">{headline}</div>
+        {headline && (
+          <>
+            <Separator orientation="vertical" className="h-4" />
+            <div className="text-muted-foreground text-xs">{headline}</div>
+          </>
+        )}
       </div>
       <div className="ml-auto flex items-center gap-2">
         <ThemeToggle />
