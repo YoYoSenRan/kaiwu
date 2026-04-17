@@ -17,7 +17,7 @@ export function PluginCard() {
   const mounted = useRef(true)
 
   const refresh = useCallback(async () => {
-    const s = await window.electron.openclaw.lifecycle.detect()
+    const s = await window.electron.openclaw.status.detect()
     if (!mounted.current) return
     setStatus(s)
   }, [])
@@ -25,7 +25,7 @@ export function PluginCard() {
   useEffect(() => {
     mounted.current = true
     void refresh()
-    const offStatus = window.electron.openclaw.lifecycle.on.status((s) => setStatus(s))
+    const offStatus = window.electron.openclaw.status.on.change((s) => setStatus(s))
     return () => {
       mounted.current = false
       offStatus()
@@ -68,9 +68,12 @@ export function PluginCard() {
   const handleRestart = useCallback(
     () =>
       wrap("restart", async () => {
-        const r = await window.electron.openclaw.lifecycle.restart()
-        if (r.ok) toast.success(t("connect.plugin.restartOk"))
-        else toast.error(t("connect.plugin.restartFail", { message: r.error ?? "unknown" }))
+        try {
+          await window.electron.openclaw.status.restart()
+          toast.success(t("connect.plugin.restartOk"))
+        } catch (err) {
+          toast.error(t("connect.plugin.restartFail", { message: (err as Error).message }))
+        }
       }),
     [t, wrap],
   )
