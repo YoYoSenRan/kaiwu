@@ -1,38 +1,33 @@
 import type { GatewaySocket } from "./socket"
 import type { GatewayCaller } from "./caller"
 import type { EventEmitter } from "./emitter"
-import type { EmitEvent } from "../types"
-import type { GatewayConnectParams, GatewayMode, GatewayState } from "./types"
+import type { ConnectParams, EventFrame, ConnectionMode, ConnectionState } from "./types"
 
 import { scope } from "../../../infra/logger"
 import { createGatewayManager } from "./manager"
 import { readGatewayAuth } from "./config"
-import { detectGateway } from "./detection"
+import { scanner } from "../container"
+import { INITIAL_STATE, reduce, type GatewayAction } from "./state"
 
 const gatewayLog = scope("openclaw:gateway")
 
-/** 扫描模式轮询间隔（ms）。10 秒平衡响应速度和资源消耗。 */
+/** 扫描模式轮询间隔(ms)。10 秒平衡响应速度和资源消耗。 */
 const POLL_INTERVAL_MS = 10_000
 
-/** GatewayClient 内部状态机动作。TS 不允许 type 别名做 class 成员,此处挂 module-level 但不 export。 */
-type GatewayAction =
-  | { type: "startDetect"; mode: GatewayMode; url: string | null }
-  | { type: "startConnect"; url: string }
-  | { type: "connected" }
-  | { type: "disconnected" }
-  | { type: "error"; message: string }
-  | { type: "authError"; message: string }
-  | { type: "metrics"; pingLatencyMs?: number | null; nextRetryAt?: number | null }
-  | { type: "reset" }
+/** GatewayClient 构造器依赖。用两个具名回调替代原来的通用 EmitEvent,意图更清晰。 */
+export interface GatewayClientDeps {
+  onStatus: (state: ConnectionState) => void
+  onEvent: (frame: EventFrame) => void
+  /** 连接成功后回调,用于上层注册 event key extractor 等业务配置。 */
+  onEmitterReady?: (emitter: EventEmitter) => void
+}
 
 /**
  * Gateway 客户端。
  *
- * 封装 socket / caller / emitter 三件套 + 状态机 + 扫描轮询，对外暴露
+ * 封装 socket / caller / emitter 三件套 + 状态机 + 扫描轮询,对外暴露
  * connect / disconnect / getState / call / getEmitter。
- *
- * 每个 OpenclawService 实例持有一个 GatewayClient 实例。以前这里是模块级
- * `let socket / caller / state` 等全局变量，改类化之后状态显式封装。
+ * 状态转移逻辑在 ./state.ts,本类只编排。
  */
 export class GatewayClient {
   private socket: GatewaySocket | null = null
@@ -40,18 +35,16 @@ export class GatewayClient {
   private emitter: EventEmitter | null = null
   private pollTimer: ReturnType<typeof setInterval> | null = null
   private isConnecting = false
-  private state: GatewayState = { status: "idle", mode: null, url: null, error: null, pingLatencyMs: null, nextRetryAt: null }
+  private state: ConnectionState = INITIAL_STATE
 
-  constructor(private readonly emitEvent: EmitEvent) {}
+  constructor(private readonly deps: GatewayClientDeps) {}
 
   /** 获取当前 gateway 连接状态。 */
-  getState(): GatewayState {
+  getState(): ConnectionState {
     return this.state
   }
 
-  /**
-   * 发起 RPC 调用。未连接时直接抛错,让 IPC 层冒泡给 renderer,避免各调用点重复 guard。
-   */
+  /** 发起 RPC 调用。未连接时直接抛错,让 IPC 层冒泡给 renderer,避免各调用点重复 guard。 */
   call<T = unknown>(method: string, params?: unknown): Promise<T> {
     if (!this.caller) throw new Error("gateway 未连接")
     return this.caller.call<T>(method, params)
@@ -64,14 +57,14 @@ export class GatewayClient {
 
   /**
    * 连接 gateway。
-   * 无 params 走扫描模式（探测本机 + 轮询），有 params 走手动模式（直连，失败不轮询）。
+   * 无 params 走扫描模式(扫描本机 + 轮询),有 params 走手动模式(直连,失败不轮询)。
    */
-  async connect(params?: GatewayConnectParams): Promise<void> {
+  async connect(params?: ConnectParams): Promise<void> {
     if (this.isConnecting || this.pollTimer || this.socket?.isConnected()) return
     this.isConnecting = true
 
     try {
-      const mode: GatewayMode = params ? "manual" : "scan"
+      const mode: ConnectionMode = params ? "manual" : "scan"
       this.dispatch({ type: "startDetect", mode, url: params?.url ?? null })
 
       if (params) {
@@ -88,7 +81,7 @@ export class GatewayClient {
     }
   }
 
-  /** 断开 gateway 连接并停止轮询，状态回到 idle。 */
+  /** 断开 gateway 连接并停止轮询,状态回到 idle。 */
   disconnect(): void {
     this.close()
     this.dispatch({ type: "reset" })
@@ -97,35 +90,10 @@ export class GatewayClient {
   // ---------- 内部 ----------
 
   private dispatch(action: GatewayAction): void {
-    const next = this.reduce(this.state, action)
+    const next = reduce(this.state, action)
     if (next !== this.state) {
       this.state = next
-      this.emitEvent("gateway:status", this.state)
-    }
-  }
-
-  private reduce(state: GatewayState, action: GatewayAction): GatewayState {
-    switch (action.type) {
-      case "startDetect":
-        return { status: "detecting", mode: action.mode, url: action.url, error: null, pingLatencyMs: null, nextRetryAt: null }
-      case "startConnect":
-        return { ...state, status: "connecting", url: action.url }
-      case "connected":
-        return { ...state, status: "connected", error: null, nextRetryAt: null }
-      case "disconnected":
-        return state.status === "connected" ? { ...state, status: "disconnected", pingLatencyMs: null } : state
-      case "error":
-        return { ...state, status: "error", error: action.message, pingLatencyMs: null, nextRetryAt: null }
-      case "authError":
-        return { status: "auth-error", error: `认证失败: ${action.message}`, pingLatencyMs: null, nextRetryAt: null, mode: null, url: null }
-      case "metrics": {
-        const next: GatewayState = { ...state }
-        if (action.pingLatencyMs !== undefined) next.pingLatencyMs = action.pingLatencyMs
-        if (action.nextRetryAt !== undefined) next.nextRetryAt = action.nextRetryAt
-        return next
-      }
-      case "reset":
-        return { status: "idle", mode: null, url: null, error: null, pingLatencyMs: null, nextRetryAt: null }
+      this.deps.onStatus(this.state)
     }
   }
 
@@ -147,8 +115,8 @@ export class GatewayClient {
     }
   }
 
-  /** 手动模式：直连指定地址，失败直接报错不轮询。 */
-  private async connectManual(params: GatewayConnectParams): Promise<void> {
+  /** 手动模式:直连指定地址,失败直接报错不轮询。 */
+  private async connectManual(params: ConnectParams): Promise<void> {
     const { url } = params
     gatewayLog.info(`手动连接至 ${url}`)
     this.dispatch({ type: "startConnect", url })
@@ -163,11 +131,11 @@ export class GatewayClient {
     }
   }
 
-  /** 扫描模式：探测本机 gateway + 读配置文件 auth + 连接。 */
+  /** 扫描模式:扫描本机 gateway + 读配置文件 auth + 连接。 */
   private async autoConnect(): Promise<void> {
-    const gateway = await detectGateway()
+    const gateway = await scanner.scan()
     if (!gateway.running || !gateway.gatewayPort) {
-      gatewayLog.debug("服务未运行，稍后重试")
+      gatewayLog.debug("服务未运行,稍后重试")
       if (this.state.status === "detecting") this.dispatch({ type: "reset" })
       return
     }
@@ -201,6 +169,9 @@ export class GatewayClient {
           this.dispatch({ type: "disconnected" })
         }
       },
+      onReconnecting: () => {
+        this.dispatch({ type: "reconnecting" })
+      },
       onMetrics: (metrics) => {
         this.dispatch({ type: "metrics", ...metrics })
       },
@@ -214,11 +185,12 @@ export class GatewayClient {
         gatewayLog.warn(`连接错误: ${message}`)
         this.dispatch({ type: "error", message })
       },
-      onEvent: (frame) => this.emitEvent("gateway:event", frame),
+      onEvent: (frame) => this.deps.onEvent(frame),
     })
 
     this.socket = manager.socket
     this.caller = manager.caller
     this.emitter = manager.emitter
+    this.deps.onEmitterReady?.(this.emitter)
   }
 }

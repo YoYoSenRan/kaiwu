@@ -25,13 +25,11 @@ export class GatewayCaller {
   private readonly pending = new Map<string, PendingReq>()
 
   constructor(private readonly socket: GatewaySocket) {
-    // 监听所有入站帧，只处理 type === "res"
-    socket.onFrame((frame) => {
+    socket.frames.subscribe((frame) => {
       if (frame.type === "res") this.handleResponse(frame as ResponseFrame)
     })
 
-    // 连接断开时拒绝所有待处理请求
-    socket.onConnectionChange((connected) => {
+    socket.connection.subscribe((connected) => {
       if (!connected) this.rejectAll("connection closed")
     })
   }

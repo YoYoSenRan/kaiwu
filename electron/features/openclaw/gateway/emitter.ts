@@ -28,7 +28,7 @@ export class EventEmitter {
   private readonly extractors = new Map<string, KeyExtractor>()
 
   constructor(socket: GatewaySocket) {
-    socket.onFrame((frame) => {
+    socket.frames.subscribe((frame) => {
       if (frame.type === "event") this.dispatch(frame as EventFrame)
     })
   }

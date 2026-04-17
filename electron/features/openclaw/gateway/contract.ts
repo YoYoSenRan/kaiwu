@@ -10,6 +10,7 @@
 
 // ---------- 协议版本 ----------
 
+/** WS 协议版本,镜像 openclaw/src/gateway/protocol/schema/frames.ts。握手时两端需兼容。 */
 export const PROTOCOL_VERSION = 3
 
 // ---------- 帧结构 ----------
@@ -40,6 +41,7 @@ export interface EventFrame {
   stateVersion?: number
 }
 
+/** gateway 返回的结构化错误。code 字符串(如 `AUTH_INVALID`)用于客户端分支判断。 */
 export interface ErrorShape {
   code: string
   message: string

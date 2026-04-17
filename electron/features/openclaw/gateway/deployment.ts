@@ -1,4 +1,4 @@
-import type { DeploymentKind, OpenClawCapabilities } from "./types"
+import type { DeploymentKind, Capabilities } from "./types"
 import { readProcessCmdline, type LiveLockInfo } from "./lock"
 
 /**
@@ -31,8 +31,8 @@ export function inferDeployment(
 /**
  * 根据部署形态计算 kaiwu 各功能的可用性。
  */
-export function computeCapabilities(deployment: DeploymentKind): OpenClawCapabilities {
-  const caps: OpenClawCapabilities = {
+export function computeCapabilities(deployment: DeploymentKind): Capabilities {
+  const caps: Capabilities = {
     gatewayRpc: true,
     pluginBridge: false,
     pluginSync: false,
