@@ -1,11 +1,11 @@
 /**
- * plugin 域本地类型:本机侦测状态、兼容性、invoke 入出参、插件事件。
+ * plugin 域本地类型:本机侦测状态、兼容性、call 入出参、插件事件。
  */
 
-import type { GatewayStatus } from "../gateway/types"
+import type { ScanResult } from "../gateway/types"
 
-/** OpenClaw 本机侦测状态:gateway 探测结果 + kaiwu 插件安装状态。 */
-export interface OpenClawStatus extends GatewayStatus {
+/** OpenClaw 当前状态:gateway 扫描结果 + kaiwu 插件安装状态。 */
+export interface OpenClawStatus extends ScanResult {
   /** 插件是否已同步到 extensionsDir。 */
   bridgeInstalled: boolean
   /** 已安装插件的版本(读 目标路径 package.json)。 */
@@ -63,4 +63,11 @@ export interface MonitorEvent {
   event: unknown
   ctx: { sessionKey?: string; agentId?: string; runId?: string }
   ts: number
+}
+
+/** bridge server 鉴权所需的凭证片段,由 BridgeServer.getCredentials() 返回。 */
+export interface ServerCredentials {
+  port: number
+  token: string
+  pid: number
 }

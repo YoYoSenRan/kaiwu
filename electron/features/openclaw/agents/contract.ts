@@ -70,6 +70,7 @@ export interface AgentsUpdateParams {
   avatar?: string
 }
 
+/** `agents.update` 返回值。 */
 export interface AgentsUpdateResult {
   ok: true
   agentId: string
@@ -81,6 +82,7 @@ export interface AgentsDeleteParams {
   deleteFiles?: boolean
 }
 
+/** `agents.delete` 返回值。removedBindings 是级联清理的 session 绑定数量。 */
 export interface AgentsDeleteResult {
   ok: true
   agentId: string

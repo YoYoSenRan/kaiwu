@@ -17,7 +17,7 @@ export type ElectronAPI = typeof api
 
 // renderer 需要的具名类型从 preload 统一 re-export，避免 renderer 跨目录直接引用 feature 内部 types
 export type { OpenClawStatus, CompatibilityResult, PluginEvent, MonitorEvent } from "./features/openclaw/plugin/types"
-export type { GatewayState, GatewayEventFrame } from "./features/openclaw/gateway/types"
+export type { ConnectionState, EventFrame } from "./features/openclaw/gateway/types"
 
 /**
  * 渲染进程可访问的全部 API。
