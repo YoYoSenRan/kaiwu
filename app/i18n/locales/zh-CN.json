@@ -147,16 +147,16 @@
       "toolsAvailable": "可用工具",
       "enabledCount": "{{count}} 个已启用"
     },
-    "agent": {
-      "coder": {
-        "name": "编码代理",
-        "desc": "编写与审查代码"
-      },
-      "designer": {
-        "name": "设计代理",
-        "desc": "UI/UX 指导"
-      }
-    }
+    "sessions": {
+      "empty": "暂无会话"
+    },
+    "members": {
+      "empty": "暂无成员"
+    },
+    "hitl": {
+      "prompt": "{{agentId}} 问你：{{question}}"
+    },
+    "select": "请选择会话"
   },
   "workflow": {
     "title": "工作流",

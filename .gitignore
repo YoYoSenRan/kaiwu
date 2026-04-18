@@ -43,3 +43,6 @@ yarn.lock
 # Misc
 .omx/
 .worktrees/
+
+# Auto-generated
+app/types/auto-imports.d.ts

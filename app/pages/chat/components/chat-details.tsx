@@ -1,10 +1,15 @@
 import { useTranslation } from "react-i18next"
-import { Info } from "lucide-react"
-import { AgentRow } from "./agent-row"
-import { SAMPLE_AGENTS } from "../data"
+import { Info, Bot } from "lucide-react"
+import { useChatDataStore, useChatUiStore } from "@/stores/chat"
+import type { ChatMember } from "../../../../electron/features/chat/types"
+
+/** 稳定的空数组引用，避免 zustand selector 每次返回新 `[]` 触发无限重渲染。 */
+const EMPTY_MEMBERS: ChatMember[] = []
 
 export function ChatDetails() {
   const { t } = useTranslation()
+  const currentSessionId = useChatUiStore((s) => s.currentSessionId)
+  const members = useChatDataStore((s) => (currentSessionId ? (s.members[currentSessionId] ?? EMPTY_MEMBERS) : EMPTY_MEMBERS))
 
   return (
     <div className="bg-card text-card-foreground ring-foreground/10 hidden w-72 flex-col overflow-hidden rounded-xl ring-1 xl:flex">
@@ -12,28 +17,26 @@ export function ChatDetails() {
         <Info className="text-muted-foreground size-5" />
         <h3 className="text-sm font-semibold tracking-tight">{t("chat.details.title")}</h3>
       </div>
-      <div className="flex-1 space-y-8 overflow-y-auto p-5">
+      <div className="flex-1 overflow-y-auto p-5">
         <div className="space-y-4">
           <h4 className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">{t("chat.details.participants")}</h4>
-          <div className="-mx-2 space-y-1">
-            {SAMPLE_AGENTS.map((agent) => (
-              <AgentRow key={agent.id} agent={agent} />
-            ))}
-          </div>
-        </div>
-
-        <div className="border-border/50 space-y-4 border-t pt-6">
-          <h4 className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">{t("chat.details.configuration")}</h4>
-          <div className="space-y-4 pt-1">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{t("chat.details.defaultModel")}</span>
-              <span className="font-medium">GPT-4 Turbo</span>
+          {members.length === 0 ? (
+            <p className="text-muted-foreground text-sm">{t("chat.members.empty")}</p>
+          ) : (
+            <div className="-mx-2 space-y-1">
+              {members.map((m) => (
+                <div key={m.id} className="hover:bg-muted/50 flex items-center gap-3 rounded-md p-2 transition-colors">
+                  <div className="bg-primary/10 ring-primary/20 flex size-9 items-center justify-center rounded-full ring-1">
+                    <Bot className="text-primary size-5" />
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <span className="mb-1.5 text-sm leading-none font-medium">{m.agentId}</span>
+                    <span className="text-muted-foreground text-[11px] leading-none">{m.replyMode}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{t("chat.details.toolsAvailable")}</span>
-              <span className="text-primary font-medium">{t("chat.details.enabledCount", { count: 5 })}</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

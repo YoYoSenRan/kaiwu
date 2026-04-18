@@ -15,6 +15,7 @@ import { Route, Routes, useLocation } from "react-router"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useThemeEffect } from "@/hooks/use-theme-effect"
 import { useEffect } from "react"
+import { attachChatListeners } from "@/stores/chat"
 
 function App() {
   useThemeEffect()
@@ -24,6 +25,8 @@ function App() {
   useEffect(() => {
     void window.electron.openclaw.gateway.connect()
   }, [])
+
+  useEffect(() => attachChatListeners(), [])
 
   return (
     <TooltipProvider>
