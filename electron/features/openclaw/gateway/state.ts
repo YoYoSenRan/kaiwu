@@ -5,7 +5,7 @@
  * 7 种动作覆盖:扫描开始 / 连接开始 / 连上 / 断开 / 重连排期 / 错误 / 认证错误 / 心跳指标 / 重置。
  */
 
-import type { ConnectionMode, ConnectionState } from "./types"
+import type { ConnectionMode, ConnectionState } from "../contracts/connection"
 
 /** 状态机动作。Discriminated union,reduce 里 switch 各 case 各自 return,靠 TS 控制流守门。 */
 export type GatewayAction =

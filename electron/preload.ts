@@ -9,15 +9,17 @@ import { updater } from "./platform/updater/bridge"
 import { deeplink } from "./platform/deeplink/bridge"
 import { clipboard } from "./platform/clipboard/bridge"
 import { notification } from "./platform/notification/bridge"
-import { openclaw } from "./features/openclaw/bridge"
+import { openclaw } from "./features/openclaw/api"
 import { knowledge } from "./features/knowledge/bridge"
 
 /** Electron API 类型，供 renderer 端通过 global.d.ts 引用 */
 export type ElectronAPI = typeof api
 
 // renderer 需要的具名类型从 preload 统一 re-export，避免 renderer 跨目录直接引用 feature 内部 types
-export type { OpenClawStatus, CompatibilityResult, PluginEvent, MonitorEvent } from "./features/openclaw/plugin/types"
-export type { ConnectionState, EventFrame } from "./features/openclaw/gateway/types"
+export type { OpenClawStatus, CompatibilityResult } from "./features/openclaw/contracts/status"
+export type { PluginEvent, MonitorEvent } from "./features/openclaw/contracts/plugin"
+export type { ConnectionState } from "./features/openclaw/contracts/connection"
+export type { EventFrame } from "./features/openclaw/gateway/contract"
 
 /**
  * 渲染进程可访问的全部 API。
