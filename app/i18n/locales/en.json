@@ -259,13 +259,38 @@
     "sessions": {
       "empty": "No sessions"
     },
+    "dialog": {
+      "create": {
+        "title": "New Chat",
+        "description": "Pick a mode and participating agents",
+        "mode": "Mode",
+        "modeDirect": "Direct",
+        "modeGroup": "Group",
+        "agents": "Participants",
+        "emptyAgents": "No agents available. Create or sync one in the Agent module first",
+        "label": "Name (optional)",
+        "labelPlaceholder": "Name this session",
+        "confirm": "Create"
+      },
+      "delete": {
+        "title": "Delete Chat",
+        "confirm": "Delete chat \"{{name}}\"? This action cannot be undone and all messages will be permanently deleted."
+      }
+    },
+    "toast": {
+      "create": {
+        "success": "Chat created",
+        "error": "Create failed: {{msg}}"
+      }
+    },
     "members": {
       "empty": "No members"
     },
     "hitl": {
       "prompt": "{{agentId}} asks: {{question}}"
     },
-    "select": "Select a session"
+    "select": "Select a session",
+    "jumpToBottom": "Jump to latest"
   },
   "workflow": {
     "title": "Workflow",

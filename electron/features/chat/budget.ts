@@ -5,11 +5,18 @@
 import { getBudgetState, upsertBudgetState } from "./repository"
 import type { BudgetConfig, BudgetState, LoopEndedReason } from "./types"
 
+/**
+ * 预算默认。
+ *
+ * 历史坑：wallClockSec 原默认 300s，会话创建 5 分钟后静默锁死，
+ * 用户只会看到"发消息无反应"，极难诊断。改为超大值等同关闭（仍保留字段供 workflow 场景显式设置）。
+ * 对日常单聊场景，轮数 / token 是真正的护栏，墙钟不该默认介入。
+ */
 const DEFAULTS: Required<BudgetConfig> = {
-  maxRounds: 20,
-  maxTokens: 100_000,
+  maxRounds: 200,
+  maxTokens: 2_000_000,
   stopPhrase: "",
-  wallClockSec: 300,
+  wallClockSec: 24 * 3600,
 }
 
 export function withDefaults(cfg: BudgetConfig): Required<BudgetConfig> {

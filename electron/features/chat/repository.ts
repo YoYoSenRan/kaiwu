@@ -7,13 +7,27 @@
 import { and, asc, eq, isNull } from "drizzle-orm"
 import { database } from "../../database/client"
 import { chatBudgetState, chatMessages, chatSessionMembers, chatSessions } from "../../database/schema"
-import type { BudgetConfig, BudgetState, ChatMember, ChatMention, ChatMessage, ChatSession, MemberPatch, ReplyMode, SenderType, MessageRole, StrategyConfig } from "./types"
+import type {
+  BudgetConfig,
+  BudgetState,
+  ChatMember,
+  ChatMention,
+  ChatMessage,
+  ChatMode,
+  ChatSession,
+  MemberPatch,
+  MessageUsage,
+  ReplyMode,
+  SenderType,
+  MessageRole,
+  StrategyConfig,
+} from "./types"
 
 // ---------- sessions ----------
 
 export function insertSession(s: {
   id: string
-  mode: "single" | "group"
+  mode: ChatMode
   label: string | null
   openclawKey: string | null
   budget: BudgetConfig
@@ -109,6 +123,9 @@ export function insertMessage(m: {
   mentions: ChatMention[]
   turnRunId: string | null
   tags: string[]
+  model: string | null
+  usage: MessageUsage | null
+  stopReason: string | null
   createdAtRemote: number | null
 }): void {
   database()
@@ -126,6 +143,9 @@ export function insertMessage(m: {
       mentions_json: JSON.stringify(m.mentions),
       turn_run_id: m.turnRunId,
       tags_json: JSON.stringify(m.tags),
+      model: m.model,
+      usage_json: m.usage ? JSON.stringify(m.usage) : null,
+      stop_reason: m.stopReason,
       created_at_remote: m.createdAtRemote,
     })
     .run()
@@ -141,6 +161,14 @@ export function nextSeq(sessionId: string): number {
   const rows = database().select({ seq: chatMessages.seq }).from(chatMessages).where(eq(chatMessages.session_id, sessionId)).all()
   if (rows.length === 0) return 1
   return Math.max(...rows.map((r) => r.seq)) + 1
+}
+
+/** 取 session 内所有已登记的 openclaw_message_id（对账幂等查询）。 */
+export function listOpenclawMessageIds(sessionId: string): Set<string> {
+  const rows = database().select({ id: chatMessages.openclaw_message_id }).from(chatMessages).where(eq(chatMessages.session_id, sessionId)).all()
+  const set = new Set<string>()
+  for (const r of rows) if (r.id) set.add(r.id)
+  return set
 }
 
 // ---------- budget ----------
@@ -217,6 +245,9 @@ function rowToMessage(row: any): ChatMessage {
     mentions: row.mentions_json ? (JSON.parse(row.mentions_json) as ChatMention[]) : [],
     turnRunId: row.turn_run_id,
     tags: row.tags_json ? (JSON.parse(row.tags_json) as string[]) : [],
+    model: row.model ?? null,
+    usage: row.usage_json ? (JSON.parse(row.usage_json) as MessageUsage) : null,
+    stopReason: row.stop_reason ?? null,
     createdAtLocal: row.created_at_local,
     createdAtRemote: row.created_at_remote,
   }

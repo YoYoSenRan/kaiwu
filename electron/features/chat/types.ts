@@ -5,7 +5,7 @@
  * JSON 字段反序列化、字段名 camelCase、必要的冗余（member 附带 agent display name）。
  */
 
-export type ChatMode = "single" | "group"
+export type ChatMode = "direct" | "group"
 export type ReplyMode = "auto" | "mention"
 export type SenderType = "user" | "agent" | "tool" | "system"
 export type MessageRole = "user" | "assistant" | "tool" | "system"
@@ -55,6 +55,15 @@ export interface ChatMention {
   source: "tool" | "plain"
 }
 
+/** StepUsage 镜像（避免 renderer 依赖 electron/agent/types）。 */
+export interface MessageUsage {
+  input?: number
+  output?: number
+  cacheRead?: number
+  cacheWrite?: number
+  total?: number
+}
+
 export interface ChatMessage {
   id: string
   sessionId: string
@@ -67,8 +76,15 @@ export interface ChatMessage {
   /** 完整 mirror。当前 MVP 简化成 { text: string } JSON。 */
   content: unknown
   mentions: ChatMention[]
+  /** 关联的 idempotencyKey（openclaw 侧叫 runId）。 */
   turnRunId: string | null
   tags: string[]
+  /** assistant 消息的模型（"provider/model-id" 或 short name）。 */
+  model: string | null
+  /** assistant 消息的 token 用量。 */
+  usage: MessageUsage | null
+  /** final 的 stopReason。 */
+  stopReason: string | null
   createdAtLocal: number
   createdAtRemote: number | null
 }
@@ -126,10 +142,33 @@ export interface LoopEvent {
   reason?: LoopEndedReason
 }
 
+/** 流式 delta：增量内容吐字。按 sessionId + idempotencyKey 分流。 */
+export interface StreamDeltaEvent {
+  sessionId: string
+  idempotencyKey: string
+  /** 本次累积内容（overwrite 模式，不是增量拼接）。 */
+  content: string
+}
+
+/** 流式结束：final / aborted / error 都触发，UI 清对应 streaming buffer。 */
+export interface StreamEndEvent {
+  sessionId: string
+  idempotencyKey: string
+}
+
+/** 通知 renderer 该 session 的消息列表需要 re-fetch（对账后外部消息入库、旁路监听等）。 */
+export interface MessagesRefreshEvent {
+  sessionId: string
+  reason: "reconcile" | "external"
+}
+
 export interface ChatEvents {
   "message:new": ChatMessage
+  "messages:refresh": MessagesRefreshEvent
   "loop:event": LoopEvent
   "loop:paused": LoopPausedEvent
+  "stream:delta": StreamDeltaEvent
+  "stream:end": StreamEndEvent
 }
 
 // ---------- Bridge ----------
@@ -140,11 +179,15 @@ export interface ChatBridge {
     create: (input: CreateSessionInput) => Promise<ChatSession>
     delete: (id: string) => Promise<void>
     archive: (id: string, archived: boolean) => Promise<void>
+    /** 对账该 session 的消息：拉 openclaw chat.history 补齐 kaiwu 缺失消息。 */
+    reconcile: (id: string) => Promise<{ imported: number }>
   }
   message: {
     list: (sessionId: string) => Promise<ChatMessage[]>
     send: (sessionId: string, content: string) => Promise<void>
     answer: (sessionId: string, input: AnswerAskInput) => Promise<void>
+    /** 中断该 session 所有活跃 run。返回中断的 runId 数量。 */
+    abort: (sessionId: string) => Promise<{ aborted: number }>
   }
   member: {
     list: (sessionId: string) => Promise<ChatMember[]>
@@ -158,7 +201,10 @@ export interface ChatBridge {
   }
   on: {
     message: (l: (payload: ChatMessage) => void) => () => void
+    messagesRefresh: (l: (payload: MessagesRefreshEvent) => void) => () => void
     loop: (l: (payload: LoopEvent) => void) => () => void
     paused: (l: (payload: LoopPausedEvent) => void) => () => void
+    streamDelta: (l: (payload: StreamDeltaEvent) => void) => () => void
+    streamEnd: (l: (payload: StreamEndEvent) => void) => () => void
   }
 }

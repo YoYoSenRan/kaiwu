@@ -16,7 +16,7 @@ import { scope } from "../../infra/logger"
 import { addTokens, checkAndIncrementRound, checkStopPhrase } from "./budget"
 import { buildSharedContext } from "./context"
 import { interpretReply } from "./interpret"
-import { newRunId, runStep } from "../../agent/executor"
+import { newIdempotencyKey, runStep } from "../../agent/executor"
 import { decideTargets } from "./routing"
 import { getSession, insertMessage, listActiveMembers, nextSeq } from "./repository"
 import type { ChatBackend } from "../../agent/executor"
@@ -35,6 +35,10 @@ export interface GroupDeps {
   emitPaused: (ev: LoopPausedEvent) => void
   /** 查 agent 的 display name；失败返回 undefined。 */
   resolveAgentDisplayName: (agentId: string) => Promise<string | undefined>
+  /** 登记活跃 idempotencyKey（供 abort 查表）。sendToMember 调 runStep 前调用。 */
+  trackKeyStart: (sessionId: string, idempotencyKey: string, openclawKey: string) => void
+  /** 注销活跃 idempotencyKey。sendToMember 在 runStep 完成/异常后调用。 */
+  trackKeyEnd: (sessionId: string, idempotencyKey: string) => void
 }
 
 /** 挂起状态登记：pendingId → { sessionId, byAgentId }。用于 answerAsk 回写。 */
@@ -64,10 +68,18 @@ export function drainPendingMentions(sessionId: string): ChatMention[] {
  */
 export async function onNewMessage(deps: GroupDeps, sessionId: string, msg: ChatMessage): Promise<void> {
   const session = getSession(sessionId)
-  if (!session || session.archived) return
+  if (!session || session.archived) {
+    log.warn(`onNewMessage skipped session=${sessionId} not found or archived`)
+    return
+  }
 
   const members = listActiveMembers(sessionId)
-  const targets = decideTargets(members, msg.mentions)
+  let targets = decideTargets(members, msg.mentions)
+  // 剔除 sender 自己：agent 不对自己刚说的话再次发言，否则会形成 agent↔空回复 的自聊循环
+  if (msg.senderType === "agent" && msg.senderId) {
+    targets = targets.filter((t) => t.agentId !== msg.senderId)
+  }
+  log.info(`onNewMessage session=${sessionId} sender=${msg.senderType} senderId=${msg.senderId ?? "<none>"} members=${members.length} targets=${targets.length}`)
 
   if (targets.length === 0) {
     log.debug(`no targets for session=${sessionId}, loop ended`)
@@ -84,32 +96,66 @@ export async function onNewMessage(deps: GroupDeps, sessionId: string, msg: Chat
   // 预算检查（每次广播前 +1 轮）
   const check = checkAndIncrementRound(sessionId, session.budget)
   if (check.exceeded) {
+    log.warn(`session=${sessionId} budget exceeded, reason=${check.reason} — loop blocked until reset`)
     deps.emitLoop("ended", sessionId, check.reason)
     return
   }
 
   deps.emitLoop("started", sessionId)
+  log.info(
+    `onNewMessage about to dispatch ${targets.length} targets: ${JSON.stringify(targets.map((t) => ({ id: t?.id, agentId: t?.agentId, openclawKey: t?.openclawKey, replyMode: t?.replyMode })))}`,
+  )
 
-  // 并发给每个 target 发
-  await Promise.all(targets.map((t) => sendToMember(deps, sessionId, msg, t)))
+  // 并发给每个 target 发；单个 target 失败不阻塞其他
+  const promises = targets.map((t, idx) => {
+    log.info(`map callback building promise idx=${idx} targetId=${t?.id}`)
+    return (async () => {
+      log.info(`map callback body starting idx=${idx} targetId=${t?.id}`)
+      try {
+        await sendToMember(deps, sessionId, msg, t)
+        log.info(`map callback body done idx=${idx}`)
+      } catch (err) {
+        log.error(`sendToMember threw for target[${idx}]=${t?.id ?? "<undefined>"}: ${(err as Error).message}\n${(err as Error).stack ?? ""}`)
+      }
+    })()
+  })
+  log.info(`onNewMessage awaiting Promise.all of ${promises.length} promises`)
+  await Promise.all(promises)
+  log.info(`onNewMessage Promise.all resolved`)
 }
 
 async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMessage, target: ChatMember): Promise<void> {
-  const displayName = await deps.resolveAgentDisplayName(target.agentId)
+  log.info(`sendToMember enter member=${target.id} agent=${target.agentId}`)
+  const displayName = await deps.resolveAgentDisplayName(target.agentId).catch((err) => {
+    log.warn(`resolveAgentDisplayName failed: ${(err as Error).message}`)
+    return undefined
+  })
+  log.info(`sendToMember resolved displayName member=${target.id} name=${displayName ?? "<none>"}`)
+
   const ctx = buildSharedContext(sessionId, target, {
     agentDisplayName: displayName,
     includeHistory: target.seedHistory || target.joinedAt <= incoming.createdAtLocal,
   })
+  log.info(`sendToMember built ctx member=${target.id} ctxKeys=${Object.keys(ctx).join(",")}`)
 
   try {
     await deps.pushContext(ctx)
+    log.info(`sendToMember pushContext ok member=${target.id}`)
   } catch (err) {
     log.warn(`pushContext failed for member=${target.id}: ${(err as Error).message}`)
   }
 
-  const runId = newRunId()
+  const idempotencyKey = newIdempotencyKey()
   const text = extractText(incoming.content)
-  const result = await runStep(deps.backend, { sessionKey: target.openclawKey, agentId: target.agentId, message: text, runId })
+  log.info(`sendToMember calling runStep member=${target.id} agent=${target.agentId} key=${idempotencyKey} sessionKey=${target.openclawKey} msgLen=${text.length}`)
+  deps.trackKeyStart(sessionId, idempotencyKey, target.openclawKey)
+  let result
+  try {
+    result = await runStep(deps.backend, { sessionKey: target.openclawKey, agentId: target.agentId, message: text, idempotencyKey })
+  } finally {
+    deps.trackKeyEnd(sessionId, idempotencyKey)
+  }
+  log.info(`sendToMember done member=${target.id} key=${idempotencyKey} success=${result.success} contentLen=${result.content?.length ?? 0} error=${result.error ?? "none"}`)
   if (!result.success) {
     log.warn(`step failed for ${target.id}: ${result.error}`)
     return
@@ -121,6 +167,11 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
 
   const interp = interpretReply(result.content)
   if (interp.shouldSuppress) return
+  // 空 final 不落库 —— openclaw 偶尔对无实质内容的 turn 返空字符串
+  if (!interp.content.trim()) {
+    log.info(`sendToMember empty final suppressed member=${target.id} key=${idempotencyKey}`)
+    return
+  }
 
   // 持久化 agent 回复 —— 顺便把此 turn 间累积的 mention_next 事件合并进来
   const assistantMsg: ChatMessage = {
@@ -134,8 +185,11 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
     role: "assistant",
     content: { text: interp.content },
     mentions: drainPendingMentions(sessionId),
-    turnRunId: runId,
+    turnRunId: idempotencyKey,
     tags: [],
+    model: null,
+    usage: result.usage ?? null,
+    stopReason: result.stopReason ?? null,
     createdAtLocal: Date.now(),
     createdAtRemote: null,
   }
@@ -152,6 +206,9 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
     mentions: assistantMsg.mentions,
     turnRunId: assistantMsg.turnRunId,
     tags: assistantMsg.tags,
+    model: assistantMsg.model,
+    usage: assistantMsg.usage,
+    stopReason: assistantMsg.stopReason,
     createdAtRemote: assistantMsg.createdAtRemote,
   })
   deps.emitMessage(assistantMsg)

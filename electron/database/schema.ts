@@ -52,7 +52,7 @@ export const agents = sqliteTable("agents", {
 
 export const chatSessions = sqliteTable("chat_sessions", {
   id: pk(),
-  mode: text("mode").notNull().$type<"single" | "group">(),
+  mode: text("mode").notNull().$type<"direct" | "group">(),
   label: text("label"),
   openclaw_key: text("openclaw_key").unique(),
   budget_json: text("budget_json").notNull(),
@@ -94,8 +94,15 @@ export const chatMessages = sqliteTable("chat_messages", {
   role: text("role").notNull().$type<"user" | "assistant" | "tool" | "system">(),
   content_json: text("content_json").notNull(),
   mentions_json: text("mentions_json"),
+  /** 关联的 idempotencyKey（openclaw 侧叫 runId）；字段名延续旧命名避免 schema 迁移。 */
   turn_run_id: text("turn_run_id"),
   tags_json: text("tags_json"),
+  /** assistant 消息用的模型（"provider/model-id"）。 */
+  model: text("model"),
+  /** StepUsage 的 JSON：input/output/cacheRead/cacheWrite/total。 */
+  usage_json: text("usage_json"),
+  /** final 的 stopReason（end_turn / tool_use / max_tokens 等）。 */
+  stop_reason: text("stop_reason"),
   created_at_local: integer("created_at_local", { mode: "number" })
     .notNull()
     .$defaultFn(() => Date.now()),

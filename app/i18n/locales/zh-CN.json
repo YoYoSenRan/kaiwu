@@ -259,13 +259,38 @@
     "sessions": {
       "empty": "暂无会话"
     },
+    "dialog": {
+      "create": {
+        "title": "新建对话",
+        "description": "选择模式和参与的智能体",
+        "mode": "模式",
+        "modeDirect": "单聊",
+        "modeGroup": "群聊",
+        "agents": "参与者",
+        "emptyAgents": "尚无可用智能体，请先到「智能体」模块创建或同步",
+        "label": "名称（可选）",
+        "labelPlaceholder": "为此会话命名",
+        "confirm": "创建"
+      },
+      "delete": {
+        "title": "删除会话",
+        "confirm": "确认删除会话「{{name}}」？此操作不可恢复，会话中的所有消息将被永久删除。"
+      }
+    },
+    "toast": {
+      "create": {
+        "success": "会话已创建",
+        "error": "创建失败：{{msg}}"
+      }
+    },
     "members": {
       "empty": "暂无成员"
     },
     "hitl": {
       "prompt": "{{agentId}} 问你：{{question}}"
     },
-    "select": "请选择会话"
+    "select": "请选择会话",
+    "jumpToBottom": "回到最新"
   },
   "workflow": {
     "title": "工作流",
