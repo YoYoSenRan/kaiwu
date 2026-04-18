@@ -1,33 +1,34 @@
 import type { IpcLifecycle } from "../../../framework"
-import type { ConnectParams, EventFrame, ConnectionState } from "./types"
+import type { ConnectParams, ConnectionState } from "../contracts/connection"
 import { Controller, Handle, IpcController } from "../../../framework"
 import { GatewayClient } from "./client"
-import { extractSessionKey } from "./manager"
-import { emitGatewayEvent, emitGatewayStatus, setGateway } from "../container"
+import { extractSessionKey } from "./keys"
+import { setGateway } from "../runtime"
+import { publishGatewayEvent, publishGatewayStatus } from "../events/publisher"
 
 /**
  * gateway 连接管理 Controller。
  *
  * 职责:
- *   - 持有唯一的 GatewayClient 实例,onReady 时 set 到 container 供 RPC services 使用
+ *   - 持有唯一的 GatewayClient 实例,onReady 时 set 到 runtime 供 RPC services 使用
  *   - 对外暴露 3 个 Handle: state / connect / disconnect
  *   - 注册业务层事件名 → key extractor 映射(chat/agent 都按 sessionKey 路由)
  *
- * GatewayClient 的 onStatus / onEvent 回调通过 container.emitGatewayStatus / emitGatewayEvent
- * 直接推送到 renderer,不走 this.emit(避免和其他 Controller 的 emit 前缀耦合)。
+ * GatewayClient 的 onStatus / onEvent 回调走 events/publisher 直接推送 renderer,
+ * 不走 this.emit(避免和其他 Controller 的 emit 前缀耦合)。
  */
 @Controller("openclaw.gateway")
 export class GatewayService extends IpcController implements IpcLifecycle {
   private readonly gateway = new GatewayClient({
-    onStatus: emitGatewayStatus,
-    onEvent: emitGatewayEvent,
-    onEmitterReady: (emitter) => {
-      emitter.registerKeyExtractor("chat", extractSessionKey)
-      emitter.registerKeyExtractor("agent", extractSessionKey)
+    onStatus: publishGatewayStatus,
+    onEvent: publishGatewayEvent,
+    onStreamReady: (stream) => {
+      stream.registerKeyExtractor("chat", extractSessionKey)
+      stream.registerKeyExtractor("agent", extractSessionKey)
     },
   })
 
-  /** 把 gateway 实例挂到 container,RPC services 的 @Handle 里 getGateway() 才能读到。 */
+  /** 把 gateway 实例挂到 runtime,RPC services 的 @Handle 里 getGateway() 才能读到。 */
   onReady(): void {
     setGateway(this.gateway)
   }
@@ -58,6 +59,3 @@ export class GatewayService extends IpcController implements IpcLifecycle {
     this.gateway.disconnect()
   }
 }
-
-/** 从 gateway/types.ts 转发 2 个常用类型,让 container.ts / bridge.ts 有一个稳定的导入入口。 */
-export type { EventFrame, ConnectionState }

@@ -1,12 +1,14 @@
-import type { GatewaySocket } from "./socket"
-import type { GatewayCaller } from "./caller"
-import type { EventEmitter } from "./emitter"
-import type { ConnectParams, EventFrame, ConnectionMode, ConnectionState } from "./types"
+import type { GatewaySocket } from "../transport/socket"
+import type { GatewayCaller } from "../transport/caller"
+import type { EventStream } from "../transport/stream"
+import type { ConnectParams, ConnectionMode, ConnectionState } from "../contracts/connection"
+import type { EventFrame } from "./contract"
 
 import { scope } from "../../../infra/logger"
-import { createGatewayManager } from "./manager"
-import { readGatewayAuth } from "./config"
-import { scanner } from "../container"
+import { createGatewayManager } from "../transport/manager"
+import { readGatewayAuth } from "../discovery/credentials"
+import { scanner } from "../runtime"
+import { Pipeline, type Middleware } from "../kernel/pipeline"
 import { INITIAL_STATE, reduce, type GatewayAction } from "./state"
 
 const gatewayLog = scope("openclaw:gateway")
@@ -19,23 +21,24 @@ export interface GatewayClientDeps {
   onStatus: (state: ConnectionState) => void
   onEvent: (frame: EventFrame) => void
   /** 连接成功后回调,用于上层注册 event key extractor 等业务配置。 */
-  onEmitterReady?: (emitter: EventEmitter) => void
+  onStreamReady?: (stream: EventStream) => void
 }
 
 /**
  * Gateway 客户端。
  *
- * 封装 socket / caller / emitter 三件套 + 状态机 + 扫描轮询,对外暴露
- * connect / disconnect / getState / call / getEmitter。
+ * 封装 socket / caller / stream 三件套 + 状态机 + 扫描轮询,对外暴露
+ * connect / disconnect / getState / call / getStream。
  * 状态转移逻辑在 ./state.ts,本类只编排。
  */
 export class GatewayClient {
   private socket: GatewaySocket | null = null
   private caller: GatewayCaller | null = null
-  private emitter: EventEmitter | null = null
+  private stream: EventStream | null = null
   private pollTimer: ReturnType<typeof setInterval> | null = null
   private isConnecting = false
   private state: ConnectionState = INITIAL_STATE
+  private readonly pipeline = new Pipeline()
 
   constructor(private readonly deps: GatewayClientDeps) {}
 
@@ -44,15 +47,22 @@ export class GatewayClient {
     return this.state
   }
 
+  /** 追加 RPC 调用中间件(埋点/重试/鉴权刷新 等)。按注册顺序执行。 */
+  use(middleware: Middleware): this {
+    this.pipeline.use(middleware)
+    return this
+  }
+
   /** 发起 RPC 调用。未连接时直接抛错,让 IPC 层冒泡给 renderer,避免各调用点重复 guard。 */
   call<T = unknown>(method: string, params?: unknown): Promise<T> {
     if (!this.caller) throw new Error("gateway 未连接")
-    return this.caller.call<T>(method, params)
+    const caller = this.caller
+    return this.pipeline.run({ method, params }, () => caller.call<T>(method, params))
   }
 
   /** 获取已连接的事件路由器。未连接时返回 null。 */
-  getEmitter(): EventEmitter | null {
-    return this.emitter
+  getStream(): EventStream | null {
+    return this.stream
   }
 
   /**
@@ -103,7 +113,7 @@ export class GatewayClient {
     this.socket?.disconnect()
     this.socket = null
     this.caller = null
-    this.emitter = null
+    this.stream = null
   }
 
   /** 完全清理:socket + pollTimer。auth error 或用户主动 disconnect 时使用。 */
@@ -156,7 +166,7 @@ export class GatewayClient {
     }
   }
 
-  /** 装配 socket + caller + emitter 三件套并注册通用监听。 */
+  /** 装配 socket + caller + stream 三件套并注册通用监听。 */
   private setupSocket(): void {
     const manager = createGatewayManager({
       onConnected: () => {
@@ -190,7 +200,7 @@ export class GatewayClient {
 
     this.socket = manager.socket
     this.caller = manager.caller
-    this.emitter = manager.emitter
-    this.deps.onEmitterReady?.(this.emitter)
+    this.stream = manager.stream
+    this.deps.onStreamReady?.(this.stream)
   }
 }
