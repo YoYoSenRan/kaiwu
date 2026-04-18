@@ -4,23 +4,20 @@ import Settings from "@/pages/settings"
 import Dashboard from "@/pages/dashboard"
 import KnowledgeList from "@/pages/knowledge/list"
 import KnowledgeDetail from "@/pages/knowledge/detail"
-import { Header } from "@/components/layout/header"
 import { TitleBar } from "@/components/layout/titlebar"
+import { NanoDock } from "@/components/layout/dock"
+import { StatusBar } from "@/components/layout/status"
 import { useGateway } from "@/hooks/use-gateway"
-import { AppSidebar } from "@/components/layout/sidebar"
-import { useSettingsStore } from "@/stores/settings"
 import { AnimatePresence, motion } from "motion/react"
 import { Route, Routes, useLocation } from "react-router"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useThemeEffect } from "@/hooks/use-theme-effect"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { useEffect } from "react"
 
 function App() {
   useThemeEffect()
   useGateway()
   const location = useLocation()
-  const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed)
-  const setSidebarCollapsed = useSettingsStore((s) => s.setSidebarCollapsed)
 
   useEffect(() => {
     void window.electron.openclaw.gateway.connect()
@@ -29,34 +26,32 @@ function App() {
   return (
     <TooltipProvider>
       <TitleBar />
-      <div className="app-shell">
-        <SidebarProvider open={!sidebarCollapsed} onOpenChange={(open) => setSidebarCollapsed(!open)}>
-          <AppSidebar />
-          <SidebarInset className="flex min-w-0 flex-col overflow-hidden">
-            <Header />
-            <main className="relative flex-1 overflow-y-auto p-4">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={location.pathname}
-                  className="flex h-full flex-col"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15, ease: "easeInOut" }}
-                >
-                  <Routes location={location}>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/task" element={<Task />} />
-                    <Route path="/knowledge" element={<KnowledgeList />} />
-                    <Route path="/knowledge/:id" element={<KnowledgeDetail />} />
-                    <Route path="/connect" element={<Connect />} />
-                    <Route path="/settings" element={<Settings />} />
-                  </Routes>
-                </motion.div>
-              </AnimatePresence>
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
+      <div className="app-shell bg-background/50 flex-col">
+        <div className="flex flex-1 overflow-hidden">
+          <NanoDock />
+          <main className="relative flex-1 overflow-y-auto p-4">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location.pathname}
+                className="flex h-full flex-col"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15, ease: "easeInOut" }}
+              >
+                <Routes location={location}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/task" element={<Task />} />
+                  <Route path="/knowledge" element={<KnowledgeList />} />
+                  <Route path="/knowledge/:id" element={<KnowledgeDetail />} />
+                  <Route path="/connect" element={<Connect />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Routes>
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
+        <StatusBar />
       </div>
     </TooltipProvider>
   )

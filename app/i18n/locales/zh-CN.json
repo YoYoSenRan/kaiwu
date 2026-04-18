@@ -46,6 +46,7 @@
   "dashboard": {
     "title": "仪表台",
     "description": "运行状态与核心指标一览",
+    "topology": "神经系统拓扑 (Neural Topology)",
     "stats": {
       "tasks": "任务",
       "knowledge": "知识库"
@@ -212,6 +213,19 @@
     "openclaw": {
       "title": "OpenClaw 桥接",
       "description": "监控并管理本机 OpenClaw gateway 与 kaiwu 插件的同步状态"
+    }
+  },
+  "layout": {
+    "omnibar": {
+      "placeholder": "按 ⌘ K 唤醒开物"
+    },
+    "status": {
+      "connected": "网关已连接",
+      "offline": "网关已离线",
+      "localLlm": "本地模型",
+      "idle": "空闲",
+      "db": "数据库",
+      "ready": "就绪"
     }
   }
 }

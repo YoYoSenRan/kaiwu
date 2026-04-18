@@ -7,8 +7,8 @@ import { useGateway } from "@/hooks/use-gateway"
 import { useGatewayStore } from "@/stores/gateway"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PluginCard } from "./components/plugin-card"
-import { gatewayBannerClass, gatewayDotClass } from "@/utils/gateway"
+import { PluginCard } from "./components/plugin"
+import { gatewayDotClass } from "@/utils/gateway"
 import type { GatewayStatus } from "@/stores/gateway"
 
 type AuthMode = "token" | "password"
@@ -18,9 +18,9 @@ export default function Connect() {
   const ping = useGatewayStore((s) => s.pingLatencyMs)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <StatusBanner status={gw.status} url={gw.url} error={gw.error} ping={ping} onDisconnect={gw.disconnect} onScan={() => gw.connect()} />
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         <ManualConnectCard onConnect={gw.connect} disabled={gw.status === "connecting" || gw.status === "detecting"} />
         <PluginCard />
       </div>
@@ -45,11 +45,11 @@ function StatusBanner({ status, url, error, ping, onDisconnect, onScan }: Status
     status === "connected" ? t("connect.banner.connected") : status === "error" || status === "auth-error" ? t("connect.banner.error") : t("connect.banner.disconnected")
 
   return (
-    <div className={`flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between ${gatewayBannerClass(status as GatewayStatus)}`}>
+    <Card className="flex flex-col gap-3 p-4 transition-colors sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-sm font-medium">
           <span className={`size-2 rounded-full ${gatewayDotClass(status as GatewayStatus)}`} />
-          {bannerText}
+          <span className="leading-none">{bannerText}</span>
         </div>
         <div className="text-muted-foreground font-mono text-xs">
           {url ? url : error ? error : "—"}
@@ -67,7 +67,7 @@ function StatusBanner({ status, url, error, ping, onDisconnect, onScan }: Status
           </Button>
         )}
       </div>
-    </div>
+    </Card>
   )
 }
 
@@ -91,8 +91,8 @@ function ManualConnectCard({ onConnect, disabled }: ManualFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("connect.section.manual")}</CardTitle>
-        <CardDescription>{t("connect.section.manualDescription")}</CardDescription>
+        <CardTitle className="text-sm font-medium">{t("connect.section.manual")}</CardTitle>
+        <CardDescription className="text-xs">{t("connect.section.manualDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1.5">
