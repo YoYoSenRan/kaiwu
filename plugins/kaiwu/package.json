@@ -14,5 +14,8 @@
     "build": {
       "openclawVersion": "2026.4.9"
     }
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.49"
   }
 }
