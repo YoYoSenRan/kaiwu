@@ -5,9 +5,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* streamdown：让 Tailwind 扫描其 dist 中的 utility class */
+/* streamdown：让 Tailwind 扫描其 dist 中的 utility class + import 动画关键帧 */
 @source "../../node_modules/streamdown/dist/*.js";
 @source "../../node_modules/@streamdown/code/dist/*.js";
+@import "streamdown/styles.css";
 
 /* 项目样式分层：变量 → 元素基础 → 自定义 class → shadcn hook → markdown 容器 */
 @import "./tokens.css";

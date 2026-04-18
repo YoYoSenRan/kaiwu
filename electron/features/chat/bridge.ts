@@ -9,11 +9,13 @@ export const chat: ChatBridge = {
     create: (input) => bridge.invoke("session:create", input),
     delete: (id) => bridge.invoke("session:delete", id),
     archive: (id, archived) => bridge.invoke("session:archive", id, archived),
+    reconcile: (id) => bridge.invoke("session:reconcile", id),
   },
   message: {
     list: (sessionId) => bridge.invoke("message:list", sessionId),
     send: (sessionId, content) => bridge.invoke("message:send", sessionId, content),
     answer: (sessionId, input) => bridge.invoke("message:answer", sessionId, input),
+    abort: (sessionId) => bridge.invoke("message:abort", sessionId),
   },
   member: {
     list: (sessionId) => bridge.invoke("member:list", sessionId),
@@ -27,7 +29,10 @@ export const chat: ChatBridge = {
   },
   on: {
     message: (l) => bridge.on("message:new", l),
+    messagesRefresh: (l) => bridge.on("messages:refresh", l),
     loop: (l) => bridge.on("loop:event", l),
     paused: (l) => bridge.on("loop:paused", l),
+    streamDelta: (l) => bridge.on("stream:delta", l),
+    streamEnd: (l) => bridge.on("stream:end", l),
   },
 }

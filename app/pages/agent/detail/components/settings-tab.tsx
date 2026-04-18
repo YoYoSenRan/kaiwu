@@ -28,6 +28,13 @@ export function SettingsTab({ detail, onUpdated, onDeleted }: Props) {
   const [models, setModels] = useState<Awaited<ReturnType<typeof window.electron.openclaw.models.list>>["models"]>([])
 
   useEffect(() => {
+    setName(gateway?.name ?? "")
+    setModel(gateway?.model?.primary ?? "")
+    setEmoji(gateway?.identity?.emoji ?? "")
+    setAvatar(gateway?.identity?.avatar ?? "")
+  }, [gateway?.name, gateway?.model?.primary, gateway?.identity?.emoji, gateway?.identity?.avatar])
+
+  useEffect(() => {
     void window.electron.openclaw.models
       .list()
       .then((res) => setModels(res.models))
