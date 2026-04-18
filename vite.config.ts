@@ -16,7 +16,12 @@ export default defineConfig(({ command }) => {
   const sourcemap = isServe || !!process.env.VSCODE_DEBUG
 
   return {
-    resolve: { alias: { "@": path.join(__dirname, "app") } },
+    resolve: {
+      alias: [
+        { find: "@", replacement: path.join(__dirname, "app") },
+        { find: /^@contracts\/(.*)$/, replacement: path.join(__dirname, "electron/features/$1/contracts") },
+      ],
+    },
     plugins: [
       tailwindcss(),
       AutoImport({ imports: ["react", "react-router"], dts: "app/types/auto-imports.d.ts" }),

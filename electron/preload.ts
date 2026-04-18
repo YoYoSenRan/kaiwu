@@ -12,6 +12,7 @@ import { notification } from "./platform/notification/bridge"
 import { openclaw } from "./features/openclaw/api"
 import { knowledge } from "./features/knowledge/bridge"
 import { chat } from "./features/chat/bridge"
+import { agent } from "./features/agent/bridge"
 
 /** Electron API 类型，供 renderer 端通过 global.d.ts 引用 */
 export type ElectronAPI = typeof api
@@ -40,6 +41,7 @@ const api = {
   openclaw,
   knowledge,
   chat,
+  agent,
 } as const
 
 contextBridge.exposeInMainWorld("electron", api)

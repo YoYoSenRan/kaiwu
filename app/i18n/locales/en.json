@@ -9,7 +9,8 @@
     "noData": "No data",
     "detail": "Detail",
     "unknownPage": "Unknown page",
-    "toggleThemeHint": "Press D to toggle theme"
+    "toggleThemeHint": "Press D to toggle theme",
+    "back": "Back"
   },
   "footer": {
     "ping": "{{ms}}ms",
@@ -40,6 +41,7 @@
     "dashboard": "Dashboard",
     "task": "Task",
     "knowledge": "Knowledge",
+    "agent": "Agent",
     "chat": "Chat",
     "workflow": "Workflow",
     "connect": "Connect",
@@ -118,6 +120,113 @@
       "namePlaceholder": "Enter knowledge base name",
       "description": "Description",
       "descriptionPlaceholder": "Optional, briefly describe the content"
+    }
+  },
+  "agent": {
+    "title": "Agent",
+    "description": "Manage agents, workspaces and model bindings",
+    "count": "{{count}} agents",
+    "create": "New Agent",
+    "emptyTitle": "No agents",
+    "emptyDescription": "Create an agent to use in chats and workflows",
+    "tabs": {
+      "list": {
+        "mine": "Mine",
+        "unsynced": "Unsynced",
+        "missing": "Missing"
+      },
+      "overview": "Overview",
+      "workspace": "Workspace",
+      "skills": "Skills",
+      "settings": "Settings"
+    },
+    "detail": {
+      "description": "Agent details",
+      "defaultBadge": "Default"
+    },
+    "list": {
+      "gatewayOffline": "Gateway disconnected, showing local references only",
+      "emptyGateway": "Gateway has no agents; batch operations disabled",
+      "unsyncedBanner": "Found {{count}} gateway agents not registered locally",
+      "unsyncedEmpty": "No unsynced agents",
+      "missingBanner": "{{count}} local agents no longer exist on gateway",
+      "missingEmpty": "No missing agents",
+      "syncAll": "Sync all",
+      "unlink": "Remove locally"
+    },
+    "dialog": {
+      "create": {
+        "title": "New Agent",
+        "description": "Configure agent name, workspace and primary model",
+        "name": "Name",
+        "workspace": "Workspace path",
+        "model": "Primary model",
+        "modelPlaceholder": "Select model (optional)",
+        "emoji": "Emoji",
+        "avatar": "Avatar (URL / path)",
+        "confirm": "Create"
+      },
+      "delete": {
+        "title": "Delete agent",
+        "purge": "Purge (gateway + local)",
+        "purgeHint": "Delete agent from openclaw gateway; optionally clean up workspace files",
+        "deleteFiles": "Also delete workspace files",
+        "unlink": "Unlink only (keep on gateway)",
+        "unlinkHint": "Keep gateway agent; only remove local index. Agent will appear in Unsynced tab",
+        "confirm": "Confirm"
+      }
+    },
+    "toast": {
+      "create": {
+        "success": "Agent created",
+        "error": "Create failed: {{msg}}"
+      },
+      "update": {
+        "success": "Saved",
+        "error": "Save failed: {{msg}}"
+      },
+      "delete": {
+        "purge": "Agent deleted",
+        "unlink": "Reference unlinked",
+        "error": "Delete failed: {{msg}}"
+      },
+      "sync": {
+        "success": "Synced {{n}} agents",
+        "error": "Sync failed: {{msg}}"
+      },
+      "fileSave": {
+        "success": "{{filename}} saved",
+        "error": "Save failed: {{msg}}"
+      }
+    },
+    "overview": {
+      "name": "Name",
+      "workspace": "Workspace",
+      "primaryModel": "Primary model",
+      "fallbacks": "Fallbacks",
+      "theme": "Theme",
+      "emoji": "Emoji",
+      "avatar": "Avatar",
+      "copied": "{{field}} copied"
+    },
+    "workspace": {
+      "selectFile": "Select a file to view / edit",
+      "readonly": "Read-only",
+      "dirty": "Unsaved",
+      "preview": "Preview",
+      "edit": "Edit",
+      "save": "Save"
+    },
+    "skills": {
+      "name": "Name",
+      "enabled": "Status",
+      "reasons": "Reasons",
+      "on": "Enabled",
+      "off": "Disabled"
+    },
+    "settings": {
+      "danger": "Danger zone",
+      "dangerHint": "Delete this agent or unlink local reference"
     }
   },
   "chat": {
