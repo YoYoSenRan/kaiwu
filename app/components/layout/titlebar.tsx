@@ -23,7 +23,7 @@ export function TitleBar() {
       {/* 左右三等分，确保中间的 Omnibar 绝对居中 */}
       <div className="flex flex-1 items-center">{isMac && <div className="titlebar-macos-spacer" />}</div>
 
-      <div className="flex flex-1 justify-center" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+      <div className="flex justify-center" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
         <button className="group border-border/50 bg-muted/40 text-muted-foreground hover:border-border/80 hover:bg-muted/80 flex h-8 w-[320px] items-center gap-2 rounded-lg border px-3 text-xs transition-all">
           <Search size={14} className="opacity-50 transition-opacity group-hover:opacity-100" />
           <span className="flex-1 text-left tracking-wide">{t("layout.omnibar.placeholder")}</span>

@@ -67,18 +67,20 @@ export function DocumentsTab({ kbId, docs, progressMap, onRefresh }: Props) {
                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   {(doc.state === "processing" || progressMap.has(doc.id)) && (
                     <div className="flex items-center gap-2">
-                      <Progress value={progressMap.get(doc.id)?.progress ?? 0} className="h-2 w-24" />
+                      <div className="w-24">
+                        <Progress value={progressMap.get(doc.id)?.progress ?? 0} />
+                      </div>
                       <span className="text-muted-foreground text-xs">{progressMap.get(doc.id)?.progress ?? 0}%</span>
                     </div>
                   )}
                   <Badge variant={STATE_VARIANT[doc.state] ?? "outline"}>{t(`knowledge.doc.${doc.state}`)}</Badge>
                   {doc.state === "failed" && (
-                    <Button variant="ghost" size="icon" className="size-7" onClick={() => handleRetry(doc.id)}>
-                      <RotateCcw className="size-3.5" />
+                    <Button variant="ghost" size="icon" onClick={() => handleRetry(doc.id)}>
+                      <RotateCcw />
                     </Button>
                   )}
-                  <Button variant="ghost" size="icon" className="size-7" onClick={() => handleDelete(doc.id)}>
-                    <Trash2 className="size-3.5" />
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(doc.id)}>
+                    <Trash2 />
                   </Button>
                 </div>
               </div>

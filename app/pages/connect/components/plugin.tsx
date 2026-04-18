@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Download, RefreshCw, Trash2, Zap } from "lucide-react"
 import type { OpenClawStatus } from "../../../../electron/preload"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 type BusyAction = null | "sync" | "uninstall" | "restart"
 
@@ -82,45 +82,45 @@ export function PluginCard() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between space-y-0">
-        <div className="space-y-1">
-          <CardTitle className="text-sm font-medium">{t("connect.plugin.title")}</CardTitle>
-          <CardDescription className="text-xs">{t("connect.plugin.description")}</CardDescription>
-        </div>
-        <Badge variant={live ? "default" : "outline"} className="mt-0.5 font-mono text-[10px] tracking-wide">
-          {live ? t("connect.plugin.statusRunning") : t("connect.plugin.statusStopped")}
-        </Badge>
+      <CardHeader>
+        <CardTitle>{t("connect.plugin.title")}</CardTitle>
+        <CardDescription>{t("connect.plugin.description")}</CardDescription>
+        <CardAction>
+          <Badge variant={live ? "default" : "outline"}>{live ? t("connect.plugin.statusRunning") : t("connect.plugin.statusStopped")}</Badge>
+        </CardAction>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-          <div>
-            <div className="text-muted-foreground text-xs">{t("connect.plugin.hostVersion")}</div>
-            <div className="truncate font-mono text-xs">{status?.version ?? t("connect.plugin.unknown")}</div>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            <div>
+              <div className="text-muted-foreground text-xs">{t("connect.plugin.hostVersion")}</div>
+              <div className="truncate font-mono text-xs">{status?.version ?? t("connect.plugin.unknown")}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground text-xs">{t("connect.plugin.gatewayPort")}</div>
+              <div className="truncate font-mono text-xs">{status?.gatewayPort ? `:${status.gatewayPort}` : t("connect.plugin.unknown")}</div>
+            </div>
           </div>
-          <div>
-            <div className="text-muted-foreground text-xs">{t("connect.plugin.gatewayPort")}</div>
-            <div className="truncate font-mono text-xs">{status?.gatewayPort ? `:${status.gatewayPort}` : t("connect.plugin.unknown")}</div>
+          <Separator />
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={busy === "sync"}>
+              <RefreshCw className={busy === "sync" ? "animate-spin" : ""} />
+              {t("connect.plugin.detect")}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSync} disabled={busy === "sync"}>
+              <Download className={busy === "sync" ? "animate-spin" : ""} />
+              {t("connect.plugin.sync")}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleUninstall} disabled={busy === "uninstall"}>
+              <Trash2 className={busy === "uninstall" ? "animate-spin" : ""} />
+              {t("connect.plugin.uninstall")}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleRestart} disabled={busy === "restart"}>
+              <Zap className={busy === "restart" ? "animate-spin" : ""} />
+              {t("connect.plugin.restart")}
+            </Button>
           </div>
-        </div>
-        <Separator />
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={busy === "sync"}>
-            <RefreshCw className={`mr-1.5 size-3.5 ${busy === "sync" ? "animate-spin" : ""}`} />
-            {t("connect.plugin.detect")}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleSync} disabled={busy === "sync"}>
-            <Download className={`mr-1.5 size-3.5 ${busy === "sync" ? "animate-spin" : ""}`} />
-            {t("connect.plugin.sync")}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleUninstall} disabled={busy === "uninstall"}>
-            <Trash2 className={`mr-1.5 size-3.5 ${busy === "uninstall" ? "animate-spin" : ""}`} />
-            {t("connect.plugin.uninstall")}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleRestart} disabled={busy === "restart"}>
-            <Zap className={`mr-1.5 size-3.5 ${busy === "restart" ? "animate-spin" : ""}`} />
-            {t("connect.plugin.restart")}
-          </Button>
         </div>
       </CardContent>
     </Card>

@@ -38,9 +38,7 @@ export function ChunkList({ docId }: Props) {
           >
             <div className="mb-1 flex items-center justify-between">
               <span className="text-muted-foreground text-xs font-medium">{t("knowledge.doc.chunkPosition", { position: chunk.position + 1 })}</span>
-              <Badge variant="outline" className="text-xs">
-                {t("knowledge.doc.chunkCount", { count: chunk.content.length })}
-              </Badge>
+              <Badge variant="outline">{t("knowledge.doc.chunkCount", { count: chunk.content.length })}</Badge>
             </div>
             <p className={`text-xs whitespace-pre-wrap ${expandedChunk === chunk.id ? "" : "line-clamp-3"}`}>{chunk.content}</p>
           </div>
