@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useGatewayStore } from "@/stores/gateway"
 import { gatewayDotColor } from "@/utils/gateway"
 import { Activity, BrainCircuit, Cpu, Database, HardDrive, ListChecks, Plug, Plus, Terminal } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 type KnowledgeBase = Awaited<ReturnType<typeof window.electron.knowledge.base.list>>[number]
 
@@ -75,7 +76,7 @@ export default function Dashboard() {
   )
 }
 
-function OverviewMetric({ title, value, icon: Icon }: { title: string; value: string; icon: any }) {
+function OverviewMetric({ title, value, icon: Icon }: { title: string; value: string; icon: LucideIcon }) {
   return (
     <Card>
       <CardContent>

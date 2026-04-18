@@ -123,8 +123,40 @@
   "chat": {
     "title": "对话",
     "description": "与知识库和工具交互",
-    "empty": "有什么我可以帮您的？",
-    "placeholder": "输入消息..."
+    "new": "新对话",
+    "search": "搜索历史...",
+    "placeholder": "提问任何内容...（输入 @ 可 mention 代理）",
+    "empty": {
+      "title": "有什么我可以帮您的？",
+      "description": "提问、探索知识库或触发本地工具"
+    },
+    "sample": {
+      "title": "UI 布局设计",
+      "description": "多智能体协作",
+      "previous": "历史会话"
+    },
+    "time": {
+      "justNow": "刚刚",
+      "hoursAgo": "{{count}} 小时前"
+    },
+    "details": {
+      "title": "对话详情",
+      "participants": "参与者",
+      "configuration": "配置",
+      "defaultModel": "默认模型",
+      "toolsAvailable": "可用工具",
+      "enabledCount": "{{count}} 个已启用"
+    },
+    "agent": {
+      "coder": {
+        "name": "编码代理",
+        "desc": "编写与审查代码"
+      },
+      "designer": {
+        "name": "设计代理",
+        "desc": "UI/UX 指导"
+      }
+    }
   },
   "workflow": {
     "title": "工作流",
