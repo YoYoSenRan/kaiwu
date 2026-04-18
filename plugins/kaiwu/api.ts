@@ -11,3 +11,9 @@ export {
   type OpenClawPluginApi,
   type PluginLogger,
 } from "openclaw/plugin-sdk/plugin-entry"
+
+export type {
+  AnyAgentTool,
+  OpenClawPluginToolContext,
+  OpenClawPluginToolFactory,
+} from "openclaw/plugin-sdk/core"

@@ -10,4 +10,44 @@
 
 declare module "openclaw/plugin-sdk/core" {
   export type { OpenClawPluginApi, PluginLogger, PluginEntryDefinition } from "openclaw/plugin-sdk/plugin-entry"
+
+  import type { TSchema } from "@sinclair/typebox"
+
+  export interface AgentTool<TParameters extends TSchema, TDetails> {
+    name: string
+    label: string
+    description: string
+    parameters: TParameters
+    execute: (
+      toolCallId: string,
+      params: unknown,
+      signal?: AbortSignal,
+      onUpdate?: unknown,
+    ) => Promise<{ content: Array<{ type: "text"; text: string }>; details: TDetails }>
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  export type AnyAgentTool = AgentTool<any, unknown>
+
+  export type OpenClawPluginToolContext = {
+    config?: unknown
+    runtimeConfig?: unknown
+    fsPolicy?: unknown
+    workspaceDir?: string
+    agentDir?: string
+    agentId?: string
+    sessionKey?: string
+    sessionId?: string
+    browser?: { sandboxBridgeUrl?: string; allowHostControl?: boolean }
+    messageChannel?: string
+    agentAccountId?: string
+    deliveryContext?: unknown
+    requesterSenderId?: string
+    senderIsOwner?: boolean
+    sandboxed?: boolean
+  }
+
+  export type OpenClawPluginToolFactory = (
+    ctx: OpenClawPluginToolContext,
+  ) => AnyAgentTool | AnyAgentTool[] | null | undefined
 }
