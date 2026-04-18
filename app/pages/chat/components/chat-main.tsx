@@ -24,7 +24,7 @@ export function ChatMain() {
   const session = sessions.find((s) => s.id === currentSessionId) ?? null
   const isHitl = pending !== null && pending.sessionId === currentSessionId
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
     const text = input.trim()
     if (!text || !currentSessionId) return
