@@ -9,10 +9,7 @@ import { DialogService } from "../platform/dialog/service"
 import { UpdaterService } from "../platform/updater/service"
 import { ClipboardService } from "../platform/clipboard/service"
 import { NotificationService } from "../platform/notification/service"
-import { GatewayService } from "../features/openclaw/gateway/service"
-import { PluginService } from "../features/openclaw/plugin/service"
-import { StatusService } from "../features/openclaw/status/service"
-import { AgentsService, ChatService, ModelsService, SessionsService } from "../features/openclaw/rpc"
+import { GatewayService, BridgeService, StatusService, domainControllers } from "../features/openclaw"
 import { KnowledgeService } from "../features/knowledge/service"
 import type { AppModule } from "../framework/module"
 
@@ -42,14 +39,11 @@ export const ipcModule: AppModule = {
       ClipboardService,
       PowerService,
       ThemeService,
-      // openclaw —— gateway/plugin 先注册,RPC services 读 container.getGateway()
+      // openclaw —— gateway/bridge 先注册,动态域 Controller 在调用时读 runtime.getGateway()
       GatewayService,
-      PluginService,
+      BridgeService,
       StatusService,
-      ChatService,
-      SessionsService,
-      AgentsService,
-      ModelsService,
+      ...domainControllers(),
       // other features
       KnowledgeService,
     ])

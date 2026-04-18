@@ -1,10 +1,11 @@
-import type { CompatibilityResult, OpenClawStatus } from "../plugin/types"
-import type { Capabilities } from "../gateway/types"
+import type { CompatibilityResult, OpenClawStatus } from "../contracts/status"
+import type { Capabilities } from "../contracts/install"
 import { Controller, Handle, IpcController } from "../../../framework"
-import { readBridge } from "../plugin/sync"
-import { checkCompatibility as computeCompatibility } from "../plugin/compatibility"
-import { runCli } from "../gateway/cli"
-import { scanner, emitStatus } from "../container"
+import { readBridge } from "../bridge/sync"
+import { checkCompatibility as computeCompatibility } from "../discovery/version"
+import { runCli } from "../discovery/cli"
+import { scanner } from "../runtime"
+import { publishStatus } from "../events/publisher"
 
 /** 调用 `openclaw gateway restart` 的超时(ms)。 */
 const RESTART_TIMEOUT_MS = 10_000
@@ -29,14 +30,14 @@ export async function currentStatus(refresh = false): Promise<OpenClawStatus> {
  */
 export async function pushStatus(refresh = false): Promise<OpenClawStatus> {
   const status = await currentStatus(refresh)
-  emitStatus(status)
+  publishStatus(status)
   return status
 }
 
 /**
  * 安装扫描 / 兼容性校验 / 部署能力 / gateway 重启。
  *
- * 注意本 Controller 自身无状态 —— 所有方法都走 container.scanner 或直接调 CLI(restart)。
+ * 注意本 Controller 自身无状态 —— 所有方法都走 runtime.scanner 或直接调 CLI(restart)。
  * 不持有 BridgeManager / GatewayClient 引用。
  */
 @Controller("openclaw.status")
