@@ -40,6 +40,8 @@
     "dashboard": "Dashboard",
     "task": "Task",
     "knowledge": "Knowledge",
+    "chat": "Chat",
+    "workflow": "Workflow",
     "connect": "Connect",
     "settings": "Settings"
   },
@@ -117,6 +119,17 @@
       "description": "Description",
       "descriptionPlaceholder": "Optional, briefly describe the content"
     }
+  },
+  "chat": {
+    "title": "Chat",
+    "description": "Interact with knowledge bases and tools",
+    "empty": "How can I help you today?",
+    "placeholder": "Ask anything..."
+  },
+  "workflow": {
+    "title": "Workflow",
+    "description": "Visual pipeline and automation design",
+    "empty": "No workflows configured yet"
   },
   "connect": {
     "title": "Connect",

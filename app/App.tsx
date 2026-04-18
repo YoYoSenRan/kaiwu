@@ -4,6 +4,8 @@ import Settings from "@/pages/settings"
 import Dashboard from "@/pages/dashboard"
 import KnowledgeList from "@/pages/knowledge/list"
 import KnowledgeDetail from "@/pages/knowledge/detail"
+import Chat from "@/pages/chat"
+import Workflow from "@/pages/workflow"
 import { TitleBar } from "@/components/layout/titlebar"
 import { NanoDock } from "@/components/layout/dock"
 import { StatusBar } from "@/components/layout/status"
@@ -34,16 +36,18 @@ function App() {
               <motion.div
                 key={location.pathname}
                 className="flex h-full flex-col"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15, ease: "easeInOut" }}
+                initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               >
                 <Routes location={location}>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/task" element={<Task />} />
                   <Route path="/knowledge" element={<KnowledgeList />} />
                   <Route path="/knowledge/:id" element={<KnowledgeDetail />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/workflow" element={<Workflow />} />
                   <Route path="/connect" element={<Connect />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>

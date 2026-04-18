@@ -40,6 +40,8 @@
     "dashboard": "仪表台",
     "task": "任务",
     "knowledge": "知识库",
+    "chat": "对话",
+    "workflow": "工作流",
     "connect": "连接",
     "settings": "设置"
   },
@@ -117,6 +119,17 @@
       "description": "描述",
       "descriptionPlaceholder": "可选，简要描述知识库内容"
     }
+  },
+  "chat": {
+    "title": "对话",
+    "description": "与知识库和工具交互",
+    "empty": "有什么我可以帮您的？",
+    "placeholder": "输入消息..."
+  },
+  "workflow": {
+    "title": "工作流",
+    "description": "可视化编排与自动化流程",
+    "empty": "暂未配置工作流"
   },
   "connect": {
     "title": "连接",
