@@ -147,16 +147,16 @@
       "toolsAvailable": "Tools Available",
       "enabledCount": "{{count}} Enabled"
     },
-    "agent": {
-      "coder": {
-        "name": "Coder Agent",
-        "desc": "Writes & reviews code"
-      },
-      "designer": {
-        "name": "Designer Agent",
-        "desc": "UI/UX guidance"
-      }
-    }
+    "sessions": {
+      "empty": "No sessions"
+    },
+    "members": {
+      "empty": "No members"
+    },
+    "hitl": {
+      "prompt": "{{agentId}} asks: {{question}}"
+    },
+    "select": "Select a session"
   },
   "workflow": {
     "title": "Workflow",
