@@ -39,7 +39,7 @@ export default function Settings() {
       </nav>
 
       {/* 右侧内容 */}
-      <div className="min-w-0 flex-1 overflow-y-auto pl-6">
+      <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-2 pl-6">
         <div className="mb-6">
           <h1 className="text-lg font-semibold">{t(current.labelKey)}</h1>
           {current.descKey && <p className="text-muted-foreground mt-1 text-sm">{t(current.descKey)}</p>}

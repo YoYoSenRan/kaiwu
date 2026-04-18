@@ -46,6 +46,7 @@
   "dashboard": {
     "title": "Dashboard",
     "description": "Runtime status and core metrics at a glance",
+    "topology": "Neural Topology",
     "stats": {
       "tasks": "Tasks",
       "knowledge": "Knowledge"
@@ -212,6 +213,19 @@
     "openclaw": {
       "title": "OpenClaw Bridge",
       "description": "Monitor and manage the sync state between local OpenClaw gateway and the kaiwu plugin"
+    }
+  },
+  "layout": {
+    "omnibar": {
+      "placeholder": "Press ⌘ K to wake Kaiwu"
+    },
+    "status": {
+      "connected": "Gateway Connected",
+      "offline": "Gateway Offline",
+      "localLlm": "Local LLM",
+      "idle": "Idle",
+      "db": "DB",
+      "ready": "Ready"
     }
   }
 }

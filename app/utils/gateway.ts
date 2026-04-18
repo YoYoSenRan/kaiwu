@@ -13,15 +13,6 @@ export function gatewayDotColor(status: GatewayStatus): string {
 }
 
 /**
- * StatusBanner 背景边框类映射。
- */
-export function gatewayBannerClass(status: GatewayStatus): string {
-  if (status === "connected") return "bg-primary/10 border-primary/20"
-  if (status === "auth-error" || status === "error") return "bg-destructive/10 border-destructive/20"
-  return "bg-muted border-border"
-}
-
-/**
  * StatusBanner 圆点颜色类映射。
  */
 export function gatewayDotClass(status: GatewayStatus): string {
