@@ -1,5 +1,4 @@
 import type { ForceGraphMethods, NodeObject, LinkObject } from "react-force-graph-2d"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { X, ZoomIn, ZoomOut, Maximize2 } from "lucide-react"
 import ForceGraph2D from "react-force-graph-2d"
@@ -144,14 +143,14 @@ export function GraphTab({ kbId, kbName, docs }: Props) {
       {/* 工具栏 */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-end p-3">
         <div className="pointer-events-auto flex gap-1 rounded-lg border border-white/10 bg-black/60 p-1 backdrop-blur">
-          <Button variant="ghost" size="icon" className="size-7 text-white/70 hover:text-white" onClick={() => fgRef.current?.zoomToFit(400, 40)}>
-            <Maximize2 className="size-3.5" />
+          <Button variant="ghost" size="icon" onClick={() => fgRef.current?.zoomToFit(400, 40)}>
+            <Maximize2 />
           </Button>
-          <Button variant="ghost" size="icon" className="size-7 text-white/70 hover:text-white" onClick={() => fgRef.current?.zoom((fgRef.current?.zoom?.() ?? 1) * 1.3, 200)}>
-            <ZoomIn className="size-3.5" />
+          <Button variant="ghost" size="icon" onClick={() => fgRef.current?.zoom((fgRef.current?.zoom?.() ?? 1) * 1.3, 200)}>
+            <ZoomIn />
           </Button>
-          <Button variant="ghost" size="icon" className="size-7 text-white/70 hover:text-white" onClick={() => fgRef.current?.zoom((fgRef.current?.zoom?.() ?? 1) / 1.3, 200)}>
-            <ZoomOut className="size-3.5" />
+          <Button variant="ghost" size="icon" onClick={() => fgRef.current?.zoom((fgRef.current?.zoom?.() ?? 1) / 1.3, 200)}>
+            <ZoomOut />
           </Button>
         </div>
       </div>
@@ -168,17 +167,15 @@ export function GraphTab({ kbId, kbName, docs }: Props) {
 
       {/* 选中节点详情 */}
       {selectedNode && (
-        <div className="absolute top-12 right-3 z-10 w-60">
-          <Card className="border-white/10 bg-black/80 p-3 text-white shadow-lg backdrop-blur">
-            <div className="flex items-start justify-between">
-              <span className="text-xs font-medium text-white/50">{typeLabel(selectedNode.type)}</span>
-              <Button variant="ghost" size="icon" className="-mt-1 -mr-1 size-6 text-white/50 hover:text-white" onClick={() => setSelectedNode(null)}>
-                <X className="size-3.5" />
-              </Button>
-            </div>
-            <p className="mt-1 text-sm leading-snug font-medium">{selectedNode.label}</p>
-            {selectedNode.detail && <p className="mt-1 text-xs leading-relaxed text-white/50">{selectedNode.detail}</p>}
-          </Card>
+        <div className="absolute top-12 right-3 z-10 w-60 rounded-lg border border-white/10 bg-black/80 p-3 text-white shadow-lg backdrop-blur">
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-medium text-white/50">{typeLabel(selectedNode.type)}</span>
+            <Button variant="ghost" size="icon" onClick={() => setSelectedNode(null)}>
+              <X />
+            </Button>
+          </div>
+          <p className="mt-1 text-sm leading-snug font-medium">{selectedNode.label}</p>
+          {selectedNode.detail && <p className="mt-1 text-xs leading-relaxed text-white/50">{selectedNode.detail}</p>}
         </div>
       )}
 

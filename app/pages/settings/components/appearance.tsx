@@ -26,7 +26,7 @@ export function AppearanceCard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Label className="text-sm">{t("settings.themeLabel")}</Label>
+        <Label>{t("settings.themeLabel")}</Label>
         <div className="flex gap-1">
           {THEMES.map(({ key, icon: Icon }) => (
             <Button key={key} variant={theme === key ? "default" : "outline"} size="sm" onClick={() => setTheme(key)}>
@@ -38,7 +38,7 @@ export function AppearanceCard() {
       </div>
 
       <div className="flex items-center justify-between">
-        <Label className="text-sm">{t("settings.langLabel")}</Label>
+        <Label>{t("settings.langLabel")}</Label>
         <div className="flex gap-1">
           <Button variant={isZh ? "default" : "outline"} size="sm" onClick={() => chooseLang("zh-CN")}>
             中文

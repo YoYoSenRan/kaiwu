@@ -54,9 +54,11 @@ export function SettingsTab({ id, name: initialName, description: initialDesc, e
 
       <div className="border-destructive/20 rounded-lg border p-4">
         <h3 className="text-destructive text-sm font-medium">{t("knowledge.delete.title")}</h3>
-        <Button variant="destructive" size="sm" className="mt-3" onClick={() => setDeleteOpen(true)}>
-          {t("knowledge.delete.title")}
-        </Button>
+        <div className="mt-3">
+          <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+            {t("knowledge.delete.title")}
+          </Button>
+        </div>
       </div>
 
       <DeleteKnowledgeDialog open={deleteOpen} name={name} onOpenChange={setDeleteOpen} onConfirm={handleDelete} />

@@ -36,7 +36,7 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">{t("dashboard.recentKnowledge")}</CardTitle>
+            <CardTitle>{t("dashboard.recentKnowledge")}</CardTitle>
           </CardHeader>
           <CardContent>
             {recent.length === 0 ? (
@@ -78,13 +78,15 @@ export default function Dashboard() {
 function OverviewMetric({ title, value, icon: Icon }: { title: string; value: string; icon: any }) {
   return (
     <Card>
-      <CardContent className="flex items-center gap-4">
-        <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
-          <Icon className="size-5" />
-        </div>
-        <div>
-          <p className="text-muted-foreground text-xs">{title}</p>
-          <p className="text-2xl leading-tight font-bold tracking-tight">{value}</p>
+      <CardContent>
+        <div className="flex items-center gap-4">
+          <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+            <Icon className="size-5" />
+          </div>
+          <div>
+            <p className="text-muted-foreground text-xs">{title}</p>
+            <p className="text-2xl leading-tight font-bold tracking-tight">{value}</p>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -96,7 +98,7 @@ function QuickActions({ onNew, onConnect, onTasks }: { onNew: () => void; onConn
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm font-medium">{t("dashboard.quickActions.title")}</CardTitle>
+        <CardTitle>{t("dashboard.quickActions.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-2">
@@ -129,18 +131,22 @@ function GatewayStatusCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm font-medium">
-          <Activity className="size-4" />
-          Gateway Node
+        <CardTitle>
+          <span className="flex items-center gap-2">
+            <Activity className="size-4" />
+            Gateway Node
+          </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="flex items-center gap-2">
-          <span className={`size-2 rounded-full ${gatewayDotColor(status)}`} />
-          <span className="text-sm leading-none font-medium">{t(`connect.status.${status}`)}</span>
+      <CardContent>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className={`size-2 rounded-full ${gatewayDotColor(status)}`} />
+            <span className="text-sm leading-none font-medium">{t(`connect.status.${status}`)}</span>
+          </div>
+          <p className="text-muted-foreground font-mono text-xs">{label}</p>
+          {status === "connected" && ping != null && <p className="text-muted-foreground font-mono text-xs">{ping}ms</p>}
         </div>
-        <p className="text-muted-foreground font-mono text-xs">{label}</p>
-        {status === "connected" && ping != null && <p className="text-muted-foreground font-mono text-xs">{ping}ms</p>}
       </CardContent>
     </Card>
   )
@@ -151,37 +157,41 @@ function ResourceUsageCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm font-medium">
-          <Cpu className="size-4" />
-          System Resources
+        <CardTitle>
+          <span className="flex items-center gap-2">
+            <Cpu className="size-4" />
+            System Resources
+          </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground font-medium">CPU</span>
-            <span className="font-mono">14%</span>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground font-medium">CPU</span>
+              <span className="font-mono">14%</span>
+            </div>
+            <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
+              <div className="bg-primary h-full w-[14%]" />
+            </div>
           </div>
-          <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
-            <div className="bg-primary h-full w-[14%]" />
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground font-medium">Memory (RAM)</span>
+              <span className="font-mono">8.2 / 32 GB</span>
+            </div>
+            <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
+              <div className="bg-primary h-full w-[25%]" />
+            </div>
           </div>
-        </div>
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground font-medium">Memory (RAM)</span>
-            <span className="font-mono">8.2 / 32 GB</span>
-          </div>
-          <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
-            <div className="bg-primary h-full w-[25%]" />
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground font-medium">GPU VRAM</span>
-            <span className="font-mono">2.1 / 24 GB</span>
-          </div>
-          <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
-            <div className="bg-primary h-full w-[8%]" />
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground font-medium">GPU VRAM</span>
+              <span className="font-mono">2.1 / 24 GB</span>
+            </div>
+            <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
+              <div className="bg-primary h-full w-[8%]" />
+            </div>
           </div>
         </div>
       </CardContent>
@@ -194,14 +204,16 @@ function LocalModelsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm font-medium">
-          <BrainCircuit className="size-4" />
-          Local AI Models
+        <CardTitle>
+          <span className="flex items-center gap-2">
+            <BrainCircuit className="size-4" />
+            Local AI Models
+          </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-0 pt-0 pb-0">
+      <CardContent>
         <div className="divide-foreground/10 divide-y">
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between py-3">
             <div className="space-y-0.5">
               <p className="text-sm font-medium">Qwen-1.5-7B</p>
               <p className="text-muted-foreground text-xs">Text Generation</p>
@@ -210,7 +222,7 @@ function LocalModelsCard() {
               <span className="size-1.5 rounded-full bg-emerald-500" /> Loaded
             </span>
           </div>
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between py-3">
             <div className="space-y-0.5">
               <p className="text-sm font-medium">BGE-M3</p>
               <p className="text-muted-foreground text-xs">Embedding</p>
@@ -238,9 +250,11 @@ function RecentActivityCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm font-medium">
-          <Terminal className="size-4" />
-          {t("dashboard.activityTitle", "Recent Activity")}
+        <CardTitle>
+          <span className="flex items-center gap-2">
+            <Terminal className="size-4" />
+            {t("dashboard.activityTitle", "Recent Activity")}
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent>

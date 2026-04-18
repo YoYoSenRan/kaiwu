@@ -24,13 +24,15 @@ export default function KnowledgeList() {
 
       {!loading && list.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <div className="bg-muted flex size-12 items-center justify-center rounded-full">
-              <Library className="text-muted-foreground size-6" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium">{t("knowledge.emptyTitle")}</p>
-              <p className="text-muted-foreground text-xs">{t("knowledge.emptyDescription")}</p>
+          <CardContent>
+            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+              <div className="bg-muted flex size-12 items-center justify-center rounded-full">
+                <Library className="text-muted-foreground size-6" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">{t("knowledge.emptyTitle")}</p>
+                <p className="text-muted-foreground text-xs">{t("knowledge.emptyDescription")}</p>
+              </div>
             </div>
           </CardContent>
         </Card>

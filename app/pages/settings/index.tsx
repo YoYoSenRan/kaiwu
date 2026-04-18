@@ -44,7 +44,9 @@ export default function Settings() {
           <h1 className="text-lg font-semibold">{t(current.labelKey)}</h1>
           {current.descKey && <p className="text-muted-foreground mt-1 text-sm">{t(current.descKey)}</p>}
         </div>
-        <Separator className="mb-6" />
+        <div className="mb-6">
+          <Separator />
+        </div>
         {active === "appearance" && <AppearanceCard />}
         {active === "about" && <AboutCard />}
       </div>
