@@ -1,11 +1,15 @@
 import { useTranslation } from "react-i18next"
 import { Info, Bot } from "lucide-react"
 import { useChatDataStore, useChatUiStore } from "@/stores/chat"
+import type { ChatMember } from "../../../../electron/features/chat/types"
+
+/** 稳定的空数组引用，避免 zustand selector 每次返回新 `[]` 触发无限重渲染。 */
+const EMPTY_MEMBERS: ChatMember[] = []
 
 export function ChatDetails() {
   const { t } = useTranslation()
   const currentSessionId = useChatUiStore((s) => s.currentSessionId)
-  const members = useChatDataStore((s) => (currentSessionId ? (s.members[currentSessionId] ?? []) : []))
+  const members = useChatDataStore((s) => (currentSessionId ? (s.members[currentSessionId] ?? EMPTY_MEMBERS) : EMPTY_MEMBERS))
 
   return (
     <div className="bg-card text-card-foreground ring-foreground/10 hidden w-72 flex-col overflow-hidden rounded-xl ring-1 xl:flex">

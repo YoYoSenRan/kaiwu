@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input"
 import { useChatDataStore, useChatUiStore } from "@/stores/chat"
 import type { ChatMessage } from "../../../../electron/features/chat/types"
 
+/** 稳定的空数组引用，避免 zustand selector 每次返回新 `[]` 触发无限重渲染。 */
+const EMPTY_MESSAGES: ChatMessage[] = []
+
 function messageText(msg: ChatMessage): string {
   const c = msg.content as { text?: string } | null
   return c?.text ?? ""
@@ -17,7 +20,7 @@ export function ChatMain() {
 
   const currentSessionId = useChatUiStore((s) => s.currentSessionId)
   const sessions = useChatDataStore((s) => s.sessions)
-  const messages = useChatDataStore((s) => (currentSessionId ? (s.messages[currentSessionId] ?? []) : []))
+  const messages = useChatDataStore((s) => (currentSessionId ? (s.messages[currentSessionId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES))
   const pending = useChatDataStore((s) => s.pending)
   const setPending = useChatDataStore((s) => s.setPending)
 
