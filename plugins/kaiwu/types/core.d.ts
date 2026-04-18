@@ -10,12 +10,5 @@
 
 declare module "openclaw/plugin-sdk/core" {
   // 所有类型都从 plugin-entry 重导出，避免同名类型在两个 module 里各声一份导致 LSP/严格 tsc 视作不同类型。
-  export type {
-    AnyAgentTool,
-    OpenClawPluginApi,
-    OpenClawPluginToolContext,
-    OpenClawPluginToolFactory,
-    PluginEntryDefinition,
-    PluginLogger,
-  } from "openclaw/plugin-sdk/plugin-entry"
+  export type { AnyAgentTool, OpenClawPluginApi, OpenClawPluginToolContext, OpenClawPluginToolFactory, PluginEntryDefinition, PluginLogger } from "openclaw/plugin-sdk/plugin-entry"
 }

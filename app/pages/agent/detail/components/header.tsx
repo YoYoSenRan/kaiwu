@@ -31,14 +31,8 @@ export function AgentDetailHeader({ detail, defaultId }: Props) {
         </Button>
       </div>
 
-      <div className="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-lg overflow-hidden">
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="" className="size-full object-cover" />
-        ) : emoji ? (
-          <span className="text-lg">{emoji}</span>
-        ) : (
-          <Bot className="size-5" />
-        )}
+      <div className="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+        {avatarUrl ? <img src={avatarUrl} alt="" className="size-full object-cover" /> : emoji ? <span className="text-lg">{emoji}</span> : <Bot className="size-5" />}
       </div>
 
       <div className="min-w-0 flex-1">

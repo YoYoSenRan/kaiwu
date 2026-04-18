@@ -11,14 +11,7 @@
  * tab 分区（mine/unsynced/missing）由 service 每次 list 派生，不入 DB。
  */
 
-import type {
-  AgentIdentityGetResult,
-  AgentWorkspaceFile,
-  GatewayAgentRow,
-  SkillsStatusResult,
-  ToolsCatalogResult,
-  ToolsEffectiveResult,
-} from "../openclaw/contracts/rpc"
+import type { AgentIdentityGetResult, AgentWorkspaceFile, GatewayAgentRow, SkillsStatusResult, ToolsCatalogResult, ToolsEffectiveResult } from "../openclaw/contracts/rpc"
 
 /** kaiwu 本地 agents 表行。 */
 export interface AgentRow {

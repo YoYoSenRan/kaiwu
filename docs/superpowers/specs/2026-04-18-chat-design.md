@@ -48,11 +48,11 @@
 
 ### 三层分工
 
-| 层 | 职责 | 不做 |
-|---|---|---|
-| **kaiwu 主进程** | 编排 loop、路由决策、预算、持久化、HITL 状态 | agent 行为定义、LLM 调用 |
-| **openclaw gateway** | LLM 调用、流式事件、session 生命周期 | 群聊编排 |
-| **kaiwu plugin** | 往 agent prompt 注入共享上下文、提供 `mention_next`/`ask_user` 工具、回推 hook 事件 | 决定下一个说话者 |
+| 层                   | 职责                                                                                | 不做                     |
+| -------------------- | ----------------------------------------------------------------------------------- | ------------------------ |
+| **kaiwu 主进程**     | 编排 loop、路由决策、预算、持久化、HITL 状态                                        | agent 行为定义、LLM 调用 |
+| **openclaw gateway** | LLM 调用、流式事件、session 生命周期                                                | 群聊编排                 |
+| **kaiwu plugin**     | 往 agent prompt 注入共享上下文、提供 `mention_next`/`ask_user` 工具、回推 hook 事件 | 决定下一个说话者         |
 
 ---
 
@@ -142,12 +142,12 @@ loop(sessionId, incoming_message):
 
 ```ts
 function decideTargets(msg, members) {
-  const active = members.filter(m => !m.left_at)
-  const explicitMentions = msg.mentions_json.map(m => m.agent_id)
+  const active = members.filter((m) => !m.left_at)
+  const explicitMentions = msg.mentions_json.map((m) => m.agent_id)
   if (explicitMentions.length > 0) {
-    return active.filter(m => explicitMentions.includes(m.agent_id))
+    return active.filter((m) => explicitMentions.includes(m.agent_id))
   }
-  return active.filter(m => m.reply_mode === 'auto')
+  return active.filter((m) => m.reply_mode === "auto")
 }
 ```
 
@@ -167,9 +167,9 @@ function buildSharedContext(sessionId, member) {
       `${members}`,
       `你可以调用 mention_next(agent_id) 把话传给其他成员。`,
       `需要用户介入时调用 ask_user(question)。`,
-    ].join('\n'),
+    ].join("\n"),
     sharedHistory: transcript,
-    knowledge: [],  // MVP 不接知识库，预留
+    knowledge: [], // MVP 不接知识库，预留
   }
 }
 ```
@@ -198,11 +198,11 @@ ctx.api.registerTool({
           sessionKey: toolCtx.sessionKey,
           agentId: params.agent_id,
           reason: params.reason,
-        }
-      }
+        },
+      },
     })
     return { ok: true }
-  }
+  },
 })
 ```
 
@@ -224,16 +224,20 @@ ctx.api.registerTool({
   }),
   handler: async (params, toolCtx) => {
     ctx.bridge.send({
-      type: "custom", ts: Date.now(),
-      payload: { channel: "chat", data: {
-        kind: "ask_user",
-        sessionKey: toolCtx.sessionKey,
-        question: params.question,
-        options: params.options,
-      }}
+      type: "custom",
+      ts: Date.now(),
+      payload: {
+        channel: "chat",
+        data: {
+          kind: "ask_user",
+          sessionKey: toolCtx.sessionKey,
+          question: params.question,
+          options: params.options,
+        },
+      },
     })
     return { ok: true, message: "Waiting for user input." }
-  }
+  },
 })
 ```
 
@@ -245,10 +249,10 @@ kaiwu 主进程收到 `ask_user` → 挂起该 session 的 loop → UI 高亮该
 
 ```ts
 interface BudgetConfig {
-  max_rounds?: number        // 默认 20
-  max_tokens?: number        // 默认 100_000
-  stop_phrase?: string       // 可选，匹配到的消息结束
-  wall_clock_sec?: number    // 默认 300
+  max_rounds?: number // 默认 20
+  max_tokens?: number // 默认 100_000
+  stop_phrase?: string // 可选，匹配到的消息结束
+  wall_clock_sec?: number // 默认 300
 }
 ```
 
@@ -291,14 +295,14 @@ electron/
 
 6 个扩展点对应表：
 
-| 扩展点 | 文件 | MVP | 未来升级 |
-|---|---|---|---|
-| 1 路由决策 | `routing.ts` | 纯 filter | β 加 silent token 过滤 |
-| 2 Context 注入器 | `context.ts` | 拼 transcript + 成员表 | β 加 silent 指令 |
-| 3 Reply 后处理 | `interpret.ts` | 永远 `shouldSuppress=false` | β 加 silent marker 识别 |
-| 4 Session 初始化 | `bootstrap.ts` | 不设 groupActivation | α 按 reply_mode 映射 |
-| 5 reply_mode 字段 | `schema.ts` | `'auto' \| 'mention'` | 加 variant 不破 schema |
-| 6 strategy_json | `schema.ts` | `{ kind: 'broadcast' }` | 扩 silent/router 变体 |
+| 扩展点            | 文件           | MVP                         | 未来升级                |
+| ----------------- | -------------- | --------------------------- | ----------------------- |
+| 1 路由决策        | `routing.ts`   | 纯 filter                   | β 加 silent token 过滤  |
+| 2 Context 注入器  | `context.ts`   | 拼 transcript + 成员表      | β 加 silent 指令        |
+| 3 Reply 后处理    | `interpret.ts` | 永远 `shouldSuppress=false` | β 加 silent marker 识别 |
+| 4 Session 初始化  | `bootstrap.ts` | 不设 groupActivation        | α 按 reply_mode 映射    |
+| 5 reply_mode 字段 | `schema.ts`    | `'auto' \| 'mention'`       | 加 variant 不破 schema  |
+| 6 strategy_json   | `schema.ts`    | `{ kind: 'broadcast' }`     | 扩 silent/router 变体   |
 
 ### 5.2 kaiwu plugin 增量
 
@@ -367,6 +371,7 @@ window.electron.chat = {
 ## 7. 入群携历史（4.1=C）
 
 建群/加成员时 UI 弹窗："是否把现有对话历史注入给新成员？"
+
 - `chat_session_members.seed_history = 1` → 加入后首次被路由选中时，context 注入完整历史
 - `seed_history = 0` → 首次被选中时 context 只含加入之后的消息
 
@@ -410,6 +415,7 @@ buildSharedContext(sessionId, member) {
 ### 10.1 升级到 silent-token 机制（β）
 
 当 "多 auto 成员抢话嘈杂" 问题出现：
+
 1. 改 `context.ts`：在 instruction 里加 "If not relevant, output exactly `<SILENT>`"
 2. 改 `interpret.ts`：识别 `<SILENT>` 返回 `shouldSuppress=true`
 3. 路由不变，数据模型不变
@@ -417,6 +423,7 @@ buildSharedContext(sessionId, member) {
 ### 10.2 升级到 openclaw-level gating（α）
 
 当需要借用 openclaw 的 groupActivation 自动注入 system prompt：
+
 1. 改 `bootstrap.ts`：加成员时按 `reply_mode` 映射 `sessions.patch({ groupActivation })`
 2. 其他不变
 
@@ -430,14 +437,14 @@ buildSharedContext(sessionId, member) {
 
 ## 11. 风险与缓解
 
-| 风险 | 缓解 |
-|---|---|
-| openclaw 卸载后 kaiwu session 孤立 | 双份存储，kaiwu 本地仍可查看历史；重新连 openclaw 后可选 "重启对话" 创建新 session 继续 |
-| agent 调 `mention_next` 提及不存在的成员 | 主进程验证，忽略无效 mention，日志 warn |
-| agent 无限 ping-pong（A @ B，B @ A） | `budget.max_rounds` 硬上限 |
-| context 拼装历史过长导致 token 爆炸 | `context.ts` 预留 sliding window + summary（future），MVP 先截断最近 N 条 |
-| plugin 断线导致工具事件丢失 | plugin 已有 WS 自动重连 + outbox，事件在重连后重放 |
-| 多 auto 成员并发嘈杂 | MVP 场景假设 auto 通常 ≤ 1；β 升级增加 silent-token |
+| 风险                                     | 缓解                                                                                    |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- |
+| openclaw 卸载后 kaiwu session 孤立       | 双份存储，kaiwu 本地仍可查看历史；重新连 openclaw 后可选 "重启对话" 创建新 session 继续 |
+| agent 调 `mention_next` 提及不存在的成员 | 主进程验证，忽略无效 mention，日志 warn                                                 |
+| agent 无限 ping-pong（A @ B，B @ A）     | `budget.max_rounds` 硬上限                                                              |
+| context 拼装历史过长导致 token 爆炸      | `context.ts` 预留 sliding window + summary（future），MVP 先截断最近 N 条               |
+| plugin 断线导致工具事件丢失              | plugin 已有 WS 自动重连 + outbox，事件在重连后重放                                      |
+| 多 auto 成员并发嘈杂                     | MVP 场景假设 auto 通常 ≤ 1；β 升级增加 silent-token                                     |
 
 ---
 

@@ -11,16 +11,27 @@ import type { BudgetConfig, BudgetState, ChatMember, ChatMention, ChatMessage, C
 
 // ---------- sessions ----------
 
-export function insertSession(s: { id: string; mode: "single" | "group"; label: string | null; openclawKey: string | null; budget: BudgetConfig; strategy: StrategyConfig; supervisorId: string | null }): void {
-  database().insert(chatSessions).values({
-    id: s.id,
-    mode: s.mode,
-    label: s.label,
-    openclaw_key: s.openclawKey,
-    budget_json: JSON.stringify(s.budget),
-    strategy_json: JSON.stringify(s.strategy),
-    supervisor_id: s.supervisorId,
-  }).run()
+export function insertSession(s: {
+  id: string
+  mode: "single" | "group"
+  label: string | null
+  openclawKey: string | null
+  budget: BudgetConfig
+  strategy: StrategyConfig
+  supervisorId: string | null
+}): void {
+  database()
+    .insert(chatSessions)
+    .values({
+      id: s.id,
+      mode: s.mode,
+      label: s.label,
+      openclaw_key: s.openclawKey,
+      budget_json: JSON.stringify(s.budget),
+      strategy_json: JSON.stringify(s.strategy),
+      supervisor_id: s.supervisorId,
+    })
+    .run()
 }
 
 export function listSessions(): ChatSession[] {
@@ -44,14 +55,17 @@ export function deleteSession(id: string): void {
 // ---------- members ----------
 
 export function insertMember(m: { id: string; sessionId: string; agentId: string; openclawKey: string; replyMode: ReplyMode; seedHistory: boolean }): void {
-  database().insert(chatSessionMembers).values({
-    id: m.id,
-    session_id: m.sessionId,
-    agent_id: m.agentId,
-    openclaw_key: m.openclawKey,
-    reply_mode: m.replyMode,
-    seed_history: m.seedHistory,
-  }).run()
+  database()
+    .insert(chatSessionMembers)
+    .values({
+      id: m.id,
+      session_id: m.sessionId,
+      agent_id: m.agentId,
+      openclaw_key: m.openclawKey,
+      reply_mode: m.replyMode,
+      seed_history: m.seedHistory,
+    })
+    .run()
 }
 
 export function listMembers(sessionId: string): ChatMember[] {
@@ -60,7 +74,12 @@ export function listMembers(sessionId: string): ChatMember[] {
 }
 
 export function listActiveMembers(sessionId: string): ChatMember[] {
-  const rows = database().select().from(chatSessionMembers).where(and(eq(chatSessionMembers.session_id, sessionId), isNull(chatSessionMembers.left_at))).orderBy(asc(chatSessionMembers.joined_at)).all()
+  const rows = database()
+    .select()
+    .from(chatSessionMembers)
+    .where(and(eq(chatSessionMembers.session_id, sessionId), isNull(chatSessionMembers.left_at)))
+    .orderBy(asc(chatSessionMembers.joined_at))
+    .all()
   return rows.map(rowToMember)
 }
 
@@ -77,22 +96,39 @@ export function markMemberLeft(id: string): void {
 
 // ---------- messages ----------
 
-export function insertMessage(m: { id: string; sessionId: string; seq: number; openclawSessionKey: string | null; openclawMessageId: string | null; senderType: SenderType; senderId: string | null; role: MessageRole; content: unknown; mentions: ChatMention[]; turnRunId: string | null; tags: string[]; createdAtRemote: number | null }): void {
-  database().insert(chatMessages).values({
-    id: m.id,
-    session_id: m.sessionId,
-    seq: m.seq,
-    openclaw_session_key: m.openclawSessionKey,
-    openclaw_message_id: m.openclawMessageId,
-    sender_type: m.senderType,
-    sender_id: m.senderId,
-    role: m.role,
-    content_json: JSON.stringify(m.content),
-    mentions_json: JSON.stringify(m.mentions),
-    turn_run_id: m.turnRunId,
-    tags_json: JSON.stringify(m.tags),
-    created_at_remote: m.createdAtRemote,
-  }).run()
+export function insertMessage(m: {
+  id: string
+  sessionId: string
+  seq: number
+  openclawSessionKey: string | null
+  openclawMessageId: string | null
+  senderType: SenderType
+  senderId: string | null
+  role: MessageRole
+  content: unknown
+  mentions: ChatMention[]
+  turnRunId: string | null
+  tags: string[]
+  createdAtRemote: number | null
+}): void {
+  database()
+    .insert(chatMessages)
+    .values({
+      id: m.id,
+      session_id: m.sessionId,
+      seq: m.seq,
+      openclaw_session_key: m.openclawSessionKey,
+      openclaw_message_id: m.openclawMessageId,
+      sender_type: m.senderType,
+      sender_id: m.senderId,
+      role: m.role,
+      content_json: JSON.stringify(m.content),
+      mentions_json: JSON.stringify(m.mentions),
+      turn_run_id: m.turnRunId,
+      tags_json: JSON.stringify(m.tags),
+      created_at_remote: m.createdAtRemote,
+    })
+    .run()
 }
 
 export function listMessages(sessionId: string): ChatMessage[] {
@@ -110,15 +146,19 @@ export function nextSeq(sessionId: string): number {
 // ---------- budget ----------
 
 export function upsertBudgetState(s: BudgetState): void {
-  database().insert(chatBudgetState).values({
-    session_id: s.sessionId,
-    rounds_used: s.roundsUsed,
-    tokens_used: s.tokensUsed,
-    started_at: s.startedAt,
-  }).onConflictDoUpdate({
-    target: chatBudgetState.session_id,
-    set: { rounds_used: s.roundsUsed, tokens_used: s.tokensUsed, started_at: s.startedAt },
-  }).run()
+  database()
+    .insert(chatBudgetState)
+    .values({
+      session_id: s.sessionId,
+      rounds_used: s.roundsUsed,
+      tokens_used: s.tokensUsed,
+      started_at: s.startedAt,
+    })
+    .onConflictDoUpdate({
+      target: chatBudgetState.session_id,
+      set: { rounds_used: s.roundsUsed, tokens_used: s.tokensUsed, started_at: s.startedAt },
+    })
+    .run()
 }
 
 export function getBudgetState(sessionId: string): BudgetState | null {

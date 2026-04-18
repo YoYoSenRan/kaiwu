@@ -40,9 +40,7 @@ export function SkillsTab({ detail }: Props) {
                   <span className="font-medium">{s.name}</span>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={s.enabled ? "default" : "secondary"}>
-                    {s.enabled ? t("agent.skills.on") : t("agent.skills.off")}
-                  </Badge>
+                  <Badge variant={s.enabled ? "default" : "secondary"}>{s.enabled ? t("agent.skills.on") : t("agent.skills.off")}</Badge>
                 </TableCell>
                 <TableCell>
                   {s.reasons && s.reasons.length > 0 ? (

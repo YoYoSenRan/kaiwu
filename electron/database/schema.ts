@@ -41,8 +41,13 @@ export const timestamps = () => ({
 
 export const agents = sqliteTable("agents", {
   agent_id: text("agent_id").primaryKey(),
-  created_at: integer("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
-  updated_at: integer("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()).$onUpdate(() => Date.now()),
+  created_at: integer("created_at", { mode: "number" })
+    .notNull()
+    .$defaultFn(() => Date.now()),
+  updated_at: integer("updated_at", { mode: "number" })
+    .notNull()
+    .$defaultFn(() => Date.now())
+    .$onUpdate(() => Date.now()),
 })
 
 export const chatSessions = sqliteTable("chat_sessions", {
@@ -53,24 +58,34 @@ export const chatSessions = sqliteTable("chat_sessions", {
   budget_json: text("budget_json").notNull(),
   strategy_json: text("strategy_json").notNull(),
   supervisor_id: text("supervisor_id"),
-  archived: integer("archived", { mode: "boolean" }).notNull().$defaultFn(() => false),
+  archived: integer("archived", { mode: "boolean" })
+    .notNull()
+    .$defaultFn(() => false),
   ...timestamps(),
 })
 
 export const chatSessionMembers = sqliteTable("chat_session_members", {
   id: pk(),
-  session_id: text("session_id").notNull().references(() => chatSessions.id, { onDelete: "cascade" }),
+  session_id: text("session_id")
+    .notNull()
+    .references(() => chatSessions.id, { onDelete: "cascade" }),
   agent_id: text("agent_id").notNull(),
   openclaw_key: text("openclaw_key").notNull(),
   reply_mode: text("reply_mode").notNull().$type<"auto" | "mention">(),
-  joined_at: integer("joined_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  joined_at: integer("joined_at", { mode: "number" })
+    .notNull()
+    .$defaultFn(() => Date.now()),
   left_at: integer("left_at", { mode: "number" }),
-  seed_history: integer("seed_history", { mode: "boolean" }).notNull().$defaultFn(() => false),
+  seed_history: integer("seed_history", { mode: "boolean" })
+    .notNull()
+    .$defaultFn(() => false),
 })
 
 export const chatMessages = sqliteTable("chat_messages", {
   id: pk(),
-  session_id: text("session_id").notNull().references(() => chatSessions.id, { onDelete: "cascade" }),
+  session_id: text("session_id")
+    .notNull()
+    .references(() => chatSessions.id, { onDelete: "cascade" }),
   seq: integer("seq", { mode: "number" }).notNull(),
   openclaw_session_key: text("openclaw_session_key"),
   openclaw_message_id: text("openclaw_message_id"),
@@ -81,14 +96,27 @@ export const chatMessages = sqliteTable("chat_messages", {
   mentions_json: text("mentions_json"),
   turn_run_id: text("turn_run_id"),
   tags_json: text("tags_json"),
-  created_at_local: integer("created_at_local", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  created_at_local: integer("created_at_local", { mode: "number" })
+    .notNull()
+    .$defaultFn(() => Date.now()),
   created_at_remote: integer("created_at_remote", { mode: "number" }),
 })
 
 export const chatBudgetState = sqliteTable("chat_budget_state", {
-  session_id: text("session_id").primaryKey().references(() => chatSessions.id, { onDelete: "cascade" }),
-  rounds_used: integer("rounds_used", { mode: "number" }).notNull().$defaultFn(() => 0),
-  tokens_used: integer("tokens_used", { mode: "number" }).notNull().$defaultFn(() => 0),
-  started_at: integer("started_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
-  updated_at: integer("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()).$onUpdate(() => Date.now()),
+  session_id: text("session_id")
+    .primaryKey()
+    .references(() => chatSessions.id, { onDelete: "cascade" }),
+  rounds_used: integer("rounds_used", { mode: "number" })
+    .notNull()
+    .$defaultFn(() => 0),
+  tokens_used: integer("tokens_used", { mode: "number" })
+    .notNull()
+    .$defaultFn(() => 0),
+  started_at: integer("started_at", { mode: "number" })
+    .notNull()
+    .$defaultFn(() => Date.now()),
+  updated_at: integer("updated_at", { mode: "number" })
+    .notNull()
+    .$defaultFn(() => Date.now())
+    .$onUpdate(() => Date.now()),
 })

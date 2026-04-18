@@ -22,6 +22,7 @@
 ```
 
 **原则:**
+
 - kaiwu 只存 `agent_id` 三列索引, 不镜像 openclaw 字段
 - 列表驱动器 = kaiwu `agents` 表(决定顺序和"认识"的 agent 集)
 - 真实字段 = openclaw RPC 实时拉取
@@ -54,6 +55,7 @@ type AgentStatus = "mine" | "unsynced" | "missing"
 ```
 
 **判定前置条件:**
+
 - gateway 未连接 → 全体视为 `unknown`, 不分 tab
 - gateway 已连接 + `agents.list` 返回 0 条 → banner 警告 "网关为空, 禁用批量删除"
 - gateway 已连接 + 非空 → 才做 3 路差集
@@ -63,44 +65,46 @@ type AgentStatus = "mine" | "unsynced" | "missing"
 ## 3. RPC 扩展清单
 
 ### 3.1 kaiwu 主进程代理层 (已有)
+
 - `openclaw.agents.list / create / update / delete`
 - `openclaw.models.list`
 
 ### 3.2 需新增代理 (全部来自 openclaw 已存在的 RPC)
 
-| 新增 | openclaw RPC | 用途 |
-|------|-------------|------|
-| `openclaw.agents.identity` | `agent.identity.get` | 获取完整 identity(name/avatar/emoji) |
-| `openclaw.agents.files.list` | `agents.files.list` | workspace 文件清单 |
-| `openclaw.agents.files.get` | `agents.files.get` | 读文件内容 |
-| `openclaw.agents.files.set` | `agents.files.set` | 写文件内容 |
-| `openclaw.agents.skills.status` | `skills.status` | skill 开关状态 |
-| `openclaw.agents.tools.catalog` | `tools.catalog` | 工具目录(全拉, 暂不 UI) |
-| `openclaw.agents.tools.effective` | `tools.effective` | 生效工具(全拉, 暂不 UI) |
+| 新增                              | openclaw RPC         | 用途                                 |
+| --------------------------------- | -------------------- | ------------------------------------ |
+| `openclaw.agents.identity`        | `agent.identity.get` | 获取完整 identity(name/avatar/emoji) |
+| `openclaw.agents.files.list`      | `agents.files.list`  | workspace 文件清单                   |
+| `openclaw.agents.files.get`       | `agents.files.get`   | 读文件内容                           |
+| `openclaw.agents.files.set`       | `agents.files.set`   | 写文件内容                           |
+| `openclaw.agents.skills.status`   | `skills.status`      | skill 开关状态                       |
+| `openclaw.agents.tools.catalog`   | `tools.catalog`      | 工具目录(全拉, 暂不 UI)              |
+| `openclaw.agents.tools.effective` | `tools.effective`    | 生效工具(全拉, 暂不 UI)              |
 
 RPC 契约类型加到 `contracts/rpc.ts`, domain 加到 `domains/agents.ts`, bridge 加到 `api.ts`.
 
 ### 3.3 kaiwu feature 层 API (自己的业务 RPC)
 
-| 方法 | 入参 | 返回 | 说明 |
-|------|------|------|------|
-| `agent.list` | — | `{ mine, unsynced, missing }` | 聚合: kaiwu DB + openclaw.list, 返回 3 分区 |
-| `agent.create` | `{ name, workspace, model?, emoji?, avatar? }` | `{ agentId }` | 网关 create → kaiwu.insert; 网关失败即失败 |
-| `agent.update` | `{ agentId, name?, workspace?, model?, emoji?, avatar? }` | `{ ok }` | 网关 update → kaiwu.touch updatedAt |
-| `agent.delete` | `{ agentId, deleteLocalFiles: boolean, alsoUnlink: boolean }` | `{ ok, removedBindings? }` | 见下方 2 种删除策略 |
-| `agent.importUnsynced` | `{ agentIds: string[] }` | `{ imported: number }` | 一键同步: 把 unsynced tab 行插 kaiwu |
-| `agent.detail` | `{ agentId }` | `{ row, identity, files, skills, tools }` | 聚合 RPC: 详情页一次性拉全 |
-| `agent.files.get` | `{ agentId, name }` | `{ file }` | 转发 |
-| `agent.files.set` | `{ agentId, name, content }` | `{ ok }` | 转发 |
+| 方法                   | 入参                                                          | 返回                                      | 说明                                        |
+| ---------------------- | ------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------- |
+| `agent.list`           | —                                                             | `{ mine, unsynced, missing }`             | 聚合: kaiwu DB + openclaw.list, 返回 3 分区 |
+| `agent.create`         | `{ name, workspace, model?, emoji?, avatar? }`                | `{ agentId }`                             | 网关 create → kaiwu.insert; 网关失败即失败  |
+| `agent.update`         | `{ agentId, name?, workspace?, model?, emoji?, avatar? }`     | `{ ok }`                                  | 网关 update → kaiwu.touch updatedAt         |
+| `agent.delete`         | `{ agentId, deleteLocalFiles: boolean, alsoUnlink: boolean }` | `{ ok, removedBindings? }`                | 见下方 2 种删除策略                         |
+| `agent.importUnsynced` | `{ agentIds: string[] }`                                      | `{ imported: number }`                    | 一键同步: 把 unsynced tab 行插 kaiwu        |
+| `agent.detail`         | `{ agentId }`                                                 | `{ row, identity, files, skills, tools }` | 聚合 RPC: 详情页一次性拉全                  |
+| `agent.files.get`      | `{ agentId, name }`                                           | `{ file }`                                | 转发                                        |
+| `agent.files.set`      | `{ agentId, name, content }`                                  | `{ ok }`                                  | 转发                                        |
 
 ### 3.4 删除策略 (2 选 1)
 
-| 选项 | 对 openclaw | 对 kaiwu | UI 勾选 |
-|------|-------------|----------|---------|
+| 选项              | 对 openclaw                              | 对 kaiwu             | UI 勾选                                                        |
+| ----------------- | ---------------------------------------- | -------------------- | -------------------------------------------------------------- |
 | **彻底删** (默认) | `agents.delete { agentId, deleteFiles }` | `DELETE FROM agents` | "删除网关 agent" ☑️ + "同时删除 workspace 磁盘文件" ☐ (用户勾) |
-| **仅解除引用** | 不动 | `DELETE FROM agents` | "仅从 kaiwu 移除引用" (这条之后 agent 流入 unsynced tab) |
+| **仅解除引用**    | 不动                                     | `DELETE FROM agents` | "仅从 kaiwu 移除引用" (这条之后 agent 流入 unsynced tab)       |
 
 Dialog 布局草案:
+
 ```
 ┌───────────────────────────────┐
 │ 删除 Agent: {name}            │
@@ -156,14 +160,15 @@ Dialog 布局草案:
 
 **4 个 Tab:**
 
-| tab | 数据源 | 内容 | 操作 |
-|-----|--------|------|------|
-| **Overview** | `agent.detail` | avatar/emoji / name / default 标记 / model primary + fallbacks chips / workspace 路径(可复制) / theme | 点击 model 切换(跳 Settings) |
-| **Workspace** | `agents.files.list/get/set` | 文件列表 + 编辑器 (MVP 支持 agents.json / soul.json / tools.json / identity.md / user.md / memory.json\|yaml) | 选文件 → 编辑 → 保存 |
-| **Skills** | `skills.status` | skill 列表 + enabled 状态 + reasons | MVP 只读; 后续加开关 |
-| **Settings** | `agents.update` | name / primary model (select) / emoji / avatar 输入 + "删除"按钮 | 编辑提交 / 触发删除 dialog |
+| tab           | 数据源                      | 内容                                                                                                          | 操作                         |
+| ------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **Overview**  | `agent.detail`              | avatar/emoji / name / default 标记 / model primary + fallbacks chips / workspace 路径(可复制) / theme         | 点击 model 切换(跳 Settings) |
+| **Workspace** | `agents.files.list/get/set` | 文件列表 + 编辑器 (MVP 支持 agents.json / soul.json / tools.json / identity.md / user.md / memory.json\|yaml) | 选文件 → 编辑 → 保存         |
+| **Skills**    | `skills.status`             | skill 列表 + enabled 状态 + reasons                                                                           | MVP 只读; 后续加开关         |
+| **Settings**  | `agents.update`             | name / primary model (select) / emoji / avatar 输入 + "删除"按钮                                              | 编辑提交 / 触发删除 dialog   |
 
 **Workspace tab 编辑保护:**
+
 - 仅允许 openclaw bootstrap 列表内的文件名 (agents.json, soul.json, tools.json, identity.md, user.md, heartbeat.json, bootstrap.json, memory.json, memory.yaml)
 - 其他文件只读展示 name/size/mtime
 - 编辑器 draft 态, 显式"保存"按钮
@@ -241,14 +246,14 @@ missing tab 每行 → "从本地删除" 按钮:
 
 所有 CRUD 必须 toast. 用 sonner.
 
-| 动作 | 成功 | 失败 |
-|------|------|------|
-| create | `Agent 已创建` | `创建失败: {err}` |
-| update | `已保存` | `保存失败: {err}` |
-| delete (彻底) | `Agent 已删除` | `删除失败: {err}` |
-| delete (仅解除) | `引用已解除` | `操作失败: {err}` |
-| importUnsynced | `已同步 {n} 个 agent` | `同步失败: {err}` |
-| workspace 保存 | `{filename} 已保存` | `保存失败: {err}` |
+| 动作            | 成功                  | 失败              |
+| --------------- | --------------------- | ----------------- |
+| create          | `Agent 已创建`        | `创建失败: {err}` |
+| update          | `已保存`              | `保存失败: {err}` |
+| delete (彻底)   | `Agent 已删除`        | `删除失败: {err}` |
+| delete (仅解除) | `引用已解除`          | `操作失败: {err}` |
+| importUnsynced  | `已同步 {n} 个 agent` | `同步失败: {err}` |
+| workspace 保存  | `{filename} 已保存`   | `保存失败: {err}` |
 
 i18n key 规则: `agent.toast.<action>.success / error`.
 
@@ -311,14 +316,14 @@ app/stores/agent.ts               # (可选) 若列表状态需跨页共享; MVP
 
 ## 8. 扩展点 (后续可接入但 MVP 不做)
 
-| 扩展点 | 位置 | 场景 |
-|--------|------|------|
-| Tools UI tab | `detail/components/tools-tab.tsx` | 已拉 `tools.catalog`, 后续做 UI |
-| Channels UI tab | 同上 | openclaw channels 相关 |
-| Cron Jobs UI tab | 同上 | 定时任务 |
-| Skill 开关 | `skills-tab.tsx` 加 toggle | 需 openclaw 的 `skills.enable/disable` RPC |
-| Workspace 高级文件 | 白名单外文件编辑 | 需安全评估 |
-| 本地元数据 (tags/favorite/notes) | 扩 `agents` 表字段 | 按需上升为 B/C 方案 |
+| 扩展点                           | 位置                              | 场景                                       |
+| -------------------------------- | --------------------------------- | ------------------------------------------ |
+| Tools UI tab                     | `detail/components/tools-tab.tsx` | 已拉 `tools.catalog`, 后续做 UI            |
+| Channels UI tab                  | 同上                              | openclaw channels 相关                     |
+| Cron Jobs UI tab                 | 同上                              | 定时任务                                   |
+| Skill 开关                       | `skills-tab.tsx` 加 toggle        | 需 openclaw 的 `skills.enable/disable` RPC |
+| Workspace 高级文件               | 白名单外文件编辑                  | 需安全评估                                 |
+| 本地元数据 (tags/favorite/notes) | 扩 `agents` 表字段                | 按需上升为 B/C 方案                        |
 
 ---
 

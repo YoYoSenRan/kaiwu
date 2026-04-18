@@ -48,9 +48,7 @@ export function ChatSidebar() {
                 <MessageSquare className={`size-4 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
                 <div className="flex w-full flex-col items-start truncate">
                   <span className="mb-1.5 w-full truncate text-left leading-none">{s.label ?? s.id}</span>
-                  <span className={`text-[11px] leading-none ${active ? "text-primary/70" : "text-muted-foreground"}`}>
-                    {s.mode}
-                  </span>
+                  <span className={`text-[11px] leading-none ${active ? "text-primary/70" : "text-muted-foreground"}`}>{s.mode}</span>
                 </div>
               </button>
             )

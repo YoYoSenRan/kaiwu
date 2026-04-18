@@ -202,7 +202,9 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
   @Handle("member:remove") async removeMember(sessionId: string, memberId: string): Promise<void> {
     const m = listMembers(sessionId).find((x) => x.id === memberId)
     if (!m) return
-    await this.deleteOpenClawSession(m.openclawKey).catch(() => { /* best effort */ })
+    await this.deleteOpenClawSession(m.openclawKey).catch(() => {
+      /* best effort */
+    })
     markMemberLeft(memberId)
   }
 

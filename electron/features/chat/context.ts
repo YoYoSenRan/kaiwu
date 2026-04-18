@@ -26,11 +26,7 @@ export interface ContextPayload {
  * @param target 本轮被调度的成员
  * @param opts.agentDisplayName 成员的展示名（从 openclaw.agents.list 拉来，调用者传入）
  */
-export function buildSharedContext(
-  sessionId: string,
-  target: ChatMember,
-  opts: { agentDisplayName?: string; includeHistory: boolean },
-): ContextPayload {
+export function buildSharedContext(sessionId: string, target: ChatMember, opts: { agentDisplayName?: string; includeHistory: boolean }): ContextPayload {
   const all = listMembers(sessionId)
   const roster: RosterEntry[] = all
     .filter((m) => m.leftAt === null)
@@ -59,7 +55,7 @@ export function buildSharedContext(
 }
 
 function messageToTranscript(m: ChatMessage): TranscriptEntry {
-  const senderLabel = m.senderType === "user" ? "user" : m.senderId ?? m.senderType
+  const senderLabel = m.senderType === "user" ? "user" : (m.senderId ?? m.senderType)
   const text = extractText(m.content)
   return { senderLabel, content: text, ts: m.createdAtLocal }
 }

@@ -24,7 +24,10 @@ export function CreateAgentDialog({ open, onOpenChange, onCreated }: Props) {
 
   useEffect(() => {
     if (!open) return
-    void window.electron.openclaw.models.list().then((res) => setModels(res.models)).catch(() => setModels([]))
+    void window.electron.openclaw.models
+      .list()
+      .then((res) => setModels(res.models))
+      .catch(() => setModels([]))
   }, [open])
 
   const reset = () => {
