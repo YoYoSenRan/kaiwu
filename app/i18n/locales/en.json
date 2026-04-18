@@ -123,8 +123,40 @@
   "chat": {
     "title": "Chat",
     "description": "Interact with knowledge bases and tools",
-    "empty": "How can I help you today?",
-    "placeholder": "Ask anything..."
+    "new": "New Chat",
+    "search": "Search history...",
+    "placeholder": "Ask anything... (@ to mention agents)",
+    "empty": {
+      "title": "How can I help you today?",
+      "description": "Ask questions, explore knowledge bases, or trigger local tools."
+    },
+    "sample": {
+      "title": "UI Layout Design",
+      "description": "Multi-agent collaboration",
+      "previous": "Previous Session"
+    },
+    "time": {
+      "justNow": "Just now",
+      "hoursAgo": "{{count}} hours ago"
+    },
+    "details": {
+      "title": "Chat Details",
+      "participants": "Participants",
+      "configuration": "Configuration",
+      "defaultModel": "Default Model",
+      "toolsAvailable": "Tools Available",
+      "enabledCount": "{{count}} Enabled"
+    },
+    "agent": {
+      "coder": {
+        "name": "Coder Agent",
+        "desc": "Writes & reviews code"
+      },
+      "designer": {
+        "name": "Designer Agent",
+        "desc": "UI/UX guidance"
+      }
+    }
   },
   "workflow": {
     "title": "Workflow",

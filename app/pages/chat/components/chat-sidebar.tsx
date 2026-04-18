@@ -2,33 +2,30 @@ import { useTranslation } from "react-i18next"
 import { MessageSquare, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { SAMPLE_SESSIONS } from "../data"
 
 export function ChatSidebar() {
   const { t } = useTranslation()
 
   return (
-    <div className="hidden w-64 flex-col overflow-hidden rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10 md:flex lg:w-72">
-      <div className="flex shrink-0 flex-col gap-3 border-b border-border/50 p-4">
+    <div className="bg-card text-card-foreground ring-foreground/10 hidden w-64 flex-col overflow-hidden rounded-xl ring-1 md:flex lg:w-72">
+      <div className="border-border/50 flex shrink-0 flex-col gap-3 border-b p-4">
         <Button>
           <Plus />
-          <span>{t("chat.new", "New Chat")}</span>
+          <span>{t("chat.new")}</span>
         </Button>
-        <Input placeholder={t("chat.search", "Search history...")} />
+        <Input placeholder={t("chat.search")} />
       </div>
       <div className="flex-1 space-y-1 overflow-y-auto p-3">
-        {[1, 2, 3, 4, 5].map((i) => (
+        {SAMPLE_SESSIONS.map((s) => (
           <button
-            key={i}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors hover:bg-muted/80 ${i === 1 ? "bg-primary/10 font-medium text-primary" : "text-foreground"}`}
+            key={s.id}
+            className={`hover:bg-muted/80 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ${s.active ? "bg-primary/10 text-primary font-medium" : "text-foreground"}`}
           >
-            <MessageSquare className={`size-4 shrink-0 ${i === 1 ? "text-primary" : "text-muted-foreground"}`} />
+            <MessageSquare className={`size-4 shrink-0 ${s.active ? "text-primary" : "text-muted-foreground"}`} />
             <div className="flex w-full flex-col items-start truncate">
-              <span className="mb-1.5 w-full truncate text-left leading-none">
-                {i === 1 ? t("chat.sample.title", "UI Layout Design") : `${t("chat.sample.previous", "Previous Session")} ${i}`}
-              </span>
-              <span className={`text-[11px] leading-none ${i === 1 ? "text-primary/70" : "text-muted-foreground"}`}>
-                {i === 1 ? t("chat.time.justNow", "Just now") : `${i} ${t("chat.time.hoursAgo", "hours ago")}`}
-              </span>
+              <span className="mb-1.5 w-full truncate text-left leading-none">{t(s.titleKey, s.titleParams)}</span>
+              <span className={`text-[11px] leading-none ${s.active ? "text-primary/70" : "text-muted-foreground"}`}>{t(s.timeKey, s.timeParams)}</span>
             </div>
           </button>
         ))}
