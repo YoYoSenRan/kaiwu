@@ -208,6 +208,116 @@ export interface AgentsDeleteResult {
   removedBindings: number
 }
 
+// ---------- agent.identity / files / skills / tools ----------
+
+/** agent.identity.get 入参。 */
+export interface AgentIdentityGetParams {
+  agentId: string
+}
+
+/** agent.identity.get 返回。 */
+export interface AgentIdentityGetResult {
+  agentId: string
+  name: string
+  avatar: string
+  emoji?: string
+  /** gateway 计算后可直接展示的 URL（失败时为 undefined）。 */
+  avatarUrl?: string
+}
+
+/** agents.files.list 入参。 */
+export interface AgentFilesListParams {
+  agentId: string
+}
+
+/** workspace 下的单个文件项。 */
+export interface AgentWorkspaceFile {
+  name: string
+  path: string
+  missing?: boolean
+  size?: number
+  mtime?: number
+}
+
+/** agents.files.list 返回。 */
+export interface AgentFilesListResult {
+  agentId: string
+  workspace: string
+  files: AgentWorkspaceFile[]
+}
+
+/** agents.files.get 入参。 */
+export interface AgentFilesGetParams {
+  agentId: string
+  name: string
+}
+
+/** agents.files.get 返回，file 在基础元信息外附 content。 */
+export interface AgentFilesGetResult {
+  agentId: string
+  workspace: string
+  file: AgentWorkspaceFile & { content: string }
+}
+
+/** agents.files.set 入参。 */
+export interface AgentFilesSetParams {
+  agentId: string
+  name: string
+  content: string
+}
+
+/** agents.files.set 返回。 */
+export interface AgentFilesSetResult {
+  ok: true
+  agentId: string
+  file: AgentWorkspaceFile
+}
+
+/** skills.status 入参。 */
+export interface SkillsStatusParams {
+  agentId: string
+}
+
+/** 单个 skill 的状态行。 */
+export interface AgentSkillRow {
+  name: string
+  enabled: boolean
+  reasons?: string[]
+}
+
+/** skills.status 返回。 */
+export interface SkillsStatusResult {
+  skills: AgentSkillRow[]
+}
+
+/** tools.catalog 入参。 */
+export interface ToolsCatalogParams {
+  agentId: string
+  includePlugins?: boolean
+}
+
+/** 工具目录分组。 */
+export interface AgentToolGroup {
+  section: string
+  tools: Array<{ name: string; source?: string; enabled?: boolean }>
+}
+
+/** tools.catalog 返回。 */
+export interface ToolsCatalogResult {
+  groups: AgentToolGroup[]
+}
+
+/** tools.effective 入参。 */
+export interface ToolsEffectiveParams {
+  agentId: string
+  sessionKey?: string
+}
+
+/** tools.effective 返回。 */
+export interface ToolsEffectiveResult {
+  groups: AgentToolGroup[]
+}
+
 // ---------- models ----------
 
 /** 单个可选模型。 */

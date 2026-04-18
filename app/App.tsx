@@ -4,6 +4,8 @@ import Settings from "@/pages/settings"
 import Dashboard from "@/pages/dashboard"
 import KnowledgeList from "@/pages/knowledge/list"
 import KnowledgeDetail from "@/pages/knowledge/detail"
+import AgentList from "@/pages/agent/list"
+import AgentDetail from "@/pages/agent/detail"
 import Chat from "@/pages/chat"
 import Workflow from "@/pages/workflow"
 import { TitleBar } from "@/components/layout/titlebar"
@@ -49,6 +51,8 @@ function App() {
                   <Route path="/task" element={<Task />} />
                   <Route path="/knowledge" element={<KnowledgeList />} />
                   <Route path="/knowledge/:id" element={<KnowledgeDetail />} />
+                  <Route path="/agent" element={<AgentList />} />
+                  <Route path="/agent/:id" element={<AgentDetail />} />
                   <Route path="/chat" element={<Chat />} />
                   <Route path="/workflow" element={<Workflow />} />
                   <Route path="/connect" element={<Connect />} />

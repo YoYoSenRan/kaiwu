@@ -5,6 +5,14 @@ import type { EventFrame } from "./gateway/contract"
 import type { InvokeArgs, InvokeResult, MonitorEvent, PluginEvent } from "./contracts/plugin"
 import type { CompatibilityResult, OpenClawStatus } from "./contracts/status"
 import type {
+  AgentFilesGetParams,
+  AgentFilesGetResult,
+  AgentFilesListParams,
+  AgentFilesListResult,
+  AgentFilesSetParams,
+  AgentFilesSetResult,
+  AgentIdentityGetParams,
+  AgentIdentityGetResult,
   AgentsCreateParams,
   AgentsCreateResult,
   AgentsDeleteParams,
@@ -19,6 +27,12 @@ import type {
   SessionDeleteParams,
   SessionListParams,
   SessionPatchParams,
+  SkillsStatusParams,
+  SkillsStatusResult,
+  ToolsCatalogParams,
+  ToolsCatalogResult,
+  ToolsEffectiveParams,
+  ToolsEffectiveResult,
 } from "./contracts/rpc"
 
 /** renderer ↔ main 的 openclaw feature 桥接接口。7 个能力域对齐主进程 7 个 Controller。 */
@@ -65,12 +79,19 @@ export interface OpenClawBridge {
     patch: (params: SessionPatchParams) => Promise<unknown>
     delete: (params: SessionDeleteParams) => Promise<unknown>
   }
-  /** Agent 管理 RPC,方法名 1:1 映射 gateway 的 agents.*。 */
+  /** Agent 管理 RPC,方法名 1:1 映射 gateway 的 agents.* / agent.identity.* / skills.* / tools.*。 */
   agents: {
     list: () => Promise<AgentsListResult>
     create: (params: AgentsCreateParams) => Promise<AgentsCreateResult>
     update: (params: AgentsUpdateParams) => Promise<AgentsUpdateResult>
     delete: (params: AgentsDeleteParams) => Promise<AgentsDeleteResult>
+    identity: (params: AgentIdentityGetParams) => Promise<AgentIdentityGetResult>
+    filesList: (params: AgentFilesListParams) => Promise<AgentFilesListResult>
+    filesGet: (params: AgentFilesGetParams) => Promise<AgentFilesGetResult>
+    filesSet: (params: AgentFilesSetParams) => Promise<AgentFilesSetResult>
+    skillsStatus: (params: SkillsStatusParams) => Promise<SkillsStatusResult>
+    toolsCatalog: (params: ToolsCatalogParams) => Promise<ToolsCatalogResult>
+    toolsEffective: (params: ToolsEffectiveParams) => Promise<ToolsEffectiveResult>
   }
   /** 可用模型清单(按 provider 分组)。 */
   models: {
@@ -142,6 +163,13 @@ export const openclaw: OpenClawBridge = {
     create: (params) => agentsBridge.invoke("create", params),
     update: (params) => agentsBridge.invoke("update", params),
     delete: (params) => agentsBridge.invoke("delete", params),
+    identity: (params) => agentsBridge.invoke("identity", params),
+    filesList: (params) => agentsBridge.invoke("filesList", params),
+    filesGet: (params) => agentsBridge.invoke("filesGet", params),
+    filesSet: (params) => agentsBridge.invoke("filesSet", params),
+    skillsStatus: (params) => agentsBridge.invoke("skillsStatus", params),
+    toolsCatalog: (params) => agentsBridge.invoke("toolsCatalog", params),
+    toolsEffective: (params) => agentsBridge.invoke("toolsEffective", params),
   },
   models: {
     list: () => modelsBridge.invoke("list"),

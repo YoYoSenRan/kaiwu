@@ -39,6 +39,12 @@ export const timestamps = () => ({
   updated_at: updatedAt(),
 })
 
+export const agents = sqliteTable("agents", {
+  agent_id: text("agent_id").primaryKey(),
+  created_at: integer("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  updated_at: integer("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()).$onUpdate(() => Date.now()),
+})
+
 export const chatSessions = sqliteTable("chat_sessions", {
   id: pk(),
   mode: text("mode").notNull().$type<"single" | "group">(),

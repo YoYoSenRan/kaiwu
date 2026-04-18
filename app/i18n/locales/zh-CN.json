@@ -9,7 +9,8 @@
     "noData": "暂无数据",
     "detail": "详情",
     "unknownPage": "未知页面",
-    "toggleThemeHint": "按 D 切换主题"
+    "toggleThemeHint": "按 D 切换主题",
+    "back": "返回"
   },
   "footer": {
     "ping": "{{ms}}ms",
@@ -40,6 +41,7 @@
     "dashboard": "仪表台",
     "task": "任务",
     "knowledge": "知识库",
+    "agent": "智能体",
     "chat": "对话",
     "workflow": "工作流",
     "connect": "连接",
@@ -118,6 +120,113 @@
       "namePlaceholder": "输入知识库名称",
       "description": "描述",
       "descriptionPlaceholder": "可选，简要描述知识库内容"
+    }
+  },
+  "agent": {
+    "title": "智能体",
+    "description": "管理智能体、工作空间与模型绑定",
+    "count": "{{count}} 个智能体",
+    "create": "新建智能体",
+    "emptyTitle": "暂无智能体",
+    "emptyDescription": "创建智能体以在对话与工作流中使用",
+    "tabs": {
+      "list": {
+        "mine": "我的",
+        "unsynced": "未同步",
+        "missing": "已失联"
+      },
+      "overview": "概览",
+      "workspace": "工作空间",
+      "skills": "技能",
+      "settings": "设置"
+    },
+    "detail": {
+      "description": "智能体详情",
+      "defaultBadge": "默认"
+    },
+    "list": {
+      "gatewayOffline": "网关未连接，仅展示本地引用",
+      "emptyGateway": "网关当前无 agent，禁用批量操作",
+      "unsyncedBanner": "发现 {{count}} 个网关 agent 未本地化",
+      "unsyncedEmpty": "没有未同步的 agent",
+      "missingBanner": "本地引用了 {{count}} 个网关已不存在的 agent",
+      "missingEmpty": "没有失联的 agent",
+      "syncAll": "一键同步",
+      "unlink": "从本地删除"
+    },
+    "dialog": {
+      "create": {
+        "title": "新建智能体",
+        "description": "配置智能体的名称、工作空间与主模型",
+        "name": "名称",
+        "workspace": "工作空间路径",
+        "model": "主模型",
+        "modelPlaceholder": "选择模型（可选）",
+        "emoji": "Emoji",
+        "avatar": "头像（URL / 路径）",
+        "confirm": "创建"
+      },
+      "delete": {
+        "title": "删除智能体",
+        "purge": "彻底删除（网关 + 本地引用）",
+        "purgeHint": "从 openclaw 网关删除 agent 配置；可选同时清理 workspace 文件",
+        "deleteFiles": "同时删除 workspace 文件",
+        "unlink": "仅从 kaiwu 移除引用",
+        "unlinkHint": "保留网关 agent，仅删除本地索引；agent 将出现在未同步 tab",
+        "confirm": "确认删除"
+      }
+    },
+    "toast": {
+      "create": {
+        "success": "Agent 已创建",
+        "error": "创建失败：{{msg}}"
+      },
+      "update": {
+        "success": "已保存",
+        "error": "保存失败：{{msg}}"
+      },
+      "delete": {
+        "purge": "Agent 已删除",
+        "unlink": "引用已解除",
+        "error": "删除失败：{{msg}}"
+      },
+      "sync": {
+        "success": "已同步 {{n}} 个 agent",
+        "error": "同步失败：{{msg}}"
+      },
+      "fileSave": {
+        "success": "{{filename}} 已保存",
+        "error": "保存失败：{{msg}}"
+      }
+    },
+    "overview": {
+      "name": "名称",
+      "workspace": "工作空间",
+      "primaryModel": "主模型",
+      "fallbacks": "回退模型",
+      "theme": "主题",
+      "emoji": "Emoji",
+      "avatar": "头像",
+      "copied": "{{field}} 已复制"
+    },
+    "workspace": {
+      "selectFile": "选择左侧文件以查看 / 编辑",
+      "readonly": "只读",
+      "dirty": "未保存",
+      "preview": "预览",
+      "edit": "编辑",
+      "save": "保存"
+    },
+    "skills": {
+      "name": "名称",
+      "enabled": "状态",
+      "reasons": "原因",
+      "on": "启用",
+      "off": "禁用"
+    },
+    "settings": {
+      "danger": "危险操作",
+      "dangerHint": "删除此 agent 或解除本地引用"
     }
   },
   "chat": {
