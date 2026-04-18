@@ -25,12 +25,18 @@ import { getGateway } from "../runtime"
 /** 域内单方法的处理函数。收到 IPC 参数,走 gateway.call 转发并返回结果。 */
 export type Handler<P, R> = (gateway: GatewayClient, params: P) => Promise<R>
 
-/** 域声明。namespace 作为 IPC channel 前缀,methods 的 key 即子 channel 名。 */
+/**
+ * 域声明。namespace 作为 IPC channel 前缀,methods 的 key 即子 channel 名。
+ * `any` 用于 Handler 泛型约束：注册表需要容纳异构 P/R 的 handler 集合，
+ * `unknown` 在逆变位置会破坏推断（handler 形参收紧为 never 无法调用）。
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface DomainSpec<M extends Record<string, Handler<any, any>>> {
   namespace: string
   methods: M
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface Domain<M = Record<string, Handler<any, any>>> {
   readonly namespace: string
   readonly methods: M
@@ -42,6 +48,7 @@ const registry: Domain[] = []
  * 声明一个 RPC 域并登记到注册表。
  * 幂等:同名 namespace 重复注册保留首次,后注册忽略并 warn。
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function domain<M extends Record<string, Handler<any, any>>>(spec: DomainSpec<M>): Domain<M> {
   const existing = registry.find((d) => d.namespace === spec.namespace)
   if (existing) return existing as Domain<M>

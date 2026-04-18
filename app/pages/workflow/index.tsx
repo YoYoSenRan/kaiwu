@@ -18,9 +18,9 @@ export default function Workflow() {
         </Button>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border/50 bg-background/50">
-        <div className="flex flex-col items-center gap-4 text-muted-foreground">
-          <div className="flex size-16 items-center justify-center rounded-2xl bg-muted/50 ring-1 ring-foreground/10">
+      <div className="border-border/50 bg-background/50 flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed">
+        <div className="text-muted-foreground flex flex-col items-center gap-4">
+          <div className="bg-muted/50 ring-foreground/10 flex size-16 items-center justify-center rounded-2xl ring-1">
             <WorkflowIcon className="size-8 opacity-40" />
           </div>
           <p className="text-sm font-medium">{t("workflow.empty", "No workflows configured yet")}</p>

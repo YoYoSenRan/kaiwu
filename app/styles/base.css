@@ -12,6 +12,16 @@ body,
   * {
     @apply border-border outline-ring/50;
   }
+  /* Tailwind v4 取消原生 button 的 pointer cursor，统一补回交互元素的指针态 */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
   /* 修 Radix + Chromium focus-visible 误判：弹出型触发器（DropdownMenu / Select / Dialog / Sheet /
      Popover / ContextMenu 等）关闭时 Radix 会把 focus 送回 trigger，Chromium 若用户最近有过
      键盘动作会把这次 programmatic focus 判为 focus-visible，导致鼠标点完后按钮残留 ring。
