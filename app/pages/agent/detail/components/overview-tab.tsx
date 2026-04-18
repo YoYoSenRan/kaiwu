@@ -64,7 +64,9 @@ export function OverviewTab({ detail, defaultId }: Props) {
             {fallbacks.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {fallbacks.map((m) => (
-                  <Badge key={m} variant="secondary">{m}</Badge>
+                  <Badge key={m} variant="secondary">
+                    {m}
+                  </Badge>
                 ))}
               </div>
             ) : (
@@ -92,7 +94,7 @@ export function OverviewTab({ detail, defaultId }: Props) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-[120px_1fr] items-start gap-4">
-      <span className="text-muted-foreground pt-1 text-xs uppercase tracking-wide">{label}</span>
+      <span className="text-muted-foreground pt-1 text-xs tracking-wide uppercase">{label}</span>
       <div>{children}</div>
     </div>
   )

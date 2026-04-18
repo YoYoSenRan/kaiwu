@@ -29,10 +29,7 @@ export function ensureBudgetState(sessionId: string): BudgetState {
  * 增加一轮 + 检查是否超限。
  * @returns 若未超 {exceeded:false}；否则 {exceeded:true, reason}
  */
-export function checkAndIncrementRound(
-  sessionId: string,
-  cfg: BudgetConfig,
-): { exceeded: false } | { exceeded: true; reason: LoopEndedReason } {
+export function checkAndIncrementRound(sessionId: string, cfg: BudgetConfig): { exceeded: false } | { exceeded: true; reason: LoopEndedReason } {
   const merged = withDefaults(cfg)
   const state = ensureBudgetState(sessionId)
   const next: BudgetState = { ...state, roundsUsed: state.roundsUsed + 1, updatedAt: Date.now() }

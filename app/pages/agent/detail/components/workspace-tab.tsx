@@ -35,10 +35,7 @@ export function WorkspaceTab({ detail, onRefresh }: Props) {
     return window.matchMedia("(prefers-color-scheme: dark)").matches
   }, [themeSetting])
 
-  const mdExtensions = useMemo(
-    () => [markdown({ base: markdownLanguage, codeLanguages: languages })],
-    [],
-  )
+  const mdExtensions = useMemo(() => [markdown({ base: markdownLanguage, codeLanguages: languages })], [])
 
   const selectedFile = selected !== null ? files.find((f) => f.name === selected) : undefined
   const dirty = selected !== null && content !== original

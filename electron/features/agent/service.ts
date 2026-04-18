@@ -13,15 +13,7 @@ import { agents as agentsDomain } from "../openclaw/domains/agents"
 import { getGateway } from "../openclaw/runtime"
 import * as repo from "./repository"
 import type { GatewayClient } from "../openclaw/gateway/client"
-import type {
-  AgentCreateInput,
-  AgentDeleteInput,
-  AgentDetail,
-  AgentImportInput,
-  AgentListEntry,
-  AgentListResult,
-  AgentUpdateInput,
-} from "./contracts"
+import type { AgentCreateInput, AgentDeleteInput, AgentDetail, AgentImportInput, AgentListEntry, AgentListResult, AgentUpdateInput } from "./contracts"
 
 const log = scope("agent:service")
 
@@ -32,17 +24,7 @@ const log = scope("agent:service")
  * 7 个 bootstrap 文件 + memory 文件（主名 MEMORY.md，兼容 memory.md）。
  * 全部是 exact 大写基名，openclaw 侧做字符串精确匹配，非白名单 `files.set` 直接拒绝。
  */
-const WRITABLE_WORKSPACE_FILES = new Set([
-  "AGENTS.md",
-  "SOUL.md",
-  "TOOLS.md",
-  "IDENTITY.md",
-  "USER.md",
-  "HEARTBEAT.md",
-  "BOOTSTRAP.md",
-  "MEMORY.md",
-  "memory.md",
-])
+const WRITABLE_WORKSPACE_FILES = new Set(["AGENTS.md", "SOUL.md", "TOOLS.md", "IDENTITY.md", "USER.md", "HEARTBEAT.md", "BOOTSTRAP.md", "MEMORY.md", "memory.md"])
 
 @Controller("agent")
 export class AgentService extends IpcController {
@@ -105,12 +87,13 @@ export class AgentService extends IpcController {
       agentId,
       gateway: listRes.status === "fulfilled" ? listRes.value.agents.find((a) => a.id === agentId) : undefined,
       identity: identity.status === "fulfilled" ? identity.value : undefined,
-      files: files.status === "fulfilled"
-        ? {
-            workspace: files.value.workspace,
-            files: files.value.files.map((f) => ({ ...f, writable: WRITABLE_WORKSPACE_FILES.has(f.name) })),
-          }
-        : undefined,
+      files:
+        files.status === "fulfilled"
+          ? {
+              workspace: files.value.workspace,
+              files: files.value.files.map((f) => ({ ...f, writable: WRITABLE_WORKSPACE_FILES.has(f.name) })),
+            }
+          : undefined,
       skills: skills.status === "fulfilled" ? skills.value : undefined,
     }
   }

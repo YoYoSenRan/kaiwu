@@ -21,11 +21,7 @@ export function get(agentId: string): AgentRow | null {
 
 export function insert(agentId: string): AgentRow {
   const now = Date.now()
-  database()
-    .insert(agents)
-    .values({ agent_id: agentId, created_at: now, updated_at: now })
-    .onConflictDoNothing()
-    .run()
+  database().insert(agents).values({ agent_id: agentId, created_at: now, updated_at: now }).onConflictDoNothing().run()
   return { agentId, createdAt: now, updatedAt: now }
 }
 

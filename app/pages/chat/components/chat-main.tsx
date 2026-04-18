@@ -91,11 +91,7 @@ export function ChatMain() {
           </div>
         )}
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={t("chat.placeholder")}
-          />
+          <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder={t("chat.placeholder")} />
           <Button size="icon" type="submit" disabled={!input.trim()}>
             <Send />
           </Button>

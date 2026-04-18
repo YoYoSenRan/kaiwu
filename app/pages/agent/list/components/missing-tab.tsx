@@ -49,11 +49,7 @@ export function MissingTab({ entries, onChanged }: Props) {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="truncate text-sm font-medium">{e.agentId}</p>
-                  {e.local && (
-                    <p className="text-muted-foreground/70 text-[11px]">
-                      {new Date(e.local.createdAt).toLocaleString()}
-                    </p>
-                  )}
+                  {e.local && <p className="text-muted-foreground/70 text-[11px]">{new Date(e.local.createdAt).toLocaleString()}</p>}
                 </div>
                 <Button size="sm" variant="outline" onClick={() => handleUnlink(e.agentId)} disabled={pendingId === e.agentId}>
                   <Unlink className="mr-1.5 size-4" />

@@ -22,8 +22,7 @@ export function DeleteAgentDialog({ open, agentId, agentName, onOpenChange, onDe
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async () => {
-    const strategy: AgentDeleteStrategy =
-      mode === "purge" ? { kind: "purge", deleteFiles } : { kind: "unlink" }
+    const strategy: AgentDeleteStrategy = mode === "purge" ? { kind: "purge", deleteFiles } : { kind: "unlink" }
     setLoading(true)
     try {
       await window.electron.agent.delete({ agentId, strategy })
@@ -54,11 +53,7 @@ export function DeleteAgentDialog({ open, agentId, agentName, onOpenChange, onDe
             <span className="text-muted-foreground text-xs">{t("agent.dialog.delete.purgeHint")}</span>
             {mode === "purge" && (
               <label className="mt-1 flex items-center gap-2 text-xs">
-                <Checkbox
-                  checked={deleteFiles}
-                  onCheckedChange={(v) => setDeleteFiles(v === true)}
-                  onClick={(e) => e.stopPropagation()}
-                />
+                <Checkbox checked={deleteFiles} onCheckedChange={(v) => setDeleteFiles(v === true)} onClick={(e) => e.stopPropagation()} />
                 <span>{t("agent.dialog.delete.deleteFiles")}</span>
               </label>
             )}

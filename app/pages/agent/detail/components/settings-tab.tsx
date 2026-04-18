@@ -28,7 +28,10 @@ export function SettingsTab({ detail, onUpdated, onDeleted }: Props) {
   const [models, setModels] = useState<Awaited<ReturnType<typeof window.electron.openclaw.models.list>>["models"]>([])
 
   useEffect(() => {
-    void window.electron.openclaw.models.list().then((res) => setModels(res.models)).catch(() => setModels([]))
+    void window.electron.openclaw.models
+      .list()
+      .then((res) => setModels(res.models))
+      .catch(() => setModels([]))
   }, [])
 
   const handleSave = async () => {
@@ -114,13 +117,7 @@ export function SettingsTab({ detail, onUpdated, onDeleted }: Props) {
         </CardContent>
       </Card>
 
-      <DeleteAgentDialog
-        open={deleteOpen}
-        agentId={detail.agentId}
-        agentName={gateway?.name}
-        onOpenChange={setDeleteOpen}
-        onDeleted={onDeleted}
-      />
+      <DeleteAgentDialog open={deleteOpen} agentId={detail.agentId} agentName={gateway?.name} onOpenChange={setDeleteOpen} onDeleted={onDeleted} />
     </div>
   )
 }
