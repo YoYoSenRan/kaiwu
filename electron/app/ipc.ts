@@ -11,6 +11,7 @@ import { ClipboardService } from "../platform/clipboard/service"
 import { NotificationService } from "../platform/notification/service"
 import { GatewayService, BridgeService, StatusService, domainControllers } from "../features/openclaw"
 import { KnowledgeService } from "../features/knowledge/service"
+import { ChatService } from "../features/chat/service"
 import type { AppModule } from "../framework/module"
 
 /**
@@ -46,6 +47,7 @@ export const ipcModule: AppModule = {
       ...domainControllers(),
       // other features
       KnowledgeService,
+      ChatService,
     ])
   },
   async dispose() {
