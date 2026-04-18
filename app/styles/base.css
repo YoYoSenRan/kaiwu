@@ -25,6 +25,7 @@ body,
   }
   body {
     @apply bg-background text-foreground;
+    letter-spacing: var(--tracking-normal);
     margin: 0;
     min-width: 320px;
     min-height: 100vh;

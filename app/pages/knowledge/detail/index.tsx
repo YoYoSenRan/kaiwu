@@ -56,26 +56,30 @@ export default function KnowledgeDetail() {
         </p>
       </div>
 
-      <Tabs defaultValue="documents" className="flex min-h-0 flex-1 flex-col">
-        <TabsList className="shrink-0">
-          <TabsTrigger value="documents">{t("knowledge.tabs.documents")}</TabsTrigger>
-          <TabsTrigger value="search">{t("knowledge.tabs.search")}</TabsTrigger>
-          <TabsTrigger value="graph">{t("knowledge.tabs.graph")}</TabsTrigger>
-          <TabsTrigger value="settings">{t("knowledge.tabs.settings")}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="documents" className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <DocumentsTab kbId={row.id} docs={docs} progressMap={progressMap} onRefresh={refresh} />
-        </TabsContent>
-        <TabsContent value="search" className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <SearchTab kbId={row.id} />
-        </TabsContent>
-        <TabsContent value="graph" className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <GraphTab kbId={row.id} kbName={row.name} docs={docs} />
-        </TabsContent>
-        <TabsContent value="settings" className="min-h-0 flex-1 overflow-y-auto">
-          <SettingsTab id={row.id} name={row.name} description={row.description} embeddingModel={row.embedding_model} onUpdated={refresh} />
-        </TabsContent>
-      </Tabs>
+      <div className="tabs-fill">
+        <Tabs defaultValue="documents">
+          <TabsList>
+            <TabsTrigger value="documents">{t("knowledge.tabs.documents")}</TabsTrigger>
+            <TabsTrigger value="search">{t("knowledge.tabs.search")}</TabsTrigger>
+            <TabsTrigger value="graph">{t("knowledge.tabs.graph")}</TabsTrigger>
+            <TabsTrigger value="settings">{t("knowledge.tabs.settings")}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="documents">
+            <DocumentsTab kbId={row.id} docs={docs} progressMap={progressMap} onRefresh={refresh} />
+          </TabsContent>
+          <TabsContent value="search">
+            <SearchTab kbId={row.id} />
+          </TabsContent>
+          <TabsContent value="graph">
+            <GraphTab kbId={row.id} kbName={row.name} docs={docs} />
+          </TabsContent>
+          <TabsContent value="settings">
+            <div className="h-full overflow-y-auto">
+              <SettingsTab id={row.id} name={row.name} description={row.description} embeddingModel={row.embedding_model} onUpdated={refresh} />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   )
 }
