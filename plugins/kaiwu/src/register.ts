@@ -13,6 +13,7 @@ import { createKaiwuRouteHandler, createDomainRegistrar } from "./core/http.js"
 import { createBridgeClient } from "./core/transport.js"
 import { setupContext } from "./context/setup.js"
 import { setupMonitor } from "./monitor/setup.js"
+import { setupChat } from "./chat/setup.js"
 
 /** HTTP 路由前缀。 */
 const HTTP_ROUTE_PREFIX = "/kaiwu/"
@@ -25,10 +26,7 @@ const HTTP_ROUTE_PREFIX = "/kaiwu/"
 const DOMAINS: Array<[string, DomainSetup]> = [
   ["context", setupContext],
   ["monitor", setupMonitor],
-  // 未来扩展：
-  // ["chat", setupChat],
-  // ["session", setupSession],
-  // ["hook", setupHook],
+  ["chat", setupChat],
 ]
 
 /**

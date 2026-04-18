@@ -40,6 +40,23 @@ declare module "openclaw/plugin-sdk/plugin-entry" {
     reason?: string
   }
 
+  // ---------- Tools ----------
+
+  export type AnyAgentTool = {
+    name: string
+    label?: string
+    description?: string
+    parameters?: unknown
+    execute: (toolCallId: string, params: unknown) => Promise<{ content: Array<{ type: string; text?: string }>; details?: unknown }>
+  }
+
+  export type OpenClawPluginToolContext = {
+    sessionKey?: string
+    agentId?: string
+  }
+
+  export type OpenClawPluginToolFactory = (ctx: OpenClawPluginToolContext) => AnyAgentTool | AnyAgentTool[] | null | undefined
+
   // ---------- Plugin API ----------
 
   export interface OpenClawPluginApi {
@@ -52,6 +69,8 @@ declare module "openclaw/plugin-sdk/plugin-entry" {
     logger: PluginLogger
 
     registerHttpRoute: (params: HttpRouteParams) => void
+
+    registerTool: (tool: AnyAgentTool | OpenClawPluginToolFactory, opts?: { name?: string }) => void
 
     /**
      * 注册 hook handler（官方方法名）。
