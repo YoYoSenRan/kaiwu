@@ -13,7 +13,7 @@
 
 import { nanoid } from "nanoid"
 import { scope } from "../../infra/logger"
-import { checkAndIncrementRound, checkStopPhrase } from "./budget"
+import { addTokens, checkAndIncrementRound, checkStopPhrase } from "./budget"
 import { buildSharedContext } from "./context"
 import { interpretReply } from "./interpret"
 import { newRunId, runStep } from "../../agent/executor"
@@ -114,6 +114,10 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
     log.warn(`step failed for ${target.id}: ${result.error}`)
     return
   }
+
+  // 把这一轮消耗的 token 累计到 session 预算里；maxTokens 检查在下一轮 checkAndIncrementRound
+  const totalTokens = result.usage?.total ?? (result.usage?.input ?? 0) + (result.usage?.output ?? 0)
+  if (totalTokens > 0) addTokens(sessionId, totalTokens)
 
   const interp = interpretReply(result.content)
   if (interp.shouldSuppress) return
