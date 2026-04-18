@@ -81,7 +81,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* 布局常量 */
-  --titlebar-h: 32px;
+  --titlebar-h: 48px;
   /* Windows titlebar 关闭按钮红色，出自 Fluent UI 系统色，两套主题统一不走 token */
   --titlebar-close-hover: #e81123;
 }

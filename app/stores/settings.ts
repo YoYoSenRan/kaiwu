@@ -8,10 +8,8 @@ export type ResolvedTheme = "dark" | "light"
 interface SettingsState {
   lang: Lang
   theme: Theme
-  sidebarCollapsed: boolean
   setLang: (lang: Lang) => void
   setTheme: (theme: Theme) => void
-  setSidebarCollapsed: (v: boolean) => void
 }
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
@@ -65,14 +63,12 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       lang: "zh-CN",
       theme: "system",
-      sidebarCollapsed: false,
       setLang: (lang) => set({ lang }),
       setTheme: (theme) => {
         // 立即 apply class，保证切换在下一次 render 之前就生效
         applyThemeClass(theme)
         set({ theme })
       },
-      setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
     }),
     {
       name: "settings",

@@ -82,12 +82,14 @@ export function PluginCard() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between">
-        <div>
-          <CardTitle>{t("connect.plugin.title")}</CardTitle>
-          <CardDescription>{t("connect.plugin.description")}</CardDescription>
+      <CardHeader className="flex flex-row items-start justify-between space-y-0">
+        <div className="space-y-1">
+          <CardTitle className="text-sm font-medium">{t("connect.plugin.title")}</CardTitle>
+          <CardDescription className="text-xs">{t("connect.plugin.description")}</CardDescription>
         </div>
-        <Badge variant={live ? "default" : "outline"}>{live ? t("connect.plugin.statusRunning") : t("connect.plugin.statusStopped")}</Badge>
+        <Badge variant={live ? "default" : "outline"} className="mt-0.5 font-mono text-[10px] tracking-wide">
+          {live ? t("connect.plugin.statusRunning") : t("connect.plugin.statusStopped")}
+        </Badge>
       </CardHeader>
 
       <CardContent className="space-y-4">
