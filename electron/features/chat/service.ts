@@ -8,9 +8,9 @@
 import { nanoid } from "nanoid"
 import { Controller, Handle, IpcController, type IpcLifecycle } from "../../framework"
 import { scope } from "../../infra/logger"
-import { newRunId, runStep, type ChatBackend } from "../../agent/executor"
+import type { ChatBackend } from "../../agent/executor"
 import type { StepEvent, StepUsage } from "../../agent/types"
-import { drainPendingMentions, hasPending, onAskUserEvent, onMentionNextEvent, onNewMessage, takePending, type GroupDeps } from "./group"
+import { hasPending, onAskUserEvent, onMentionNextEvent, onNewMessage, takePending, type GroupDeps } from "./group"
 import { buildSessionInitParams } from "./bootstrap"
 import {
   deleteSession as deleteSessionRow,
@@ -44,8 +44,6 @@ import type {
   ChatMessage,
   ChatSession,
   CreateSessionInput,
-  LoopEndedReason,
-  LoopPausedEvent,
   MemberPatch,
 } from "./types"
 
