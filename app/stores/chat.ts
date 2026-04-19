@@ -1,11 +1,19 @@
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
 import type { ChatMessage, ChatMember, ChatSession, LoopEvent, LoopPausedEvent, StreamDeltaEvent, StreamEndEvent } from "../../electron/features/chat/types"
 
 /** 单条流式 buffer：当前 session 的某个 idempotencyKey 的累积内容。 */
 export interface StreamBuffer {
   content: string
   startedAt: number
+  /** 本次 run 对应的 openclaw sessionKey，用于反查发言 member/agent。 */
+  openclawSessionKey: string
+}
+
+/** 消息预览：截取 text 首 60 字，空白压成单空格。 */
+function extractPreview(msg: ChatMessage): string {
+  const c = msg.content as { text?: string } | null
+  const text = (c?.text ?? "").replace(/\s+/g, " ").trim()
+  return text.length > 60 ? text.slice(0, 60) + "…" : text
 }
 
 /**
@@ -19,15 +27,10 @@ interface ChatUiState {
   setCurrent: (id: string | null) => void
 }
 
-export const useChatUiStore = create<ChatUiState>()(
-  persist(
-    (set) => ({
-      currentSessionId: null,
-      setCurrent: (id) => set({ currentSessionId: id }),
-    }),
-    { name: "chat-ui", version: 1 },
-  ),
-)
+export const useChatUiStore = create<ChatUiState>()((set) => ({
+  currentSessionId: null,
+  setCurrent: (id) => set({ currentSessionId: id }),
+}))
 
 // ---------- data cache ----------
 
@@ -37,8 +40,16 @@ interface ChatDataState {
   messages: Record<string, ChatMessage[]>
   pending: LoopPausedEvent | null
   loopStatus: Record<string, LoopEvent["kind"]>
+  /** 每 session 最新一次 ended 事件（含 reason，含序号用作 useEffect 触发器）。 */
+  loopEnded: Record<string, { reason?: LoopEvent["reason"]; seq: number }>
   /** 流式 buffer：sessionId → idempotencyKey → content。UI 渲染时把这里的 buffer 作为末尾临时气泡。 */
   streaming: Record<string, Record<string, StreamBuffer>>
+  /** 每 session 最近一次活动时间戳（用于 sidebar 排序）。 */
+  sessionActivity: Record<string, number>
+  /** 每 session 最近一条消息预览（sidebar 副标题）。 */
+  sessionLastText: Record<string, string>
+  /** 每 session 未读数（sidebar 红点）。 */
+  unread: Record<string, number>
 
   refreshSessions: () => Promise<void>
   refreshMembers: (sessionId: string) => Promise<void>
@@ -49,6 +60,7 @@ interface ChatDataState {
   setLoopStatus: (ev: LoopEvent) => void
   applyStreamDelta: (ev: StreamDeltaEvent) => void
   applyStreamEnd: (ev: StreamEndEvent) => void
+  clearUnread: (sessionId: string) => void
 }
 
 export const useChatDataStore = create<ChatDataState>((set) => ({
@@ -57,11 +69,22 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
   messages: {},
   pending: null,
   loopStatus: {},
+  loopEnded: {},
   streaming: {},
+  sessionActivity: {},
+  sessionLastText: {},
+  unread: {},
 
   refreshSessions: async () => {
     const sessions = await window.electron.chat.session.list()
-    set({ sessions })
+    set((s) => {
+      // 初始化 activity：已有值保留，否则 fallback 到 session.updatedAt
+      const activity = { ...s.sessionActivity }
+      for (const sess of sessions) {
+        if (activity[sess.id] === undefined) activity[sess.id] = sess.updatedAt
+      }
+      return { sessions, sessionActivity: activity }
+    })
   },
   deleteSession: async (sessionId) => {
     await window.electron.chat.session.delete(sessionId)
@@ -72,11 +95,20 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
       delete nextMembers[sessionId]
       const nextLoopStatus = { ...s.loopStatus }
       delete nextLoopStatus[sessionId]
+      const nextActivity = { ...s.sessionActivity }
+      delete nextActivity[sessionId]
+      const nextLastText = { ...s.sessionLastText }
+      delete nextLastText[sessionId]
+      const nextUnread = { ...s.unread }
+      delete nextUnread[sessionId]
       return {
         sessions: s.sessions.filter((x) => x.id !== sessionId),
         messages: nextMessages,
         members: nextMembers,
         loopStatus: nextLoopStatus,
+        sessionActivity: nextActivity,
+        sessionLastText: nextLastText,
+        unread: nextUnread,
         pending: s.pending?.sessionId === sessionId ? null : s.pending,
       }
     })
@@ -87,15 +119,53 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
   },
   refreshMessages: async (sessionId) => {
     const messages = await window.electron.chat.message.list(sessionId)
-    set((s) => ({ messages: { ...s.messages, [sessionId]: messages } }))
+    set((s) => {
+      const last = messages[messages.length - 1]
+      const nextActivity = { ...s.sessionActivity }
+      const nextLastText = { ...s.sessionLastText }
+      if (last) {
+        nextActivity[sessionId] = last.createdAtLocal
+        nextLastText[sessionId] = extractPreview(last)
+      }
+      return {
+        messages: { ...s.messages, [sessionId]: messages },
+        sessionActivity: nextActivity,
+        sessionLastText: nextLastText,
+      }
+    })
   },
   appendMessage: (msg) => {
-    set((s) => ({
-      messages: { ...s.messages, [msg.sessionId]: [...(s.messages[msg.sessionId] ?? []), msg] },
-    }))
+    const currentId = useChatUiStore.getState().currentSessionId
+    set((s) => {
+      const next: Partial<ChatDataState> = {
+        messages: { ...s.messages, [msg.sessionId]: [...(s.messages[msg.sessionId] ?? []), msg] },
+        sessionActivity: { ...s.sessionActivity, [msg.sessionId]: msg.createdAtLocal },
+        sessionLastText: { ...s.sessionLastText, [msg.sessionId]: extractPreview(msg) },
+      }
+      // 非当前 session + 非 user 自己发的 → 未读 +1
+      if (msg.sessionId !== currentId && msg.senderType !== "user") {
+        next.unread = { ...s.unread, [msg.sessionId]: (s.unread[msg.sessionId] ?? 0) + 1 }
+      }
+      return next
+    })
   },
+  clearUnread: (sessionId) =>
+    set((s) => {
+      if (!s.unread[sessionId]) return {}
+      const next = { ...s.unread }
+      delete next[sessionId]
+      return { unread: next }
+    }),
   setPending: (ev) => set({ pending: ev }),
-  setLoopStatus: (ev) => set((s) => ({ loopStatus: { ...s.loopStatus, [ev.sessionId]: ev.kind } })),
+  setLoopStatus: (ev) =>
+    set((s) => {
+      const next: Partial<ChatDataState> = { loopStatus: { ...s.loopStatus, [ev.sessionId]: ev.kind } }
+      if (ev.kind === "ended") {
+        const prev = s.loopEnded[ev.sessionId]
+        next.loopEnded = { ...s.loopEnded, [ev.sessionId]: { reason: ev.reason, seq: (prev?.seq ?? 0) + 1 } }
+      }
+      return next
+    }),
   applyStreamDelta: (ev) =>
     set((s) => {
       const perSession = s.streaming[ev.sessionId] ?? {}
@@ -108,7 +178,11 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
           ...s.streaming,
           [ev.sessionId]: {
             ...perSession,
-            [ev.idempotencyKey]: { content: ev.content, startedAt: prev?.startedAt ?? Date.now() },
+            [ev.idempotencyKey]: {
+              content: ev.content,
+              startedAt: prev?.startedAt ?? Date.now(),
+              openclawSessionKey: ev.openclawSessionKey,
+            },
           },
         },
       }

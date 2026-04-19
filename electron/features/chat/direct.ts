@@ -24,8 +24,8 @@ export interface DirectDeps {
   backend: ChatBackend
   emitMessage: (msg: ChatMessage) => void
   emitLoop: (kind: "started" | "ended", sessionId: string, reason?: LoopEndedReason) => void
-  emitStreamDelta: (sessionId: string, idempotencyKey: string, content: string) => void
-  emitStreamEnd: (sessionId: string, idempotencyKey: string) => void
+  emitStreamDelta: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, content: string) => void
+  emitStreamEnd: (sessionId: string, idempotencyKey: string, openclawSessionKey: string) => void
   trackKeyStart: (sessionId: string, idempotencyKey: string, openclawKey: string) => void
   trackKeyEnd: (sessionId: string, idempotencyKey: string) => void
   /** 从 openclaw chat.history 取该 sessionKey 最后一条 assistant 消息的元数据。失败返 null 不阻塞。 */
@@ -75,7 +75,7 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
   try {
     const result = await runStep(deps.backend, { sessionKey: member.openclawKey, agentId: member.agentId, message: text, idempotencyKey }, (ev) => {
       if (ev.kind === "delta") {
-        deps.emitStreamDelta(sessionId, idempotencyKey, ev.content)
+        deps.emitStreamDelta(sessionId, idempotencyKey, member.openclawKey, ev.content)
       }
     })
 
@@ -148,7 +148,7 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
     deps.emitMessage(assistantMsg)
   } finally {
     deps.trackKeyEnd(sessionId, idempotencyKey)
-    deps.emitStreamEnd(sessionId, idempotencyKey)
+    deps.emitStreamEnd(sessionId, idempotencyKey, member.openclawKey)
     deps.emitLoop("ended", sessionId)
   }
 }

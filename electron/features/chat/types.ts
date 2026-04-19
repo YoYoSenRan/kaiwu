@@ -146,6 +146,8 @@ export interface LoopEvent {
 export interface StreamDeltaEvent {
   sessionId: string
   idempotencyKey: string
+  /** 本轮对应的 openclaw sessionKey —— UI 反查发言 member/agent。 */
+  openclawSessionKey: string
   /** 本次累积内容（overwrite 模式，不是增量拼接）。 */
   content: string
 }
@@ -154,6 +156,7 @@ export interface StreamDeltaEvent {
 export interface StreamEndEvent {
   sessionId: string
   idempotencyKey: string
+  openclawSessionKey: string
 }
 
 /** 通知 renderer 该 session 的消息列表需要 re-fetch（对账后外部消息入库、旁路监听等）。 */

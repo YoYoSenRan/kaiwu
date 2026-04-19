@@ -1,4 +1,5 @@
-import { Bot, Users } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Bot, Users, Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -7,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAgentCacheStore } from "@/stores/agent"
+import type { ReplyMode } from "../../../../electron/features/chat/types"
 
 type Mode = "direct" | "group"
 
@@ -24,6 +26,7 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
 
   const [mode, setMode] = useState<Mode>("direct")
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [replyModes, setReplyModes] = useState<Record<string, ReplyMode>>({})
   const [label, setLabel] = useState("")
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(false)
@@ -52,6 +55,7 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
   const reset = () => {
     setMode("direct")
     setSelected(new Set())
+    setReplyModes({})
     setLabel("")
   }
 
@@ -67,6 +71,10 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
     })
   }
 
+  const toggleReplyMode = (agentId: string) => {
+    setReplyModes((prev) => ({ ...prev, [agentId]: prev[agentId] === "mention" ? "auto" : "mention" }))
+  }
+
   const canSubmit = (mode === "direct" ? selected.size === 1 : selected.size >= 1) && !loading
 
   const handleSubmit = async () => {
@@ -76,7 +84,11 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
       const session = await window.electron.chat.session.create({
         mode,
         label: label.trim() || undefined,
-        members: Array.from(selected).map((agentId) => ({ agentId, replyMode: "auto" as const })),
+        members: Array.from(selected).map((agentId) => ({
+          agentId,
+          // direct 固定 auto（1v1 没必要只回 @）；group 读用户选择，默认 auto
+          replyMode: mode === "direct" ? "auto" : (replyModes[agentId] ?? "auto"),
+        })),
       })
       toast.success(t("chat.toast.create.success"))
       reset()
@@ -123,6 +135,7 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
                 {mine.map((e) => {
                   const checked = selected.has(e.agentId)
                   const gw = e.gateway
+                  const rm = replyModes[e.agentId] ?? "auto"
                   return (
                     <label key={e.agentId} className={`hover:bg-muted/60 flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors ${checked ? "bg-primary/5" : ""}`}>
                       <Checkbox checked={checked} onCheckedChange={() => toggleAgent(e.agentId)} />
@@ -139,6 +152,22 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
                         <p className="truncate text-sm font-medium">{gw?.name ?? e.agentId}</p>
                         {gw?.model?.primary && <p className="text-muted-foreground truncate text-xs">{gw.model.primary}</p>}
                       </div>
+                      {/* 仅 group 模式 + 已勾选时显示 replyMode 切换；direct 模式固定 auto */}
+                      {mode === "group" && checked && (
+                        <button
+                          type="button"
+                          onClick={(ev) => {
+                            ev.preventDefault()
+                            toggleReplyMode(e.agentId)
+                          }}
+                          title={t("chat.members.replyModeHint")}
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                            rm === "auto" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {rm === "auto" ? t("chat.members.replyAuto") : t("chat.members.replyMention")}
+                        </button>
+                      )}
                     </label>
                   )
                 })}
@@ -158,7 +187,7 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
             {t("common.cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={!canSubmit}>
-            {t("chat.dialog.create.confirm")}
+            {loading ? <Loader2 className="size-4 animate-spin" /> : t("chat.dialog.create.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>
