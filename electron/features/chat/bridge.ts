@@ -34,5 +34,6 @@ export const chat: ChatBridge = {
     paused: (l) => bridge.on("loop:paused", l),
     streamDelta: (l) => bridge.on("stream:delta", l),
     streamEnd: (l) => bridge.on("stream:end", l),
+    error: (l) => bridge.on("chat:error", l),
   },
 }

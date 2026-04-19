@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { EmptyState } from "./empty-state"
 import type { AgentListResult } from "@contracts/agent"
 
 interface Props {
@@ -28,13 +29,7 @@ export function MissingTab({ entries, onChanged }: Props) {
   }
 
   if (entries.length === 0) {
-    return (
-      <Card>
-        <CardContent>
-          <p className="text-muted-foreground py-10 text-center text-sm">{t("agent.list.missingEmpty")}</p>
-        </CardContent>
-      </Card>
-    )
+    return <EmptyState type="missing" />
   }
 
   return (
@@ -42,7 +37,7 @@ export function MissingTab({ entries, onChanged }: Props) {
       <div className="bg-destructive/10 text-destructive ring-destructive/30 rounded-lg px-4 py-3 ring-1">
         <p className="text-sm">{t("agent.list.missingBanner", { count: entries.length })}</p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {entries.map((e) => (
           <Card key={e.agentId}>
             <CardContent>

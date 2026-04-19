@@ -5,6 +5,7 @@
     "save": "保存",
     "delete": "删除",
     "edit": "编辑",
+    "clear": "清空",
     "loading": "加载中...",
     "noData": "暂无数据",
     "detail": "详情",
@@ -257,7 +258,8 @@
       "enabledCount": "{{count}} 个已启用"
     },
     "sessions": {
-      "empty": "暂无会话"
+      "empty": "暂无会话",
+      "noMatch": "没有匹配的会话"
     },
     "dialog": {
       "create": {
@@ -270,6 +272,13 @@
         "emptyAgents": "尚无可用智能体，请先到「智能体」模块创建或同步",
         "label": "名称（可选）",
         "labelPlaceholder": "为此会话命名",
+        "advanced": "高级设置",
+        "budgetRounds": "最大轮次",
+        "budgetRoundsHint": "默认 200，超过自动停",
+        "budgetTokens": "最大 Token 数",
+        "budgetTokensHint": "默认 2,000,000",
+        "budgetWallClock": "最长时间（秒）",
+        "budgetWallClockHint": "默认 86400（24 小时）",
         "confirm": "创建"
       },
       "delete": {
@@ -291,18 +300,44 @@
         "error": "循环出错，已停止"
       }
     },
+    "budget": {
+      "title": "预算",
+      "rounds": "轮次",
+      "tokens": "Token",
+      "reset": "重置",
+      "resetDone": "预算已重置",
+      "resetFailed": "重置失败：{{msg}}"
+    },
     "members": {
       "empty": "暂无成员",
       "replyAuto": "自动",
       "replyMention": "仅 @",
       "replyModeHint": "点击切换回复模式",
-      "patchFailed": "更新成员失败：{{msg}}"
+      "patchFailed": "更新成员失败：{{msg}}",
+      "add": "加成员",
+      "addTitle": "添加成员",
+      "addConfirm": "添加",
+      "addFailed": "添加失败：{{msg}}",
+      "addedToast": "已添加 {{name}}",
+      "remove": "踢出",
+      "removeConfirm": "将 {{name}} 从会话中移除？",
+      "removeFailed": "移除失败：{{msg}}",
+      "removedToast": "已移除 {{name}}",
+      "allAdded": "所有可用智能体已在会话中"
     },
     "hitl": {
       "prompt": "{{agentId}} 问你：{{question}}"
     },
     "select": "请选择会话",
-    "jumpToBottom": "回到最新"
+    "jumpToBottom": "回到最新",
+    "retry": "重试",
+    "retryNoUserMsg": "找不到要重试的消息",
+    "aborted": "已停止",
+    "error": {
+      "banner": "出错：{{msg}}",
+      "disconnected": "连接已断，重连后自动同步",
+      "dismiss": "关闭"
+    }
   },
   "workflow": {
     "title": "工作流",

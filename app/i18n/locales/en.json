@@ -5,6 +5,7 @@
     "save": "Save",
     "delete": "Delete",
     "edit": "Edit",
+    "clear": "Clear",
     "loading": "Loading...",
     "noData": "No data",
     "detail": "Detail",
@@ -257,7 +258,8 @@
       "enabledCount": "{{count}} Enabled"
     },
     "sessions": {
-      "empty": "No sessions"
+      "empty": "No sessions",
+      "noMatch": "No matching sessions"
     },
     "dialog": {
       "create": {
@@ -270,6 +272,13 @@
         "emptyAgents": "No agents available. Create or sync one in the Agent module first",
         "label": "Name (optional)",
         "labelPlaceholder": "Name this session",
+        "advanced": "Advanced",
+        "budgetRounds": "Max rounds",
+        "budgetRoundsHint": "Default 200, auto-stops when exceeded",
+        "budgetTokens": "Max tokens",
+        "budgetTokensHint": "Default 2,000,000",
+        "budgetWallClock": "Max wall-clock (sec)",
+        "budgetWallClockHint": "Default 86400 (24 hours)",
         "confirm": "Create"
       },
       "delete": {
@@ -291,18 +300,44 @@
         "error": "Loop error, stopped"
       }
     },
+    "budget": {
+      "title": "Budget",
+      "rounds": "Rounds",
+      "tokens": "Tokens",
+      "reset": "Reset",
+      "resetDone": "Budget reset",
+      "resetFailed": "Reset failed: {{msg}}"
+    },
     "members": {
       "empty": "No members",
       "replyAuto": "Auto",
       "replyMention": "Only @",
       "replyModeHint": "Click to toggle reply mode",
-      "patchFailed": "Failed to update member: {{msg}}"
+      "patchFailed": "Failed to update member: {{msg}}",
+      "add": "Add member",
+      "addTitle": "Add member",
+      "addConfirm": "Add",
+      "addFailed": "Add failed: {{msg}}",
+      "addedToast": "Added {{name}}",
+      "remove": "Remove",
+      "removeConfirm": "Remove {{name}} from this session?",
+      "removeFailed": "Remove failed: {{msg}}",
+      "removedToast": "Removed {{name}}",
+      "allAdded": "All available agents already in session"
     },
     "hitl": {
       "prompt": "{{agentId}} asks: {{question}}"
     },
     "select": "Select a session",
-    "jumpToBottom": "Jump to latest"
+    "jumpToBottom": "Jump to latest",
+    "retry": "Retry",
+    "retryNoUserMsg": "No user message to retry",
+    "aborted": "Stopped",
+    "error": {
+      "banner": "Error: {{msg}}",
+      "disconnected": "Disconnected, will auto-sync on reconnect",
+      "dismiss": "Dismiss"
+    }
   },
   "workflow": {
     "title": "Workflow",
