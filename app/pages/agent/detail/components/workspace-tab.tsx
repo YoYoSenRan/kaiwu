@@ -1,4 +1,4 @@
-import { Eye, FileText, Lock, Pencil } from "lucide-react"
+import { Eye, FileText, FolderOpen, Lock, Pencil, Save } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import CodeMirror from "@uiw/react-codemirror"
@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useSettingsStore } from "@/stores/settings"
 import type { AgentDetail } from "@contracts/agent"
 
@@ -74,80 +75,98 @@ export function WorkspaceTab({ detail, onRefresh }: Props) {
   }
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-[200px_1fr] gap-4">
-      {/* 左：文件列表面板 */}
-      <div className="bg-card ring-foreground/10 flex min-h-0 flex-col overflow-hidden rounded-xl ring-1">
-        <div className="flex-1 overflow-y-auto p-2">
-          {files.length === 0 && <p className="text-muted-foreground py-4 text-center text-xs">{t("common.noData")}</p>}
-          <div className="space-y-1">
-            {files.map((f) => {
-              const active = f.name === selected
-              return (
-                <button
-                  key={f.name}
-                  onClick={() => loadFile(f.name)}
-                  className={`flex w-full flex-col gap-0.5 rounded-md px-3 py-2 text-left transition-colors ${active ? "bg-primary/10 text-primary" : "hover:bg-muted/70"}`}
-                >
-                  <div className="flex items-center gap-2">
-                    {f.writable ? <FileText className="size-3.5 shrink-0" /> : <Lock className="size-3.5 shrink-0" />}
-                    <span className="truncate text-xs font-medium">{f.name}</span>
-                  </div>
-                  {(f.size !== undefined || f.mtime) && (
-                    <span className="text-muted-foreground/70 text-[10px]">
-                      {f.size !== undefined ? `${f.size}B` : ""}
-                      {f.mtime ? ` · ${new Date(f.mtime).toLocaleString()}` : ""}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
+    <div className="grid h-full min-h-0 grid-cols-[240px_1fr] gap-4">
+      <Card className="min-h-0 overflow-hidden" size="sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <FolderOpen className="text-muted-foreground size-4" />
+            Workspace 文件
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-y-auto py-0">
+          {files.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <FolderOpen className="text-muted-foreground/40 mb-2 size-8" />
+              <p className="text-muted-foreground text-xs">{t("common.noData")}</p>
+            </div>
+          ) : (
+            <div className="space-y-0.5">
+              {files.map((f) => {
+                const active = f.name === selected
+                return (
+                  <button
+                    key={f.name}
+                    onClick={() => loadFile(f.name)}
+                    className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors ${active ? "bg-primary/10 text-primary" : "hover:bg-muted/70"}`}
+                  >
+                    {f.writable ? (
+                      <FileText className="size-3.5 shrink-0" />
+                    ) : (
+                      <Lock className="text-muted-foreground size-3.5 shrink-0" />
+                    )}
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-xs font-medium">{f.name}</span>
+                      {(f.size !== undefined || f.mtime) && (
+                        <span className="text-muted-foreground/70 text-[10px]">
+                          {f.size !== undefined ? `${f.size}B` : ""}
+                          {f.mtime ? ` · ${new Date(f.mtime).toLocaleString()}` : ""}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* 右：内容面板 */}
-      <div className="bg-card ring-foreground/10 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl ring-1">
+      <Card className="min-h-0 min-w-0 overflow-hidden" size="sm">
         {selected === null ? (
-          <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-1 flex-col items-center justify-center">
+            <FileText className="text-muted-foreground/40 mb-3 size-10" />
             <p className="text-muted-foreground text-sm">{t("agent.workspace.selectFile")}</p>
           </div>
         ) : (
           <div className="flex min-h-0 flex-1 flex-col">
-            {/* toolbar */}
             <div className="border-border/50 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3">
               <div className="flex min-w-0 items-center gap-2">
-                <code className="bg-muted rounded px-2 py-1 text-xs">{selected}</code>
+                <span className="truncate text-sm font-medium">{selected}</span>
                 {!editable && <Badge variant="secondary">{t("agent.workspace.readonly")}</Badge>}
                 {dirty && editable && <Badge>{t("agent.workspace.dirty")}</Badge>}
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <div className="bg-muted ring-foreground/10 flex rounded-md p-0.5 ring-1">
-                  <button
+                  <Button
+                    size="sm"
+                    variant="ghost"
                     onClick={() => setMode("preview")}
-                    className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition-colors ${mode === "preview" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`h-7 gap-1 px-2 text-xs ${mode === "preview" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
                   >
                     <Eye className="size-3.5" />
                     <span>{t("agent.workspace.preview")}</span>
-                  </button>
+                  </Button>
                   {editable && (
-                    <button
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={() => setMode("edit")}
-                      className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition-colors ${mode === "edit" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                      className={`h-7 gap-1 px-2 text-xs ${mode === "edit" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
                     >
                       <Pencil className="size-3.5" />
                       <span>{t("agent.workspace.edit")}</span>
-                    </button>
+                    </Button>
                   )}
                 </div>
                 {editable && mode === "edit" && (
-                  <Button size="sm" onClick={handleSave} disabled={!dirty || saving}>
-                    {t("agent.workspace.save")}
+                  <Button size="sm" variant="ghost" onClick={handleSave} disabled={!dirty || saving} className="h-7 gap-1 px-2 text-xs">
+                    <Save className="size-3.5" />
+                    <span>{t("agent.workspace.save")}</span>
                   </Button>
                 )}
               </div>
             </div>
 
-            {/* body */}
             <div className="min-h-0 flex-1 overflow-hidden">
               {loading ? (
                 <p className="text-muted-foreground py-6 text-center text-sm">{t("common.loading")}</p>
@@ -172,7 +191,7 @@ export function WorkspaceTab({ detail, onRefresh }: Props) {
             </div>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   )
 }

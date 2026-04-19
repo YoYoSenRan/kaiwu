@@ -37,6 +37,8 @@ export interface GroupDeps {
   emitStreamDelta: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, content: string) => void
   /** 流式结束（成功 / 失败 / aborted 均触发，兜底清 UI buffer）。 */
   emitStreamEnd: (sessionId: string, idempotencyKey: string, openclawSessionKey: string) => void
+  /** 运行错误事件（transient banner，不入 DB）。对齐 openclaw UI lastError 语义。 */
+  emitError: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, message: string) => void
   /** 查 agent 的 display name；失败返回 undefined。 */
   resolveAgentDisplayName: (agentId: string) => Promise<string | undefined>
   /** 登记活跃 idempotencyKey（供 abort 查表）。sendToMember 调 runStep 前调用。 */
@@ -44,9 +46,12 @@ export interface GroupDeps {
   /** 注销活跃 idempotencyKey。sendToMember 在 runStep 完成/异常后调用。 */
   trackKeyEnd: (sessionId: string, idempotencyKey: string) => void
   /** 从 openclaw chat.history 取该 sessionKey 最后一条 assistant 消息的元数据。失败返 null 不阻塞。 */
-  fetchAssistantMeta: (
-    sessionKey: string,
-  ) => Promise<{ model?: string; usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; total?: number }; stopReason?: string } | null>
+  fetchAssistantMeta: (sessionKey: string) => Promise<{
+    id?: string
+    model?: string
+    usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; total?: number }
+    stopReason?: string
+  } | null>
 }
 
 /** 挂起状态登记：pendingId → { sessionId, byAgentId }。用于 answerAsk 回写。 */
@@ -172,12 +177,16 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
 
   if (!result.success) {
     if (result.error === "aborted") {
-      // 中断不落库；UI 靠 stream:end + 已展示的 user 消息即可
+      // 对齐 openclaw UI：中断保留 partial 作为 assistant 消息
+      const partial = result.content?.trim() ?? ""
+      if (partial) {
+        const abortedMsg = buildAndInsertAbortedMessage(sessionId, target, result.content, idempotencyKey)
+        deps.emitMessage(abortedMsg)
+      }
       return
     }
-    // 其他错误 → 落一条错误提示消息（参考 direct.ts；保证 UI 能看到失败）
-    const errMsg = buildAndInsertErrorMessage(sessionId, target, result.error ?? "unknown error", idempotencyKey)
-    deps.emitMessage(errMsg)
+    // 其他错误 → emit chat:error banner，不入 DB（对齐 openclaw UI）
+    deps.emitError(sessionId, idempotencyKey, target.openclawKey, result.error ?? "unknown error")
     return
   }
 
@@ -205,7 +214,7 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
     sessionId,
     seq: nextSeq(sessionId),
     openclawSessionKey: target.openclawKey,
-    openclawMessageId: null,
+    openclawMessageId: meta?.id ?? null,
     senderType: "agent",
     senderId: target.agentId,
     role: "assistant",
@@ -243,23 +252,23 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
   await onNewMessage(deps, sessionId, assistantMsg)
 }
 
-function buildAndInsertErrorMessage(sessionId: string, target: ChatMember, error: string, idempotencyKey: string): ChatMessage {
+function buildAndInsertAbortedMessage(sessionId: string, target: ChatMember, content: string, idempotencyKey: string): ChatMessage {
   const msg: ChatMessage = {
     id: nanoid(),
     sessionId,
     seq: nextSeq(sessionId),
     openclawSessionKey: target.openclawKey,
     openclawMessageId: null,
-    senderType: "system",
-    senderId: null,
-    role: "system",
-    content: { text: `[error] ${error}` },
+    senderType: "agent",
+    senderId: target.agentId,
+    role: "assistant",
+    content: { text: content },
     mentions: [],
     turnRunId: idempotencyKey,
-    tags: ["error"],
+    tags: ["aborted"],
     model: null,
     usage: null,
-    stopReason: null,
+    stopReason: "aborted",
     createdAtLocal: Date.now(),
     createdAtRemote: null,
   }

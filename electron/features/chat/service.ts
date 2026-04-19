@@ -91,6 +91,10 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
         this.emit("stream:delta", { sessionId, idempotencyKey, openclawSessionKey, content }),
       emitStreamEnd: (sessionId, idempotencyKey, openclawSessionKey) =>
         this.emit("stream:end", { sessionId, idempotencyKey, openclawSessionKey }),
+      emitError: (sessionId, idempotencyKey, openclawSessionKey, message) => {
+        const kind: "disconnected" | "error" = /disconnect/i.test(message) ? "disconnected" : "error"
+        this.emit("chat:error", { sessionId, idempotencyKey, openclawSessionKey, message, kind })
+      },
       resolveAgentDisplayName: (agentId) => this.resolveAgentDisplayName(agentId),
       trackKeyStart: (sessionId, idempotencyKey, openclawKey) => {
         let set = this.activeKeysBySession.get(sessionId)
@@ -114,6 +118,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
       emitLoop: this.deps.emitLoop,
       emitStreamDelta: this.deps.emitStreamDelta,
       emitStreamEnd: this.deps.emitStreamEnd,
+      emitError: this.deps.emitError,
       trackKeyStart: this.deps.trackKeyStart,
       trackKeyEnd: this.deps.trackKeyEnd,
       fetchAssistantMeta: this.deps.fetchAssistantMeta,
@@ -122,7 +127,31 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     // 启动时全量对账（等 gateway 连上后自动跑，不阻塞 onReady）
     void this.reconcileAllOnStartup()
 
+    // 连接健康 watchdog：发现 gateway 掉线时，把所有活跃 run 用合成 "disconnected" error 收尾，
+    // 避免 runStep 因事件流中断永挂。
+    this.startConnectionWatchdog()
+
     log.info("chat service ready")
+  }
+
+  private connectionWatchdog: ReturnType<typeof setInterval> | null = null
+  private lastGatewayConnected = true
+
+  private startConnectionWatchdog(): void {
+    this.connectionWatchdog = setInterval(() => {
+      const connected = getGateway().getState().status === "connected"
+      if (this.lastGatewayConnected && !connected && this.listenersByKey.size > 0) {
+        log.warn(`gateway dropped with ${this.listenersByKey.size} active runs; dispatching synthetic disconnected errors`)
+        for (const [key, listener] of this.listenersByKey) {
+          try {
+            listener({ kind: "error", idempotencyKey: key, message: "disconnected", errorKind: "disconnected" })
+          } catch (err) {
+            log.warn(`synthetic disconnected dispatch failed key=${key}: ${(err as Error).message}`)
+          }
+        }
+      }
+      this.lastGatewayConnected = connected
+    }, 1000)
   }
 
   /** 100ms 轮询 gateway stream，可用即订阅；30s 上限，超时打 error。 */
@@ -141,6 +170,10 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
   async onShutdown(): Promise<void> {
     this.offGatewayEvents?.()
     this.offPluginEvents?.()
+    if (this.connectionWatchdog) {
+      clearInterval(this.connectionWatchdog)
+      this.connectionWatchdog = null
+    }
   }
 
   // ========== session ==========
@@ -350,6 +383,10 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     return {
       send: async (params) => {
         log.info(`chat.send RPC call sessionKey=${params.sessionKey} idempotencyKey=${params.idempotencyKey} msgLen=${params.message.length}`)
+        // 预检 gateway 状态；断连时直接抛 disconnected，避免把传输问题当成真实错误
+        if (getGateway().getState().status !== "connected") {
+          throw new Error("disconnected")
+        }
         try {
           const res = await getGateway().call("chat.send", { sessionKey: params.sessionKey, message: params.message, idempotencyKey: params.idempotencyKey })
           log.info(`chat.send RPC ack idempotencyKey=${params.idempotencyKey}, response=${JSON.stringify(res)}`)
@@ -463,11 +500,12 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     const gw = getGateway()
     if (gw.getState().status !== "connected") return { imported: 0 }
 
-    // 已有 kaiwu 消息的 fuzzy 幂等键：role + 文本前缀 80 字符
-    // （openclaw 没提供稳定 message id，只能 content+role 近似匹配）
+    // 三层去重键：
+    //   ① strongId = __openclaw.id（来自 transcript 文件，UUID，最稳）
+    //   ② syntheticId = role + timestamp（id 缺失时的次佳合成键）
+    //   ③ fuzzyKey = role + 文本前缀 80 字（防 kaiwu 自己发的没填 id 被二次入库）
     const existingKeys = this.buildFuzzyKeySet(sessionId)
-    // 已有 openclawMessageId 的合成 id 集合（用于后续精确匹配）
-    const existingSyntheticIds = listOpenclawMessageIds(sessionId)
+    const existingOpenclawIds = listOpenclawMessageIds(sessionId)
     let imported = 0
 
     for (const member of members) {
@@ -485,6 +523,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
               model?: string
               stopReason?: string
               usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; totalTokens?: number }
+              __openclaw?: { id?: string; seq?: number; kind?: string }
             }>
           }>("chat.history", { sessionKey }),
           new Promise<never>((_, rej) => setTimeout(() => rej(new Error("chat.history timeout 10s")), 10_000)),
@@ -497,13 +536,14 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
 
         for (const r of sorted) {
           const contentText = extractHistoryText(r.content)
+          const strongId = r.__openclaw?.id ?? null
+          const syntheticId = !strongId && r.timestamp ? `${r.role}:${r.timestamp}` : null
+          const storedId = strongId ?? syntheticId
           const fuzzyKey = `${r.role}:${contentText.slice(0, 80)}`
-          // 合成稳定 id：role + timestamp（openclaw 不给 id，timestamp ms 精度极少碰撞）
-          const syntheticId = r.timestamp ? `${r.role}:${r.timestamp}` : null
 
-          // 两层去重：fuzzy 防 kaiwu 已有（kaiwu 发的没填 openclawMessageId）；synthetic 防同一 openclaw 消息重复同步
+          // 三层去重
+          if (storedId && existingOpenclawIds.has(storedId)) continue
           if (existingKeys.has(fuzzyKey)) continue
-          if (syntheticId && existingSyntheticIds.has(syntheticId)) continue
 
           const usage = r.usage
             ? {
@@ -522,7 +562,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
             sessionId,
             seq: nextSeq(sessionId),
             openclawSessionKey: sessionKey,
-            openclawMessageId: syntheticId,
+            openclawMessageId: storedId,
             senderType,
             senderId: senderType === "agent" ? member.agentId : null,
             role,
@@ -536,7 +576,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
             createdAtRemote: r.timestamp ?? null,
           })
           existingKeys.add(fuzzyKey)
-          if (syntheticId) existingSyntheticIds.add(syntheticId)
+          if (storedId) existingOpenclawIds.add(storedId)
           imported++
         }
       } catch (err) {
@@ -593,16 +633,27 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     }
   }
 
-  /** 拉 openclaw chat.history 最后一条 assistant 消息的元数据（usage / model / stopReason）。 */
+  /** 拉 openclaw chat.history 最后一条 assistant 消息的元数据（id / usage / model / stopReason）。 */
   private async fetchAssistantMeta(
     sessionKey: string,
-  ): Promise<{ model?: string; usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; total?: number }; stopReason?: string } | null> {
+  ): Promise<{
+    id?: string
+    model?: string
+    usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; total?: number }
+    stopReason?: string
+  } | null> {
     try {
-      const history = await getGateway().call<
-        Array<{ role: string; model?: string; stopReason?: string; usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; totalTokens?: number } }>
-      >("chat.history", { sessionKey, limit: 1 })
+      const resp = await getGateway().call<{
+        messages?: Array<{
+          role: string
+          model?: string
+          stopReason?: string
+          usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; totalTokens?: number }
+          __openclaw?: { id?: string }
+        }>
+      }>("chat.history", { sessionKey })
+      const history = resp?.messages
       if (!Array.isArray(history) || history.length === 0) return null
-      // 取最后一条 assistant
       const last = [...history].reverse().find((m) => m.role === "assistant")
       if (!last) return null
       const u = last.usage
@@ -616,7 +667,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
             total: u.totalTokens,
           }
         : undefined
-      return { model: last.model, usage, stopReason: last.stopReason }
+      return { id: last.__openclaw?.id, model: last.model, usage, stopReason: last.stopReason }
     } catch (err) {
       log.warn(`fetchAssistantMeta failed sessionKey=${sessionKey}: ${(err as Error).message}`)
       return null

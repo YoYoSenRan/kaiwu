@@ -165,6 +165,19 @@ export interface MessagesRefreshEvent {
   reason: "reconcile" | "external"
 }
 
+/** 运行期错误（非对话内容，不入 DB）。对齐 openclaw UI 的 lastError banner 语义。 */
+export interface ChatErrorEvent {
+  sessionId: string
+  /** 本次失败 run 的 idempotencyKey（可选，UI 可用于 retry）。 */
+  idempotencyKey?: string
+  /** 失败 run 的 openclaw sessionKey（group 多 agent 时定位是谁出错）。 */
+  openclawSessionKey?: string
+  /** 失败原因文本。 */
+  message: string
+  /** 错误类型：disconnected = 连接断（重连后 reconcile 会补）；error = 真实错误。 */
+  kind?: "error" | "disconnected"
+}
+
 export interface ChatEvents {
   "message:new": ChatMessage
   "messages:refresh": MessagesRefreshEvent
@@ -172,6 +185,7 @@ export interface ChatEvents {
   "loop:paused": LoopPausedEvent
   "stream:delta": StreamDeltaEvent
   "stream:end": StreamEndEvent
+  "chat:error": ChatErrorEvent
 }
 
 // ---------- Bridge ----------
@@ -199,7 +213,7 @@ export interface ChatBridge {
     patch: (sessionId: string, memberId: string, patch: MemberPatch) => Promise<ChatMember>
   }
   budget: {
-    get: (sessionId: string) => Promise<BudgetState>
+    get: (sessionId: string) => Promise<BudgetState | null>
     reset: (sessionId: string) => Promise<void>
   }
   on: {
@@ -209,5 +223,6 @@ export interface ChatBridge {
     paused: (l: (payload: LoopPausedEvent) => void) => () => void
     streamDelta: (l: (payload: StreamDeltaEvent) => void) => () => void
     streamEnd: (l: (payload: StreamEndEvent) => void) => () => void
+    error: (l: (payload: ChatErrorEvent) => void) => () => void
   }
 }

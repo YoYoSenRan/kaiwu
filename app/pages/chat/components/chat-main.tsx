@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Send, Sparkles, AlertCircle, Square, User as UserIcon, Bot, ChevronDown } from "lucide-react"
+import { Send, Sparkles, AlertCircle, RotateCcw, Square, User as UserIcon, Bot, Users, ChevronDown, X } from "lucide-react"
 import { toast } from "sonner"
 import { Streamdown, type BundledTheme } from "streamdown"
 import { Button } from "@/components/ui/button"
@@ -101,6 +101,9 @@ export function ChatMain() {
   const [input, setInput] = useState("")
 
   const currentSessionId = useChatUiStore((s) => s.currentSessionId)
+  const drafts = useChatUiStore((s) => s.drafts)
+  const setDraft = useChatUiStore((s) => s.setDraft)
+  const clearDraft = useChatUiStore((s) => s.clearDraft)
   const sessions = useChatDataStore((s) => s.sessions)
   const messages = useChatDataStore((s) => (currentSessionId ? (s.messages[currentSessionId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES))
   const members = useChatDataStore((s) => (currentSessionId ? (s.members[currentSessionId] ?? EMPTY_MEMBERS) : EMPTY_MEMBERS))
@@ -108,6 +111,8 @@ export function ChatMain() {
   const setPending = useChatDataStore((s) => s.setPending)
   const loopStatus = useChatDataStore((s) => (currentSessionId ? s.loopStatus[currentSessionId] : undefined))
   const loopEnded = useChatDataStore((s) => (currentSessionId ? s.loopEnded[currentSessionId] : undefined))
+  const lastError = useChatDataStore((s) => (currentSessionId ? s.lastError[currentSessionId] : undefined))
+  const dismissError = useChatDataStore((s) => s.dismissError)
   const streamingMap = useChatDataStore((s) => (currentSessionId ? (s.streaming[currentSessionId] ?? EMPTY_STREAMING) : EMPTY_STREAMING))
   const getGatewayRow = useAgentCacheStore((s) => s.getGatewayRow)
   const setListResult = useAgentCacheStore((s) => s.setListResult)
@@ -125,6 +130,23 @@ export function ChatMain() {
       .then((res) => setListResult(res))
       .catch(() => {})
   }, [listResult, setListResult])
+
+  // 切 session 时：先存当前 session 的 draft（input 此刻还是上一 session 的），再加载新 session draft
+  const prevSessionIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    const prev = prevSessionIdRef.current
+    if (prev && prev !== currentSessionId) {
+      setDraft(prev, input)
+    }
+    if (currentSessionId) {
+      setInput(drafts[currentSessionId] ?? "")
+    } else {
+      setInput("")
+    }
+    prevSessionIdRef.current = currentSessionId
+    // 只在 currentSessionId 变化时同步；input 变化由 setDraft onChange 单独处理
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSessionId])
 
   // loop ended reason → toast（只针对当前 session；seq 变化即触发一次）
   const lastLoopEndedSeqRef = useRef(0)
@@ -153,6 +175,33 @@ export function ChatMain() {
     if (!currentSessionId) return
     try {
       await window.electron.chat.message.abort(currentSessionId)
+    } catch (err) {
+      toast.error((err as Error).message)
+    }
+  }
+
+  /** 从当前 session 最近一条 user 消息重发。banner retry 入口。 */
+  async function handleRetry() {
+    if (!currentSessionId) return
+    let userMsg: ChatMessage | undefined
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].senderType === "user") {
+        userMsg = messages[i]
+        break
+      }
+    }
+    if (!userMsg) {
+      toast.error(t("chat.retryNoUserMsg"))
+      return
+    }
+    const text = (userMsg.content as { text?: string } | null)?.text ?? ""
+    if (!text.trim()) {
+      toast.error(t("chat.retryNoUserMsg"))
+      return
+    }
+    dismissError(currentSessionId)
+    try {
+      await window.electron.chat.message.send(currentSessionId, text)
     } catch (err) {
       toast.error((err as Error).message)
     }
@@ -206,6 +255,7 @@ export function ChatMain() {
   function handleInputChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const value = e.target.value
     setInput(value)
+    if (currentSessionId) setDraft(currentSessionId, value)
     const caret = e.target.selectionStart ?? value.length
     updateMention(detectMentionAt(value, caret))
   }
@@ -238,9 +288,11 @@ export function ChatMain() {
     const text = input.trim()
     if (!text || !currentSessionId) return
     setInput("")
+    clearDraft(currentSessionId)
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
     }
+    dismissError(currentSessionId)
     try {
       if (isHitl && pending) {
         await window.electron.chat.message.answer(currentSessionId, { pendingId: pending.pendingId, answer: text })
@@ -346,19 +398,60 @@ export function ChatMain() {
         <h2 className="text-sm font-semibold tracking-tight">{session?.label ?? currentSessionId}</h2>
       </div>
 
+      {lastError &&
+        (lastError.kind === "disconnected" ? (
+          <div className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-700 dark:text-yellow-400">
+            <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+            <span className="flex-1 whitespace-pre-wrap">{t("chat.error.disconnected")}</span>
+            <button
+              type="button"
+              onClick={() => currentSessionId && dismissError(currentSessionId)}
+              aria-label={t("chat.error.dismiss")}
+              className="hover:bg-yellow-500/20 flex size-5 shrink-0 items-center justify-center rounded transition-colors"
+            >
+              <X className="size-3" />
+            </button>
+          </div>
+        ) : (
+          <div className="bg-destructive/10 text-destructive ring-destructive/30 mx-4 mt-3 flex items-start gap-2 rounded-lg px-3 py-2 text-xs ring-1">
+            <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+            <span className="flex-1 whitespace-pre-wrap">{t("chat.error.banner", { msg: lastError.text })}</span>
+            {!isRunning && (
+              <button
+                type="button"
+                onClick={() => void handleRetry()}
+                className="hover:bg-destructive/20 flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 transition-colors"
+              >
+                <RotateCcw className="size-3" />
+                <span>{t("chat.retry")}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => currentSessionId && dismissError(currentSessionId)}
+              aria-label={t("chat.error.dismiss")}
+              className="hover:bg-destructive/20 flex size-5 shrink-0 items-center justify-center rounded transition-colors"
+            >
+              <X className="size-3" />
+            </button>
+          </div>
+        ))}
+
       <div className="relative flex min-h-0 flex-1 flex-col">
-        {showJumpBtn && (
-          <button
-            onClick={jumpToBottom}
-            className="bg-card text-foreground ring-foreground/10 hover:bg-muted absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs shadow-md ring-1 transition-colors"
-          >
-            <ChevronDown className="size-3.5" />
-            <span>{t("chat.jumpToBottom")}</span>
-          </button>
-        )}
+        <button
+          onClick={jumpToBottom}
+          aria-hidden={!showJumpBtn}
+          tabIndex={showJumpBtn ? 0 : -1}
+          className={`bg-card text-foreground ring-foreground/10 hover:bg-muted absolute bottom-6 left-1/2 z-10 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs shadow-md ring-1 transition-all duration-200 ease-out ${
+            showJumpBtn ? "-translate-x-1/2 translate-y-0 opacity-100" : "pointer-events-none -translate-x-1/2 translate-y-2 opacity-0"
+          }`}
+        >
+          <ChevronDown className="size-3.5" />
+          <span>{t("chat.jumpToBottom")}</span>
+        </button>
         <div ref={scrollAreaRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4">
           {messages.length === 0 && sortedStreams.length === 0 ? (
-            <EmptyHint t={t} />
+            <EmptyHint t={t} mode={session?.mode} />
           ) : (
             <div className="flex flex-col gap-3">
               {messages.map((msg, idx) => {
@@ -388,6 +481,7 @@ export function ChatMain() {
                   <StreamingRow
                     key={`stream:${key}`}
                     content={buf.content}
+                    agentId={agentId ?? undefined}
                     agentName={agent?.name ?? agentId ?? undefined}
                     avatarUrl={agent?.identity?.avatarUrl}
                     emoji={agent?.identity?.emoji}
@@ -468,12 +562,13 @@ export function ChatMain() {
   )
 }
 
-function EmptyHint({ t }: { t: (k: string) => string }) {
+function EmptyHint({ t, mode }: { t: (k: string) => string; mode?: "direct" | "group" }) {
+  const Icon = mode === "group" ? Users : mode === "direct" ? Bot : Sparkles
   return (
     <div className="flex h-full items-center justify-center transition-opacity duration-500 ease-out">
       <div className="animate-in fade-in-0 zoom-in-95 flex flex-col items-center gap-5 text-center duration-500">
         <div className="from-primary/20 via-primary/10 ring-primary/20 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br to-transparent ring-1">
-          <Sparkles className="text-primary size-8" />
+          <Icon className="text-primary size-8" />
         </div>
         <div className="space-y-1.5">
           <p className="text-foreground text-lg font-medium tracking-tight">{t("chat.empty.title")}</p>
@@ -494,23 +589,12 @@ interface RowProps {
 }
 
 function MessageRow({ msg, agentName, avatarUrl, emoji, agentModel, memberAgentIds }: RowProps) {
+  const { t } = useTranslation()
   const isUser = msg.senderType === "user"
-  const isError = msg.tags?.includes("error")
+  const isAborted = msg.tags?.includes("aborted")
   const isSystem = msg.senderType === "system"
   const text = messageText(msg)
-  const rendered = isUser || !isSystem && !isError ? highlightMentions(text, memberAgentIds) : text
-
-  // error：独立红色 alert，居中、带图标
-  if (isError) {
-    return (
-      <div className="flex justify-center py-1">
-        <div className="bg-destructive/10 text-destructive ring-destructive/30 flex max-w-[80%] items-start gap-2 rounded-lg px-3 py-2 text-xs whitespace-pre-wrap ring-1">
-          <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
-          <span>{text || "—"}</span>
-        </div>
-      </div>
-    )
-  }
+  const rendered = isUser || !isSystem ? highlightMentions(text, memberAgentIds) : text
 
   // system：居中、小字灰色、无气泡
   if (isSystem) {
@@ -523,12 +607,17 @@ function MessageRow({ msg, agentName, avatarUrl, emoji, agentModel, memberAgentI
 
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
-      <Avatar isUser={isUser} avatarUrl={avatarUrl} emoji={emoji} />
+      <Avatar isUser={isUser} avatarUrl={avatarUrl} emoji={emoji} ringClass={agentRingClass(msg.senderId)} />
       <div className={`flex max-w-[70%] flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
-        <div className={`min-w-0 overflow-hidden rounded-2xl px-3 py-2 text-sm ${isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+        <div
+          className={`min-w-0 overflow-hidden rounded-2xl px-3 py-2 text-sm ${isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"} ${
+            isAborted ? "ring-muted-foreground/40 ring-1 ring-dashed" : ""
+          }`}
+        >
           <Streamdown mode="static" shikiTheme={SHIKI_THEME} className="markdown-prose">
             {rendered || "—"}
           </Streamdown>
+          {isAborted && <span className="text-muted-foreground mt-1 block text-[10px]">{t("chat.aborted")}</span>}
         </div>
         <MessageFooter msg={msg} agentName={agentName} isUser={isUser} agentModel={agentModel} />
       </div>
@@ -546,10 +635,22 @@ function TimeDivider({ ts }: { ts: number }) {
   )
 }
 
-function StreamingRow({ content, agentName, avatarUrl, emoji }: { content: string; agentName?: string; avatarUrl?: string; emoji?: string }) {
+function StreamingRow({
+  content,
+  agentId,
+  agentName,
+  avatarUrl,
+  emoji,
+}: {
+  content: string
+  agentId?: string
+  agentName?: string
+  avatarUrl?: string
+  emoji?: string
+}) {
   return (
     <div className="flex flex-row gap-3">
-      <Avatar isUser={false} avatarUrl={avatarUrl} emoji={emoji} />
+      <Avatar isUser={false} avatarUrl={avatarUrl} emoji={emoji} ringClass={agentRingClass(agentId)} />
       <div className="flex max-w-[70%] flex-col items-start gap-1">
         <div className="bg-muted text-foreground ring-primary/30 rounded-2xl px-3 py-2 text-sm ring-1">
           {content ? (
@@ -566,9 +667,14 @@ function StreamingRow({ content, agentName, avatarUrl, emoji }: { content: strin
   )
 }
 
-function Avatar({ isUser, avatarUrl, emoji }: { isUser: boolean; avatarUrl?: string; emoji?: string }) {
+function Avatar({ isUser, avatarUrl, emoji, ringClass }: { isUser: boolean; avatarUrl?: string; emoji?: string; ringClass?: string }) {
+  const ring = isUser ? "ring-primary/30" : (ringClass ?? "ring-foreground/10")
   return (
-    <div className={`flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg ${isUser ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
+    <div
+      className={`flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg ring-2 ${ring} ${
+        isUser ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+      }`}
+    >
       {!isUser && avatarUrl ? (
         <img src={avatarUrl} alt="" className="size-full object-cover" />
       ) : !isUser && emoji ? (
@@ -607,25 +713,25 @@ function MessageFooter({ msg, agentName, isUser, agentModel }: { msg: ChatMessag
     )
   if (inTok)
     parts.push(
-      <span key="in" className="text-muted-foreground">
+      <span key="in" title="input tokens" className="text-muted-foreground cursor-help">
         ↑{inTok}
       </span>,
     )
   if (outTok)
     parts.push(
-      <span key="out" className="text-muted-foreground">
+      <span key="out" title="output tokens" className="text-muted-foreground cursor-help">
         ↓{outTok}
       </span>,
     )
   if (cacheR)
     parts.push(
-      <span key="cr" className="text-muted-foreground">
+      <span key="cr" title="cache read tokens" className="text-muted-foreground cursor-help">
         R{cacheR}
       </span>,
     )
   if (cacheW)
     parts.push(
-      <span key="cw" className="text-muted-foreground">
+      <span key="cw" title="cache write tokens" className="text-muted-foreground cursor-help">
         W{cacheW}
       </span>,
     )

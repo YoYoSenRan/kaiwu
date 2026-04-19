@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react"
+import { AlertTriangle, Save, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -64,10 +64,31 @@ export function SettingsTab({ detail, onUpdated, onDeleted }: Props) {
     <div className="space-y-4">
       <Card>
         <CardContent>
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-4 flex-1">
+              <div>
+                <p className="text-base font-semibold">{t("agent.settings.basicInfo")}</p>
+                <p className="text-xs text-muted-foreground">{t("agent.settings.basicInfoHint")}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>{t("agent.dialog.create.name")}</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+            </div>
+            <Button onClick={handleSave} disabled={saving} size="sm">
+              <Save className="mr-1.5 size-4" />
+              {t("common.save")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>{t("agent.dialog.create.name")}</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <div>
+              <p className="text-base font-semibold">{t("agent.settings.modelConfig")}</p>
+              <p className="text-xs text-muted-foreground">{t("agent.settings.modelConfigHint")}</p>
             </div>
             <div className="space-y-2">
               <Label>{t("agent.dialog.create.model")}</Label>
@@ -88,6 +109,17 @@ export function SettingsTab({ detail, onUpdated, onDeleted }: Props) {
                 </Select>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <p className="text-base font-semibold">{t("agent.settings.identity")}</p>
+              <p className="text-xs text-muted-foreground">{t("agent.settings.identityHint")}</p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>{t("agent.dialog.create.emoji")}</Label>
@@ -98,21 +130,19 @@ export function SettingsTab({ detail, onUpdated, onDeleted }: Props) {
                 <Input value={avatar} onChange={(e) => setAvatar(e.target.value)} />
               </div>
             </div>
-            <div className="flex justify-end">
-              <Button onClick={handleSave} disabled={saving}>
-                {t("common.save")}
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-destructive/20 bg-destructive/5">
         <CardContent>
           <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium">{t("agent.settings.danger")}</p>
-              <p className="text-muted-foreground text-xs">{t("agent.settings.dangerHint")}</p>
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 size-4 text-destructive shrink-0" />
+              <div>
+                <p className="text-base font-semibold text-destructive">{t("agent.settings.danger")}</p>
+                <p className="text-xs text-muted-foreground">{t("agent.settings.dangerHint")}</p>
+              </div>
             </div>
             <div className="shrink-0">
               <Button variant="destructive" onClick={() => setDeleteOpen(true)}>

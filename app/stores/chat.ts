@@ -1,5 +1,6 @@
 import { create } from "zustand"
-import type { ChatMessage, ChatMember, ChatSession, LoopEvent, LoopPausedEvent, StreamDeltaEvent, StreamEndEvent } from "../../electron/features/chat/types"
+import { persist } from "zustand/middleware"
+import type { BudgetState, ChatErrorEvent, ChatMessage, ChatMember, ChatSession, LoopEvent, LoopPausedEvent, StreamDeltaEvent, StreamEndEvent } from "../../electron/features/chat/types"
 
 /** 单条流式 buffer：当前 session 的某个 idempotencyKey 的累积内容。 */
 export interface StreamBuffer {
@@ -24,13 +25,40 @@ function extractPreview(msg: ChatMessage): string {
 
 interface ChatUiState {
   currentSessionId: string | null
+  /** 草稿：每 session 当前未发送的输入文本。切 session 保留，关闭应用也保留。 */
+  drafts: Record<string, string>
   setCurrent: (id: string | null) => void
+  setDraft: (sessionId: string, text: string) => void
+  clearDraft: (sessionId: string) => void
 }
 
-export const useChatUiStore = create<ChatUiState>()((set) => ({
-  currentSessionId: null,
-  setCurrent: (id) => set({ currentSessionId: id }),
-}))
+export const useChatUiStore = create<ChatUiState>()(
+  persist(
+    (set) => ({
+      currentSessionId: null,
+      drafts: {},
+      setCurrent: (id) => set({ currentSessionId: id }),
+      setDraft: (sessionId, text) =>
+        set((s) => {
+          if (!text) {
+            if (!s.drafts[sessionId]) return {}
+            const next = { ...s.drafts }
+            delete next[sessionId]
+            return { drafts: next }
+          }
+          return { drafts: { ...s.drafts, [sessionId]: text } }
+        }),
+      clearDraft: (sessionId) =>
+        set((s) => {
+          if (!s.drafts[sessionId]) return {}
+          const next = { ...s.drafts }
+          delete next[sessionId]
+          return { drafts: next }
+        }),
+    }),
+    { name: "chat-ui", version: 1, partialize: (s) => ({ drafts: s.drafts }) },
+  ),
+)
 
 // ---------- data cache ----------
 
@@ -50,6 +78,10 @@ interface ChatDataState {
   sessionLastText: Record<string, string>
   /** 每 session 未读数（sidebar 红点）。 */
   unread: Record<string, number>
+  /** 每 session 最后一次运行错误（对齐 openclaw UI lastError；transient，不入 DB）。 */
+  lastError: Record<string, { text: string; ts: number; openclawSessionKey?: string; idempotencyKey?: string; kind?: "error" | "disconnected" }>
+  /** 每 session 预算用量快照（按需 refresh）。 */
+  budgetStates: Record<string, BudgetState | null>
 
   refreshSessions: () => Promise<void>
   refreshMembers: (sessionId: string) => Promise<void>
@@ -60,7 +92,11 @@ interface ChatDataState {
   setLoopStatus: (ev: LoopEvent) => void
   applyStreamDelta: (ev: StreamDeltaEvent) => void
   applyStreamEnd: (ev: StreamEndEvent) => void
+  applyError: (ev: ChatErrorEvent) => void
+  dismissError: (sessionId: string) => void
   clearUnread: (sessionId: string) => void
+  refreshBudget: (sessionId: string) => Promise<void>
+  resetBudget: (sessionId: string) => Promise<void>
 }
 
 export const useChatDataStore = create<ChatDataState>((set) => ({
@@ -74,6 +110,8 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
   sessionActivity: {},
   sessionLastText: {},
   unread: {},
+  lastError: {},
+  budgetStates: {},
 
   refreshSessions: async () => {
     const sessions = await window.electron.chat.session.list()
@@ -156,6 +194,35 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
       delete next[sessionId]
       return { unread: next }
     }),
+  applyError: (ev) =>
+    set((s) => ({
+      lastError: {
+        ...s.lastError,
+        [ev.sessionId]: {
+          text: ev.message,
+          ts: Date.now(),
+          openclawSessionKey: ev.openclawSessionKey,
+          idempotencyKey: ev.idempotencyKey,
+          kind: ev.kind,
+        },
+      },
+    })),
+  dismissError: (sessionId) =>
+    set((s) => {
+      if (!s.lastError[sessionId]) return {}
+      const next = { ...s.lastError }
+      delete next[sessionId]
+      return { lastError: next }
+    }),
+  refreshBudget: async (sessionId) => {
+    const state = await window.electron.chat.budget.get(sessionId)
+    set((s) => ({ budgetStates: { ...s.budgetStates, [sessionId]: state } }))
+  },
+  resetBudget: async (sessionId) => {
+    await window.electron.chat.budget.reset(sessionId)
+    const state = await window.electron.chat.budget.get(sessionId)
+    set((s) => ({ budgetStates: { ...s.budgetStates, [sessionId]: state } }))
+  },
   setPending: (ev) => set({ pending: ev }),
   setLoopStatus: (ev) =>
     set((s) => {
@@ -209,6 +276,7 @@ export function attachChatListeners(): () => void {
   const offPaused = window.electron.chat.on.paused((ev) => store.setPending(ev))
   const offStreamDelta = window.electron.chat.on.streamDelta((ev) => store.applyStreamDelta(ev))
   const offStreamEnd = window.electron.chat.on.streamEnd((ev) => store.applyStreamEnd(ev))
+  const offError = window.electron.chat.on.error((ev) => store.applyError(ev))
   return () => {
     offMessage()
     offRefresh()
@@ -216,5 +284,6 @@ export function attachChatListeners(): () => void {
     offPaused()
     offStreamDelta()
     offStreamEnd()
+    offError()
   }
 }

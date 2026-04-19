@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { MessageSquare, MoreVertical, Plus, Trash2 } from "lucide-react"
+import { MessageSquare, MoreVertical, Plus, Search, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -24,18 +24,27 @@ export function ChatSidebar() {
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [query, setQuery] = useState("")
 
   useEffect(() => {
     refreshSessions()
   }, [refreshSessions])
 
   const sortedSessions = useMemo(() => {
-    return [...sessions].sort((a, b) => {
+    const sorted = [...sessions].sort((a, b) => {
       const ta = sessionActivity[a.id] ?? a.updatedAt
       const tb = sessionActivity[b.id] ?? b.updatedAt
       return tb - ta
     })
-  }, [sessions, sessionActivity])
+    const q = query.trim().toLowerCase()
+    if (!q) return sorted
+    return sorted.filter((s) => {
+      const label = (s.label ?? s.id).toLowerCase()
+      const preview = (sessionLastText[s.id] ?? "").toLowerCase()
+      const mode = s.mode.toLowerCase()
+      return label.includes(q) || preview.includes(q) || mode.includes(q)
+    })
+  }, [sessions, sessionActivity, sessionLastText, query])
 
   async function handleSelect(id: string) {
     setCurrent(id)
@@ -80,11 +89,31 @@ export function ChatSidebar() {
           <Plus />
           <span>{t("chat.new")}</span>
         </Button>
-        <Input placeholder={t("chat.search")} className="hidden" />
+        <div className="relative">
+          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("chat.search")}
+            className="h-8 pl-8 pr-8 text-xs"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label={t("common.clear")}
+              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 flex size-4 -translate-y-1/2 items-center justify-center rounded transition-colors"
+            >
+              <X className="size-3" />
+            </button>
+          )}
+        </div>
       </div>
       <div className="flex-1 space-y-1 overflow-y-auto p-3">
         {sortedSessions.length === 0 ? (
-          <p className="text-muted-foreground px-3 py-4 text-center text-sm">{t("chat.sessions.empty")}</p>
+          <p className="text-muted-foreground px-3 py-4 text-center text-sm">
+            {query ? t("chat.sessions.noMatch") : t("chat.sessions.empty")}
+          </p>
         ) : (
           sortedSessions.map((s) => {
             const active = s.id === currentSessionId

@@ -26,12 +26,17 @@ export interface DirectDeps {
   emitLoop: (kind: "started" | "ended", sessionId: string, reason?: LoopEndedReason) => void
   emitStreamDelta: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, content: string) => void
   emitStreamEnd: (sessionId: string, idempotencyKey: string, openclawSessionKey: string) => void
+  /** 运行错误事件（transient banner，不入 DB）。对齐 openclaw UI lastError 语义。 */
+  emitError: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, message: string) => void
   trackKeyStart: (sessionId: string, idempotencyKey: string, openclawKey: string) => void
   trackKeyEnd: (sessionId: string, idempotencyKey: string) => void
   /** 从 openclaw chat.history 取该 sessionKey 最后一条 assistant 消息的元数据。失败返 null 不阻塞。 */
-  fetchAssistantMeta: (
-    sessionKey: string,
-  ) => Promise<{ model?: string; usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; total?: number }; stopReason?: string } | null>
+  fetchAssistantMeta: (sessionKey: string) => Promise<{
+    id?: string
+    model?: string
+    usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; total?: number }
+    stopReason?: string
+  } | null>
 }
 
 /**
@@ -83,12 +88,16 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
 
     if (!result.success) {
       if (result.error === "aborted") {
-        // 中断不落库；UI 靠 stream:end + 已展示的 user 消息即可
+        // 对齐 openclaw UI：中断时保留 partial 作为完整 assistant 消息，防数据丢失
+        const partial = result.content?.trim() ?? ""
+        if (partial) {
+          const abortedMsg = buildAndInsertAbortedMessage(sessionId, member, result.content, idempotencyKey)
+          deps.emitMessage(abortedMsg)
+        }
         return
       }
-      // 其他错误 → 落一条错误提示消息
-      const errMsg = buildAndInsertErrorMessage(sessionId, member, result.error ?? "unknown error", idempotencyKey)
-      deps.emitMessage(errMsg)
+      // 其他错误 → emit chat:error banner，不入 DB（对齐 openclaw UI）
+      deps.emitError(sessionId, idempotencyKey, member.openclawKey, result.error ?? "unknown error")
       return
     }
 
@@ -99,7 +108,7 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
       return
     }
 
-    // 从 openclaw chat.history 补元数据（usage / model / stopReason）——event stream 不带这些
+    // 从 openclaw chat.history 补元数据（id / usage / model / stopReason）——event stream 不带这些
     const meta = await deps.fetchAssistantMeta(member.openclawKey).catch(() => null)
     const usage = meta?.usage ?? result.usage ?? null
     const model = meta?.model ?? null
@@ -113,7 +122,7 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
       sessionId,
       seq: nextSeq(sessionId),
       openclawSessionKey: member.openclawKey,
-      openclawMessageId: null,
+      openclawMessageId: meta?.id ?? null,
       senderType: "agent",
       senderId: member.agentId,
       role: "assistant",
@@ -153,23 +162,23 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
   }
 }
 
-function buildAndInsertErrorMessage(sessionId: string, member: ChatMember, error: string, idempotencyKey: string): ChatMessage {
+function buildAndInsertAbortedMessage(sessionId: string, member: ChatMember, content: string, idempotencyKey: string): ChatMessage {
   const msg: ChatMessage = {
     id: nanoid(),
     sessionId,
     seq: nextSeq(sessionId),
     openclawSessionKey: member.openclawKey,
     openclawMessageId: null,
-    senderType: "system",
-    senderId: null,
-    role: "system",
-    content: { text: `[error] ${error}` },
+    senderType: "agent",
+    senderId: member.agentId,
+    role: "assistant",
+    content: { text: content },
     mentions: [],
     turnRunId: idempotencyKey,
-    tags: ["error"],
+    tags: ["aborted"],
     model: null,
     usage: null,
-    stopReason: null,
+    stopReason: "aborted",
     createdAtLocal: Date.now(),
     createdAtRemote: null,
   }

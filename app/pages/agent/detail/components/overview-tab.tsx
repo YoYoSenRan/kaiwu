@@ -1,4 +1,4 @@
-import { Copy } from "lucide-react"
+import { Copy, Cpu, FolderOpen, Image, Palette, RefreshCw, Smile, User } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
@@ -31,95 +31,116 @@ export function OverviewTab({ detail, defaultId }: Props) {
   }
 
   return (
-    <div className="grid items-start gap-4 md:grid-cols-2">
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">{t("agent.overview.identity", "Identity")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Field label={t("agent.overview.name")}>
-              <div className="flex items-center gap-2">
-                <span className="text-sm">{name ?? "—"}</span>
-                {isDefault && (
-                  <Badge variant="secondary" className="font-normal">
-                    {t("agent.detail.defaultBadge")}
-                  </Badge>
-                )}
-              </div>
-            </Field>
-
-            <Field label={t("agent.overview.emoji")}>
-              <span className="text-sm">{emoji ?? "—"}</span>
-            </Field>
-
-            <Field label={t("agent.overview.avatar")}>
-              {avatar ? <code className="bg-muted rounded px-2 py-1 text-xs">{avatar}</code> : <span className="text-muted-foreground text-sm">—</span>}
-            </Field>
-
-            <Field label={t("agent.overview.theme")}>
-              <span className="text-sm">{theme ?? "—"}</span>
-            </Field>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">{t("agent.overview.configuration", "Configuration")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Field label={t("agent.overview.workspace")}>
-              {workspace ? (
+    <Card>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-base">{t("agent.overview.title", "Overview")}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          <section>
+            <h3 className="text-muted-foreground mb-4 text-xs font-semibold uppercase tracking-wide">
+              {t("agent.overview.identity", "Identity")}
+            </h3>
+            <div className="grid grid-cols-2 gap-6">
+              <FieldItem icon={<User className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.name")}>
                 <div className="flex items-center gap-2">
-                  <code className="bg-muted rounded px-2 py-1 text-xs">{workspace}</code>
-                  <div>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => copy(workspace, t("agent.overview.workspace"))}>
+                  <span className="text-sm font-medium">{name ?? <Empty />}</span>
+                  {isDefault && (
+                    <Badge variant="secondary" className="font-normal">
+                      {t("agent.detail.defaultBadge")}
+                    </Badge>
+                  )}
+                </div>
+              </FieldItem>
+
+              <FieldItem icon={<Smile className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.emoji")}>
+                <span className="text-sm font-medium">{emoji ?? <Empty />}</span>
+              </FieldItem>
+
+              <FieldItem icon={<Palette className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.theme")}>
+                <span className="text-sm font-medium">{theme ?? <Empty />}</span>
+              </FieldItem>
+
+              <FieldItem icon={<Image className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.avatar")}>
+                {avatar ? (
+                  avatar.startsWith("http") ? (
+                    <img src={avatar} alt="avatar" className="h-8 w-8 rounded-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-medium">{avatar}</span>
+                  )
+                ) : (
+                  <Empty />
+                )}
+              </FieldItem>
+
+              <FieldItem icon={<FolderOpen className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.workspace")}>
+                {workspace ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{workspace}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => copy(workspace, t("agent.overview.workspace"))}
+                    >
                       <Copy className="size-3.5" />
                     </Button>
                   </div>
-                </div>
-              ) : (
-                <span className="text-muted-foreground text-sm">—</span>
-              )}
-            </Field>
+                ) : (
+                  <Empty />
+                )}
+              </FieldItem>
+            </div>
+          </section>
 
-            <Field label={t("agent.overview.primaryModel")}>
-              {primary ? (
-                <Badge variant="secondary" className="font-normal">
-                  {primary}
-                </Badge>
-              ) : (
-                <span className="text-muted-foreground text-sm">—</span>
-              )}
-            </Field>
+          <section>
+            <h3 className="text-muted-foreground mb-4 text-xs font-semibold uppercase tracking-wide">
+              {t("agent.overview.configuration", "Configuration")}
+            </h3>
+            <div className="grid grid-cols-2 gap-6">
+              <FieldItem icon={<Cpu className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.primaryModel")}>
+                {primary ? (
+                  <Badge variant="secondary" className="font-normal">
+                    {primary}
+                  </Badge>
+                ) : (
+                  <Empty />
+                )}
+              </FieldItem>
 
-            <Field label={t("agent.overview.fallbacks")}>
-              {fallbacks.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {fallbacks.map((m) => (
-                    <Badge key={m} variant="secondary" className="font-normal">
-                      {m}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-muted-foreground text-sm">—</span>
-              )}
-            </Field>
-          </div>
-        </CardContent>
-      </Card>
+              <FieldItem icon={<RefreshCw className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.fallbacks")}>
+                {fallbacks.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {fallbacks.map((m) => (
+                      <Badge key={m} variant="secondary" className="font-normal">
+                        {m}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <Empty />
+                )}
+              </FieldItem>
+            </div>
+          </section>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function FieldItem({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3">
+      {icon}
+      <div className="min-w-0 flex-1">
+        <div className="text-muted-foreground text-xs uppercase tracking-wide">{label}</div>
+        <div className="mt-1">{children}</div>
+      </div>
     </div>
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-[100px_1fr] items-start gap-4">
-      <span className="text-muted-foreground pt-1 text-xs tracking-wide uppercase">{label}</span>
-      <div className="min-w-0">{children}</div>
-    </div>
-  )
+function Empty() {
+  return <span className="text-muted-foreground/60 text-sm">—</span>
 }

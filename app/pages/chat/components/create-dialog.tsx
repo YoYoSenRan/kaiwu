@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Bot, Users, Loader2 } from "lucide-react"
+import { Bot, Users, Loader2, ChevronDown } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,10 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [replyModes, setReplyModes] = useState<Record<string, ReplyMode>>({})
   const [label, setLabel] = useState("")
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [maxRounds, setMaxRounds] = useState("")
+  const [maxTokens, setMaxTokens] = useState("")
+  const [wallClockSec, setWallClockSec] = useState("")
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(false)
 
@@ -57,6 +61,10 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
     setSelected(new Set())
     setReplyModes({})
     setLabel("")
+    setAdvancedOpen(false)
+    setMaxRounds("")
+    setMaxTokens("")
+    setWallClockSec("")
   }
 
   const toggleAgent = (agentId: string) => {
@@ -81,9 +89,18 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
     if (!canSubmit) return
     setLoading(true)
     try {
+      const budget: { maxRounds?: number; maxTokens?: number; wallClockSec?: number } = {}
+      const r = Number(maxRounds)
+      if (Number.isFinite(r) && r > 0) budget.maxRounds = r
+      const tk = Number(maxTokens)
+      if (Number.isFinite(tk) && tk > 0) budget.maxTokens = tk
+      const w = Number(wallClockSec)
+      if (Number.isFinite(w) && w > 0) budget.wallClockSec = w
+
       const session = await window.electron.chat.session.create({
         mode,
         label: label.trim() || undefined,
+        budget: Object.keys(budget).length > 0 ? budget : undefined,
         members: Array.from(selected).map((agentId) => ({
           agentId,
           // direct 固定 auto（1v1 没必要只回 @）；group 读用户选择，默认 auto
@@ -179,6 +196,34 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
           <div className="space-y-2">
             <Label>{t("chat.dialog.create.label")}</Label>
             <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t("chat.dialog.create.labelPlaceholder")} />
+          </div>
+
+          {/* Advanced */}
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setAdvancedOpen((v) => !v)}
+              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[11px] font-medium tracking-wider uppercase transition-colors"
+            >
+              <ChevronDown className={`size-3 transition-transform ${advancedOpen ? "" : "-rotate-90"}`} />
+              {t("chat.dialog.create.advanced")}
+            </button>
+            {advancedOpen && (
+              <div className="ring-foreground/10 space-y-3 rounded-lg p-3 ring-1">
+                <div className="space-y-1">
+                  <Label>{t("chat.dialog.create.budgetRounds")}</Label>
+                  <Input type="number" value={maxRounds} onChange={(e) => setMaxRounds(e.target.value)} placeholder={t("chat.dialog.create.budgetRoundsHint")} />
+                </div>
+                <div className="space-y-1">
+                  <Label>{t("chat.dialog.create.budgetTokens")}</Label>
+                  <Input type="number" value={maxTokens} onChange={(e) => setMaxTokens(e.target.value)} placeholder={t("chat.dialog.create.budgetTokensHint")} />
+                </div>
+                <div className="space-y-1">
+                  <Label>{t("chat.dialog.create.budgetWallClock")}</Label>
+                  <Input type="number" value={wallClockSec} onChange={(e) => setWallClockSec(e.target.value)} placeholder={t("chat.dialog.create.budgetWallClockHint")} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

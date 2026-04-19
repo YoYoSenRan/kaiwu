@@ -70,6 +70,7 @@ export default function AgentList() {
               <Badge variant={missing.length > 0 ? "destructive" : "secondary"}>{missing.length}</Badge>
             </TabsTrigger>
           </TabsList>
+
           <TabsContent value="mine">
             <div className="min-h-0 flex-1 overflow-y-auto p-0.5">
               <MineTab entries={mine} />
