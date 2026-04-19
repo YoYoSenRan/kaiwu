@@ -87,6 +87,10 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
       emitMessage: (msg) => this.emit("message:new", msg),
       emitLoop: (kind, sessionId, reason) => this.emit("loop:event", { sessionId, kind, reason }),
       emitPaused: (ev) => this.emit("loop:paused", ev),
+      emitStreamDelta: (sessionId, idempotencyKey, openclawSessionKey, content) =>
+        this.emit("stream:delta", { sessionId, idempotencyKey, openclawSessionKey, content }),
+      emitStreamEnd: (sessionId, idempotencyKey, openclawSessionKey) =>
+        this.emit("stream:end", { sessionId, idempotencyKey, openclawSessionKey }),
       resolveAgentDisplayName: (agentId) => this.resolveAgentDisplayName(agentId),
       trackKeyStart: (sessionId, idempotencyKey, openclawKey) => {
         let set = this.activeKeysBySession.get(sessionId)
@@ -101,17 +105,18 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
         this.activeKeysBySession.get(sessionId)?.delete(idempotencyKey)
         this.sessionKeyByKey.delete(idempotencyKey)
       },
+      fetchAssistantMeta: (sessionKey) => this.fetchAssistantMeta(sessionKey),
     }
 
     this.directDeps = {
       backend: this.deps.backend,
       emitMessage: this.deps.emitMessage,
       emitLoop: this.deps.emitLoop,
-      emitStreamDelta: (sessionId, idempotencyKey, content) => this.emit("stream:delta", { sessionId, idempotencyKey, content }),
-      emitStreamEnd: (sessionId, idempotencyKey) => this.emit("stream:end", { sessionId, idempotencyKey }),
+      emitStreamDelta: this.deps.emitStreamDelta,
+      emitStreamEnd: this.deps.emitStreamEnd,
       trackKeyStart: this.deps.trackKeyStart,
       trackKeyEnd: this.deps.trackKeyEnd,
-      fetchAssistantMeta: (sessionKey) => this.fetchAssistantMeta(sessionKey),
+      fetchAssistantMeta: this.deps.fetchAssistantMeta,
     }
 
     // 启动时全量对账（等 gateway 连上后自动跑，不阻塞 onReady）
@@ -198,7 +203,21 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
       log.error("message:send called but deps not ready")
       throw new Error("chat service not ready")
     }
+    // preflight 四闸（参考 discord plugin：gate-before-persist，避免脏数据）
+    if (!content.trim()) {
+      throw new Error("message content is empty")
+    }
+    const preSession = getSession(sessionId)
+    if (!preSession) {
+      throw new Error(`session ${sessionId} not found`)
+    }
+    if (preSession.archived) {
+      throw new Error(`session ${sessionId} is archived`)
+    }
     const members = listActiveMembers(sessionId)
+    if (members.length === 0) {
+      throw new Error(`session ${sessionId} has no active members`)
+    }
     log.info(`message:send activeMembers=${members.length} memberIds=${members.map((m) => m.id).join(",")}`)
     const userMsg: ChatMessage = {
       id: nanoid(),
@@ -239,11 +258,8 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     })
     this.emit("message:new", userMsg)
 
-    const session = getSession(sessionId)
-    if (!session) throw new Error(`session ${sessionId} not found`)
-
     try {
-      if (session.mode === "direct") {
+      if (preSession.mode === "direct") {
         if (!this.directDeps) throw new Error("direct deps not ready")
         log.info(`message:send dispatching to direct loop sessionId=${sessionId}`)
         await sendDirect(this.directDeps, sessionId, userMsg)

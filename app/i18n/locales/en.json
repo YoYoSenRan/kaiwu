@@ -281,10 +281,22 @@
       "create": {
         "success": "Chat created",
         "error": "Create failed: {{msg}}"
+      },
+      "loopEnded": {
+        "noTarget": "No one replied (agents need @ to continue)",
+        "budgetRounds": "Max rounds reached, stopped",
+        "budgetTokens": "Token budget reached, stopped",
+        "budgetWallClock": "Max wall-clock reached, stopped",
+        "stopPhrase": "Stop phrase hit, stopped",
+        "error": "Loop error, stopped"
       }
     },
     "members": {
-      "empty": "No members"
+      "empty": "No members",
+      "replyAuto": "Auto",
+      "replyMention": "Only @",
+      "replyModeHint": "Click to toggle reply mode",
+      "patchFailed": "Failed to update member: {{msg}}"
     },
     "hitl": {
       "prompt": "{{agentId}} asks: {{question}}"

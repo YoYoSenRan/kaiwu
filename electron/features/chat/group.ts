@@ -33,12 +33,20 @@ export interface GroupDeps {
   emitMessage: (msg: ChatMessage) => void
   emitLoop: (kind: "started" | "ended", sessionId: string, reason?: LoopEndedReason) => void
   emitPaused: (ev: LoopPausedEvent) => void
+  /** 流式 delta 事件（runStep 实时推）。UI 按 idempotencyKey 分桶缓存，openclawSessionKey 用于反查发言 agent。 */
+  emitStreamDelta: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, content: string) => void
+  /** 流式结束（成功 / 失败 / aborted 均触发，兜底清 UI buffer）。 */
+  emitStreamEnd: (sessionId: string, idempotencyKey: string, openclawSessionKey: string) => void
   /** 查 agent 的 display name；失败返回 undefined。 */
   resolveAgentDisplayName: (agentId: string) => Promise<string | undefined>
   /** 登记活跃 idempotencyKey（供 abort 查表）。sendToMember 调 runStep 前调用。 */
   trackKeyStart: (sessionId: string, idempotencyKey: string, openclawKey: string) => void
   /** 注销活跃 idempotencyKey。sendToMember 在 runStep 完成/异常后调用。 */
   trackKeyEnd: (sessionId: string, idempotencyKey: string) => void
+  /** 从 openclaw chat.history 取该 sessionKey 最后一条 assistant 消息的元数据。失败返 null 不阻塞。 */
+  fetchAssistantMeta: (
+    sessionKey: string,
+  ) => Promise<{ model?: string; usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; total?: number }; stopReason?: string } | null>
 }
 
 /** 挂起状态登记：pendingId → { sessionId, byAgentId }。用于 answerAsk 回写。 */
@@ -74,8 +82,8 @@ export async function onNewMessage(deps: GroupDeps, sessionId: string, msg: Chat
   }
 
   const members = listActiveMembers(sessionId)
-  let targets = decideTargets(members, msg.mentions)
-  // 剔除 sender 自己：agent 不对自己刚说的话再次发言，否则会形成 agent↔空回复 的自聊循环
+  let targets = decideTargets(members, msg.mentions, msg.senderType)
+  // 剔除 sender 自己：防御性兜底 —— agent 若 @ 自己时 routing 也不转给自己
   if (msg.senderType === "agent" && msg.senderId) {
     targets = targets.filter((t) => t.agentId !== msg.senderId)
   }
@@ -151,19 +159,27 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
   deps.trackKeyStart(sessionId, idempotencyKey, target.openclawKey)
   let result
   try {
-    result = await runStep(deps.backend, { sessionKey: target.openclawKey, agentId: target.agentId, message: text, idempotencyKey })
+    result = await runStep(deps.backend, { sessionKey: target.openclawKey, agentId: target.agentId, message: text, idempotencyKey }, (ev) => {
+      if (ev.kind === "delta") {
+        deps.emitStreamDelta(sessionId, idempotencyKey, target.openclawKey, ev.content)
+      }
+    })
   } finally {
     deps.trackKeyEnd(sessionId, idempotencyKey)
+    deps.emitStreamEnd(sessionId, idempotencyKey, target.openclawKey)
   }
   log.info(`sendToMember done member=${target.id} key=${idempotencyKey} success=${result.success} contentLen=${result.content?.length ?? 0} error=${result.error ?? "none"}`)
+
   if (!result.success) {
-    log.warn(`step failed for ${target.id}: ${result.error}`)
+    if (result.error === "aborted") {
+      // 中断不落库；UI 靠 stream:end + 已展示的 user 消息即可
+      return
+    }
+    // 其他错误 → 落一条错误提示消息（参考 direct.ts；保证 UI 能看到失败）
+    const errMsg = buildAndInsertErrorMessage(sessionId, target, result.error ?? "unknown error", idempotencyKey)
+    deps.emitMessage(errMsg)
     return
   }
-
-  // 把这一轮消耗的 token 累计到 session 预算里；maxTokens 检查在下一轮 checkAndIncrementRound
-  const totalTokens = result.usage?.total ?? (result.usage?.input ?? 0) + (result.usage?.output ?? 0)
-  if (totalTokens > 0) addTokens(sessionId, totalTokens)
 
   const interp = interpretReply(result.content)
   if (interp.shouldSuppress) return
@@ -172,6 +188,16 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
     log.info(`sendToMember empty final suppressed member=${target.id} key=${idempotencyKey}`)
     return
   }
+
+  // 从 openclaw chat.history 补元数据（usage / model / stopReason）——event stream 不带这些
+  const meta = await deps.fetchAssistantMeta(target.openclawKey).catch(() => null)
+  const usage = meta?.usage ?? result.usage ?? null
+  const model = meta?.model ?? null
+  const stopReason = meta?.stopReason ?? result.stopReason ?? null
+
+  // 把这一轮消耗的 token 累计到 session 预算里；maxTokens 检查在下一轮 checkAndIncrementRound
+  const totalTokens = usage?.total ?? (usage?.input ?? 0) + (usage?.output ?? 0)
+  if (totalTokens > 0) addTokens(sessionId, totalTokens)
 
   // 持久化 agent 回复 —— 顺便把此 turn 间累积的 mention_next 事件合并进来
   const assistantMsg: ChatMessage = {
@@ -187,9 +213,9 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
     mentions: drainPendingMentions(sessionId),
     turnRunId: idempotencyKey,
     tags: [],
-    model: null,
-    usage: result.usage ?? null,
-    stopReason: result.stopReason ?? null,
+    model,
+    usage,
+    stopReason,
     createdAtLocal: Date.now(),
     createdAtRemote: null,
   }
@@ -215,6 +241,47 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
 
   // 递归继续（下一个 target 由 decideTargets 根据新消息的 mentions 决定）
   await onNewMessage(deps, sessionId, assistantMsg)
+}
+
+function buildAndInsertErrorMessage(sessionId: string, target: ChatMember, error: string, idempotencyKey: string): ChatMessage {
+  const msg: ChatMessage = {
+    id: nanoid(),
+    sessionId,
+    seq: nextSeq(sessionId),
+    openclawSessionKey: target.openclawKey,
+    openclawMessageId: null,
+    senderType: "system",
+    senderId: null,
+    role: "system",
+    content: { text: `[error] ${error}` },
+    mentions: [],
+    turnRunId: idempotencyKey,
+    tags: ["error"],
+    model: null,
+    usage: null,
+    stopReason: null,
+    createdAtLocal: Date.now(),
+    createdAtRemote: null,
+  }
+  insertMessage({
+    id: msg.id,
+    sessionId: msg.sessionId,
+    seq: msg.seq,
+    openclawSessionKey: msg.openclawSessionKey,
+    openclawMessageId: msg.openclawMessageId,
+    senderType: msg.senderType,
+    senderId: msg.senderId,
+    role: msg.role,
+    content: msg.content,
+    mentions: msg.mentions,
+    turnRunId: msg.turnRunId,
+    tags: msg.tags,
+    model: msg.model,
+    usage: msg.usage,
+    stopReason: msg.stopReason,
+    createdAtRemote: msg.createdAtRemote,
+  })
+  return msg
 }
 
 /** 收到 plugin 推的 mention_next 事件 —— 积攒到桶里，assistant 落库时被 drain。 */

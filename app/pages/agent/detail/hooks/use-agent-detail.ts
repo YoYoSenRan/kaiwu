@@ -31,7 +31,7 @@ export function useAgentDetail(agentId: string | undefined) {
   }, [agentId])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 初始加载
+     
     void refresh()
   }, [refresh])
 

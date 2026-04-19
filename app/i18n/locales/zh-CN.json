@@ -281,10 +281,22 @@
       "create": {
         "success": "会话已创建",
         "error": "创建失败：{{msg}}"
+      },
+      "loopEnded": {
+        "noTarget": "无人回应（agent 需 @ 才会继续串话）",
+        "budgetRounds": "已达最大轮次，已停止",
+        "budgetTokens": "已达 token 预算，已停止",
+        "budgetWallClock": "已达最长时间，已停止",
+        "stopPhrase": "命中终止短语，已停止",
+        "error": "循环出错，已停止"
       }
     },
     "members": {
-      "empty": "暂无成员"
+      "empty": "暂无成员",
+      "replyAuto": "自动",
+      "replyMention": "仅 @",
+      "replyModeHint": "点击切换回复模式",
+      "patchFailed": "更新成员失败：{{msg}}"
     },
     "hitl": {
       "prompt": "{{agentId}} 问你：{{question}}"

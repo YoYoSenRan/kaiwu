@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { MessageSquare, MoreVertical, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,9 +11,13 @@ import { DeleteChatDialog } from "./delete-dialog"
 export function ChatSidebar() {
   const { t } = useTranslation()
   const sessions = useChatDataStore((s) => s.sessions)
+  const sessionActivity = useChatDataStore((s) => s.sessionActivity)
+  const sessionLastText = useChatDataStore((s) => s.sessionLastText)
+  const unread = useChatDataStore((s) => s.unread)
   const refreshSessions = useChatDataStore((s) => s.refreshSessions)
   const refreshMessages = useChatDataStore((s) => s.refreshMessages)
   const refreshMembers = useChatDataStore((s) => s.refreshMembers)
+  const clearUnread = useChatDataStore((s) => s.clearUnread)
   const currentSessionId = useChatUiStore((s) => s.currentSessionId)
   const setCurrent = useChatUiStore((s) => s.setCurrent)
   const deleteSession = useChatDataStore((s) => s.deleteSession)
@@ -25,8 +29,17 @@ export function ChatSidebar() {
     refreshSessions()
   }, [refreshSessions])
 
+  const sortedSessions = useMemo(() => {
+    return [...sessions].sort((a, b) => {
+      const ta = sessionActivity[a.id] ?? a.updatedAt
+      const tb = sessionActivity[b.id] ?? b.updatedAt
+      return tb - ta
+    })
+  }, [sessions, sessionActivity])
+
   async function handleSelect(id: string) {
     setCurrent(id)
+    clearUnread(id)
     // 进入会话先对账一次（拉 openclaw history 补缺失消息），再拉 kaiwu DB
     try {
       await window.electron.chat.session.reconcile(id)
@@ -67,26 +80,36 @@ export function ChatSidebar() {
           <Plus />
           <span>{t("chat.new")}</span>
         </Button>
-        <Input placeholder={t("chat.search")} />
+        <Input placeholder={t("chat.search")} className="hidden" />
       </div>
       <div className="flex-1 space-y-1 overflow-y-auto p-3">
-        {sessions.length === 0 ? (
+        {sortedSessions.length === 0 ? (
           <p className="text-muted-foreground px-3 py-4 text-center text-sm">{t("chat.sessions.empty")}</p>
         ) : (
-          sessions.map((s) => {
+          sortedSessions.map((s) => {
             const active = s.id === currentSessionId
+            const preview = sessionLastText[s.id] ?? ""
+            const unreadCount = unread[s.id] ?? 0
             return (
-              <div
+              <button
                 key={s.id}
-                className={`group flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm transition-colors ${active ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted/80"}`}
+                onClick={() => handleSelect(s.id)}
+                className={`group flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm text-left transition-colors focus-visible:ring-2 focus-visible:ring-primary/20 ${active ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted/80"}`}
               >
-                <button onClick={() => handleSelect(s.id)} className="flex flex-1 items-center gap-3 overflow-hidden">
-                  <MessageSquare className={`size-4 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
-                  <div className="flex flex-col items-start truncate">
-                    <span className="mb-1.5 w-full truncate text-left leading-none">{s.label ?? s.id}</span>
-                    <span className={`text-[11px] leading-none ${active ? "text-primary/70" : "text-muted-foreground"}`}>{s.mode}</span>
+                <MessageSquare className={`size-4 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+                  <div className="flex w-full items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate leading-none">{s.label ?? s.id}</span>
+                    {unreadCount > 0 && !active && (
+                      <span className="bg-primary text-primary-foreground flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[10px] leading-none font-medium">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
                   </div>
-                </button>
+                  <span className={`w-full truncate text-[11px] leading-none ${active ? "text-primary/70" : "text-muted-foreground"}`}>
+                    {preview || s.mode}
+                  </span>
+                </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="hover:bg-muted rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100">
@@ -100,7 +123,7 @@ export function ChatSidebar() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
+              </button>
             )
           })
         )}
