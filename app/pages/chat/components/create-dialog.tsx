@@ -178,7 +178,7 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
                             toggleReplyMode(e.agentId)
                           }}
                           title={t("chat.members.replyModeHint")}
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                          className={`btn-focus shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
                             rm === "auto" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
                           }`}
                         >
@@ -203,7 +203,8 @@ export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
             <button
               type="button"
               onClick={() => setAdvancedOpen((v) => !v)}
-              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[11px] font-medium tracking-wider uppercase transition-colors"
+              aria-expanded={advancedOpen}
+              className="btn-focus text-muted-foreground hover:text-foreground flex items-center gap-1 text-[11px] font-medium tracking-wider uppercase transition-colors"
             >
               <ChevronDown className={`size-3 transition-transform ${advancedOpen ? "" : "-rotate-90"}`} />
               {t("chat.dialog.create.advanced")}
@@ -245,7 +246,8 @@ function ModeCard({ active, onClick, icon, label }: { active: boolean; onClick: 
     <button
       type="button"
       onClick={onClick}
-      className={`ring-foreground/10 flex flex-col items-center gap-1.5 rounded-lg px-4 py-3 text-sm ring-1 transition-colors ${active ? "bg-primary/10 ring-primary/40 text-primary" : "hover:bg-muted/60"}`}
+      aria-pressed={active}
+      className={`btn-focus ring-foreground/10 flex flex-col items-center gap-1.5 rounded-lg px-4 py-3 text-sm ring-1 transition-colors ${active ? "bg-primary/10 ring-primary/40 text-primary" : "hover:bg-muted/60"}`}
     >
       {icon}
       <span>{label}</span>

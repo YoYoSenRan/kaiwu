@@ -308,6 +308,22 @@
       "resetDone": "Budget reset",
       "resetFailed": "Reset failed: {{msg}}"
     },
+    "usage": {
+      "context": "Context",
+      "stale": "stale"
+    },
+    "delivery": {
+      "queued": "queued",
+      "replying": "replying",
+      "done": "done",
+      "error": "error",
+      "aborted": "aborted"
+    },
+    "memberCard": {
+      "noModel": "no model",
+      "noContext": "no context yet",
+      "lastCompaction": "compacted {{when}}"
+    },
     "members": {
       "empty": "No members",
       "replyAuto": "Auto",
@@ -448,10 +464,10 @@
     "status": {
       "connected": "Gateway Connected",
       "offline": "Gateway Offline",
-      "localLlm": "Local LLM",
-      "idle": "Idle",
-      "db": "DB",
-      "ready": "Ready"
+      "sessions": "Sessions",
+      "knowledgeBases": "Knowledge Bases",
+      "agents": "Agents",
+      "systemReady": "System Ready"
     }
   }
 }

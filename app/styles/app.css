@@ -1,6 +1,14 @@
 /* ===== 自定义 class：布局壳 + titlebar ===== */
 /* CSS 变量定义在 tokens.css，元素级 reset 在 base.css */
 
+/* 原生 <button> 键盘焦点 ring（WCAG 2.4.7 可见焦点）。
+   shadcn Button 自带 focus 样式；本 class 给不走 shadcn 的原生按钮用。
+   用 var(--ring) 保持 token 单一来源。 */
+.btn-focus:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 60%, transparent);
+}
+
 .app-shell {
   position: absolute;
   top: var(--titlebar-h);

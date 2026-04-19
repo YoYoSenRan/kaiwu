@@ -11,12 +11,12 @@
 
 import { nanoid } from "nanoid"
 import { scope } from "../../infra/logger"
-import { addTokens, checkAndIncrementRound } from "./budget"
 import { interpretReply } from "./interpret"
+import { stripMentionsForAgent } from "./mention-utils"
 import { newIdempotencyKey, runStep } from "../../agent/executor"
 import { getSession, insertMessage, listActiveMembers, nextSeq } from "./repository"
 import type { ChatBackend } from "../../agent/executor"
-import type { ChatMember, ChatMessage, LoopEndedReason } from "./types"
+import type { ChatMember, ChatMessage, DeliveryUpdateEvent, LoopEndedReason } from "./types"
 
 const log = scope("chat:direct")
 
@@ -28,6 +28,8 @@ export interface DirectDeps {
   emitStreamEnd: (sessionId: string, idempotencyKey: string, openclawSessionKey: string) => void
   /** 运行错误事件（transient banner，不入 DB）。对齐 openclaw UI lastError 语义。 */
   emitError: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, message: string) => void
+  /** 投递态更新事件(transient):user 消息发往成员后的处理进度。单聊只 1 个 member。 */
+  emitDelivery: (ev: DeliveryUpdateEvent) => void
   trackKeyStart: (sessionId: string, idempotencyKey: string, openclawKey: string) => void
   trackKeyEnd: (sessionId: string, idempotencyKey: string) => void
   /** 从 openclaw chat.history 取该 sessionKey 最后一条 assistant 消息的元数据。失败返 null 不阻塞。 */
@@ -62,24 +64,38 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
     return
   }
 
-  // 预算检查（direct 也记一轮）
-  const check = checkAndIncrementRound(sessionId, session.budget)
-  if (check.exceeded) {
-    log.warn(`session=${sessionId} budget exceeded, reason=${check.reason}`)
-    deps.emitLoop("ended", sessionId, check.reason)
-    return
-  }
-
+  // 单聊无护栏:linear single-turn,agent 不会自动续轮,不需要 rounds/tokens/wallClock。
+  // 上下文容量与 compaction 由 openclaw 侧自动管理。
   deps.emitLoop("started", sessionId)
   const idempotencyKey = newIdempotencyKey()
-  const text = extractText(userMsg.content)
+  // 发给 agent 的文本剥离 @mention 标记(与 group 一致,即便单聊也去掉用户手动 @ 的情况)
+  const text = stripMentionsForAgent(extractText(userMsg.content), [member])
   log.info(`sendDirect start session=${sessionId} agent=${member.agentId} key=${idempotencyKey} sessionKey=${member.openclawKey} msgLen=${text.length}`)
+
+  // delivery 态锁定:必然以 done/error/aborted 之一结束
+  let terminalEmitted = false
+  const emitTerminal = (status: "done" | "error" | "aborted", errorMsg?: string): void => {
+    if (terminalEmitted) return
+    terminalEmitted = true
+    deps.emitDelivery({ sessionId, anchorMsgId: userMsg.id, memberId: member.id, status, errorMsg, at: Date.now() })
+  }
+  deps.emitDelivery({ sessionId, anchorMsgId: userMsg.id, memberId: member.id, status: "queued", at: Date.now() })
+
+  // queued 永久卡死 watchdog:60s 无 delta → error
+  let replyingEmitted = false
+  const startWatchdog = setTimeout(() => {
+    if (!replyingEmitted) emitTerminal("error", "start timeout")
+  }, 60_000)
 
   deps.trackKeyStart(sessionId, idempotencyKey, member.openclawKey)
 
   try {
     const result = await runStep(deps.backend, { sessionKey: member.openclawKey, agentId: member.agentId, message: text, idempotencyKey }, (ev) => {
       if (ev.kind === "delta") {
+        if (!replyingEmitted) {
+          replyingEmitted = true
+          deps.emitDelivery({ sessionId, anchorMsgId: userMsg.id, memberId: member.id, status: "replying", at: Date.now() })
+        }
         deps.emitStreamDelta(sessionId, idempotencyKey, member.openclawKey, ev.content)
       }
     })
@@ -94,17 +110,23 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
           const abortedMsg = buildAndInsertAbortedMessage(sessionId, member, result.content, idempotencyKey)
           deps.emitMessage(abortedMsg)
         }
+        emitTerminal("aborted")
         return
       }
       // 其他错误 → emit chat:error banner，不入 DB（对齐 openclaw UI）
       deps.emitError(sessionId, idempotencyKey, member.openclawKey, result.error ?? "unknown error")
+      emitTerminal("error", result.error ?? "unknown error")
       return
     }
 
     const interp = interpretReply(result.content)
-    if (interp.shouldSuppress) return
+    if (interp.shouldSuppress) {
+      emitTerminal("done")
+      return
+    }
     if (!interp.content.trim()) {
       log.info(`sendDirect empty final suppressed session=${sessionId} key=${idempotencyKey}`)
+      emitTerminal("done")
       return
     }
 
@@ -113,9 +135,6 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
     const usage = meta?.usage ?? result.usage ?? null
     const model = meta?.model ?? null
     const stopReason = meta?.stopReason ?? result.stopReason ?? null
-
-    const totalTokens = usage?.total ?? (usage?.input ?? 0) + (usage?.output ?? 0)
-    if (totalTokens > 0) addTokens(sessionId, totalTokens)
 
     const assistantMsg: ChatMessage = {
       id: nanoid(),
@@ -155,7 +174,13 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
       createdAtRemote: assistantMsg.createdAtRemote,
     })
     deps.emitMessage(assistantMsg)
+    emitTerminal("done")
+  } catch (err) {
+    emitTerminal("error", (err as Error).message)
+    throw err
   } finally {
+    clearTimeout(startWatchdog)
+    if (!terminalEmitted) emitTerminal("error", "unknown termination")
     deps.trackKeyEnd(sessionId, idempotencyKey)
     deps.emitStreamEnd(sessionId, idempotencyKey, member.openclawKey)
     deps.emitLoop("ended", sessionId)

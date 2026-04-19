@@ -125,6 +125,43 @@ export interface SessionDeleteParams {
   key: string
 }
 
+/**
+ * sessions.list 返回的单个 session row(openclaw 侧 `GatewaySessionRow` 的镜像)。
+ *
+ * 字段按需列出,未列出的 openclaw 侧字段未被 kaiwu 使用。
+ *
+ * token/context 语义(对齐 openclaw `deriveSessionTotalTokens`):
+ *   - `totalTokens` = prompt 侧快照(input + cacheRead + cacheWrite),不含 output
+ *   - `contextTokens` = 当前模型的 context window 容量
+ *   - `totalTokensFresh` = 本值是否反映当次 run(否则 transcript fallback)
+ */
+export interface GatewaySessionRow {
+  key: string
+  kind?: "direct" | "group" | "global" | "unknown"
+  label?: string
+  displayName?: string
+  updatedAt: number | null
+  sessionId?: string
+  inputTokens?: number
+  outputTokens?: number
+  totalTokens?: number
+  totalTokensFresh?: boolean
+  estimatedCostUsd?: number
+  modelProvider?: string
+  model?: string
+  contextTokens?: number
+  compactionCheckpointCount?: number
+  latestCompactionCheckpoint?: { at?: number }
+}
+
+/** sessions.list 完整响应。 */
+export interface SessionsListResult {
+  ts: number
+  path?: string
+  count: number
+  sessions: GatewaySessionRow[]
+}
+
 // ---------- agents ----------
 
 /** agent 身份信息(嵌套在 GatewayAgentRow.identity 下)。 */

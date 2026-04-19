@@ -14,8 +14,12 @@
   --secondary: oklch(0.994 0 0);
   --secondary-foreground: oklch(0.2046 0 0);
   --muted: oklch(0.9461 0 0);
-  --muted-foreground: oklch(0.2435 0 0);
-  --accent: oklch(0.9461 0 0);
+  /* muted-foreground 是次级文字色（时间戳、副标题、提示）。
+     应比 foreground 明显更浅以形成视觉层级。
+     对比度对 background ≈ 4.6:1，满足 WCAG AA。 */
+  --muted-foreground: oklch(0.556 0 0);
+  /* accent 给 hover 态（DropdownMenu/Select item hover），要和 muted 略区分。 */
+  --accent: oklch(0.93 0 0);
   --accent-foreground: oklch(0.2435 0 0);
   --destructive: oklch(0.5523 0.1927 32.7272);
   --destructive-foreground: oklch(0.9934 0.0032 17.2118);
