@@ -1,6 +1,15 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import type { BudgetState, ChatErrorEvent, ChatMessage, ChatMember, ChatSession, LoopEvent, LoopPausedEvent, StreamDeltaEvent, StreamEndEvent } from "../../electron/features/chat/types"
+import type { BudgetState, ChatErrorEvent, ChatMessage, ChatMember, ChatSession, DeliveryStatus, DeliveryUpdateEvent, LoopEvent, LoopPausedEvent, SessionUsage, StreamDeltaEvent, StreamEndEvent } from "../../electron/features/chat/types"
+
+/** 每 (sessionId, anchorMsgId, memberId) 的投递态快照。 */
+export interface DeliveryState {
+  status: DeliveryStatus
+  errorMsg?: string
+  at: number
+}
+
+const TERMINAL_STATUSES: ReadonlySet<DeliveryStatus> = new Set<DeliveryStatus>(["done", "error", "aborted"])
 
 /** 单条流式 buffer：当前 session 的某个 idempotencyKey 的累积内容。 */
 export interface StreamBuffer {
@@ -80,8 +89,14 @@ interface ChatDataState {
   unread: Record<string, number>
   /** 每 session 最后一次运行错误（对齐 openclaw UI lastError；transient，不入 DB）。 */
   lastError: Record<string, { text: string; ts: number; openclawSessionKey?: string; idempotencyKey?: string; kind?: "error" | "disconnected" }>
-  /** 每 session 预算用量快照（按需 refresh）。 */
+  /** 每 session 预算用量快照（按需 refresh，群聊用）。 */
   budgetStates: Record<string, BudgetState | null>
+  /** 每 session usage 快照（单聊用，数据源 openclaw sessions.list）。 */
+  usageStates: Record<string, SessionUsage | null>
+  /** 每 session 下每 member 的 usage 快照(群聊用,每成员独立 openclaw session)。 */
+  memberUsages: Record<string, Record<string, SessionUsage>>
+  /** 投递态:sessionId → anchorMsgId → memberId → DeliveryState。transient,不入 DB,重启清零。 */
+  deliveries: Record<string, Record<string, Record<string, DeliveryState>>>
 
   refreshSessions: () => Promise<void>
   refreshMembers: (sessionId: string) => Promise<void>
@@ -97,6 +112,9 @@ interface ChatDataState {
   clearUnread: (sessionId: string) => void
   refreshBudget: (sessionId: string) => Promise<void>
   resetBudget: (sessionId: string) => Promise<void>
+  refreshUsage: (sessionId: string) => Promise<void>
+  refreshMemberUsages: (sessionId: string) => Promise<void>
+  applyDelivery: (ev: DeliveryUpdateEvent) => void
 }
 
 export const useChatDataStore = create<ChatDataState>((set) => ({
@@ -112,6 +130,9 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
   unread: {},
   lastError: {},
   budgetStates: {},
+  usageStates: {},
+  memberUsages: {},
+  deliveries: {},
 
   refreshSessions: async () => {
     const sessions = await window.electron.chat.session.list()
@@ -139,6 +160,10 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
       delete nextLastText[sessionId]
       const nextUnread = { ...s.unread }
       delete nextUnread[sessionId]
+      const nextDeliveries = { ...s.deliveries }
+      delete nextDeliveries[sessionId]
+      const nextMemberUsages = { ...s.memberUsages }
+      delete nextMemberUsages[sessionId]
       return {
         sessions: s.sessions.filter((x) => x.id !== sessionId),
         messages: nextMessages,
@@ -147,6 +172,8 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
         sessionActivity: nextActivity,
         sessionLastText: nextLastText,
         unread: nextUnread,
+        deliveries: nextDeliveries,
+        memberUsages: nextMemberUsages,
         pending: s.pending?.sessionId === sessionId ? null : s.pending,
       }
     })
@@ -223,6 +250,32 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
     const state = await window.electron.chat.budget.get(sessionId)
     set((s) => ({ budgetStates: { ...s.budgetStates, [sessionId]: state } }))
   },
+  refreshUsage: async (sessionId) => {
+    const state = await window.electron.chat.usage.get(sessionId)
+    set((s) => ({ usageStates: { ...s.usageStates, [sessionId]: state } }))
+  },
+  refreshMemberUsages: async (sessionId) => {
+    const map = await window.electron.chat.usage.getMembers(sessionId)
+    set((s) => ({ memberUsages: { ...s.memberUsages, [sessionId]: map } }))
+  },
+  applyDelivery: (ev) =>
+    set((s) => {
+      const sessionBucket = s.deliveries[ev.sessionId] ?? {}
+      const anchorBucket = sessionBucket[ev.anchorMsgId] ?? {}
+      const prev = anchorBucket[ev.memberId]
+      // 终态锁定:done/error/aborted 后忽略后续事件,防乱序覆盖
+      if (prev && TERMINAL_STATUSES.has(prev.status)) return {}
+      const nextMember: DeliveryState = { status: ev.status, errorMsg: ev.errorMsg, at: ev.at }
+      return {
+        deliveries: {
+          ...s.deliveries,
+          [ev.sessionId]: {
+            ...sessionBucket,
+            [ev.anchorMsgId]: { ...anchorBucket, [ev.memberId]: nextMember },
+          },
+        },
+      }
+    }),
   setPending: (ev) => set({ pending: ev }),
   setLoopStatus: (ev) =>
     set((s) => {
@@ -277,6 +330,7 @@ export function attachChatListeners(): () => void {
   const offStreamDelta = window.electron.chat.on.streamDelta((ev) => store.applyStreamDelta(ev))
   const offStreamEnd = window.electron.chat.on.streamEnd((ev) => store.applyStreamEnd(ev))
   const offError = window.electron.chat.on.error((ev) => store.applyError(ev))
+  const offDelivery = window.electron.chat.on.delivery((ev) => store.applyDelivery(ev))
   return () => {
     offMessage()
     offRefresh()
@@ -285,5 +339,6 @@ export function attachChatListeners(): () => void {
     offStreamDelta()
     offStreamEnd()
     offError()
+    offDelivery()
   }
 }

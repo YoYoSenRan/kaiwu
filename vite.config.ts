@@ -22,6 +22,9 @@ export default defineConfig(({ command }) => {
         { find: /^@contracts\/(.*)$/, replacement: path.join(__dirname, "electron/features/$1/contracts") },
       ],
     },
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+    },
     plugins: [
       tailwindcss(),
       AutoImport({ imports: ["react", "react-router"], dts: "app/types/auto-imports.d.ts" }),

@@ -97,6 +97,22 @@ export interface BudgetState {
   updatedAt: number
 }
 
+/**
+ * Session 级 usage 快照,数据源为 openclaw `sessions.list`。
+ *
+ * `totalTokens` 是 prompt 侧快照(不含 output),`contextTokens` 是模型 context window 容量。
+ * `fresh=false` 表示数据是 transcript fallback 非当次 run 结果,UI 应降级展示。
+ */
+export interface SessionUsage {
+  totalTokens: number | null
+  contextTokens: number | null
+  fresh: boolean
+  model: string | null
+  estimatedCostUsd: number | null
+  /** 上次压缩检查点时间戳(ms)。UI 用于显示"上次压缩 X 分钟前"。 */
+  latestCompactionAt: number | null
+}
+
 // ---------- Service 入参/出参 ----------
 
 export interface CreateSessionInput {
@@ -165,6 +181,20 @@ export interface MessagesRefreshEvent {
   reason: "reconcile" | "external"
 }
 
+/** 多 agent 投递态：user 消息发给各成员后,每成员独立的处理进度。transient,不入 DB。 */
+export type DeliveryStatus = "queued" | "replying" | "done" | "error" | "aborted"
+
+export interface DeliveryUpdateEvent {
+  sessionId: string
+  /** 触发本次投递的消息 id(通常是 user msg)。UI 按此绑定 chip 到消息气泡下。 */
+  anchorMsgId: string
+  memberId: string
+  status: DeliveryStatus
+  /** status=error 时的错误文本。 */
+  errorMsg?: string
+  at: number
+}
+
 /** 运行期错误（非对话内容，不入 DB）。对齐 openclaw UI 的 lastError banner 语义。 */
 export interface ChatErrorEvent {
   sessionId: string
@@ -186,6 +216,7 @@ export interface ChatEvents {
   "stream:delta": StreamDeltaEvent
   "stream:end": StreamEndEvent
   "chat:error": ChatErrorEvent
+  "delivery:update": DeliveryUpdateEvent
 }
 
 // ---------- Bridge ----------
@@ -216,6 +247,12 @@ export interface ChatBridge {
     get: (sessionId: string) => Promise<BudgetState | null>
     reset: (sessionId: string) => Promise<void>
   }
+  usage: {
+    /** 拉 openclaw 侧 session 的 usage 快照(单聊用,取 first member)。session 不存在或 RPC 失败返 null。 */
+    get: (sessionId: string) => Promise<SessionUsage | null>
+    /** 拉该 session 所有成员各自的 usage 快照(群聊用)。按 memberId 索引。 */
+    getMembers: (sessionId: string) => Promise<Record<string, SessionUsage>>
+  }
   on: {
     message: (l: (payload: ChatMessage) => void) => () => void
     messagesRefresh: (l: (payload: MessagesRefreshEvent) => void) => () => void
@@ -224,5 +261,6 @@ export interface ChatBridge {
     streamDelta: (l: (payload: StreamDeltaEvent) => void) => () => void
     streamEnd: (l: (payload: StreamEndEvent) => void) => () => void
     error: (l: (payload: ChatErrorEvent) => void) => () => void
+    delivery: (l: (payload: DeliveryUpdateEvent) => void) => () => void
   }
 }

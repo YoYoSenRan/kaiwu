@@ -102,7 +102,7 @@ export function ChatSidebar() {
               type="button"
               onClick={() => setQuery("")}
               aria-label={t("common.clear")}
-              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 flex size-4 -translate-y-1/2 items-center justify-center rounded transition-colors"
+              className="btn-focus text-muted-foreground hover:text-foreground absolute top-1/2 right-2 flex size-4 -translate-y-1/2 items-center justify-center rounded transition-colors"
             >
               <X className="size-3" />
             </button>
@@ -120,10 +120,10 @@ export function ChatSidebar() {
             const preview = sessionLastText[s.id] ?? ""
             const unreadCount = unread[s.id] ?? 0
             return (
-              <button
+              <div
                 key={s.id}
                 onClick={() => handleSelect(s.id)}
-                className={`group flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm text-left transition-colors focus-visible:ring-2 focus-visible:ring-primary/20 ${active ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted/80"}`}
+                className={`btn-focus group flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-3 text-sm text-left transition-colors ${active ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted/80"}`}
               >
                 <MessageSquare className={`size-4 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
                 <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
@@ -141,7 +141,11 @@ export function ChatSidebar() {
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="hover:bg-muted rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100">
+                    <button
+                      className="btn-focus hover:bg-muted rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                      aria-label={t("common.detail")}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <MoreVertical className="size-4" />
                     </button>
                   </DropdownMenuTrigger>
@@ -152,7 +156,7 @@ export function ChatSidebar() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </button>
+              </div>
             )
           })
         )}

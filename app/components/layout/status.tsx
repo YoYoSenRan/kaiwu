@@ -1,16 +1,27 @@
 import { useGatewayStore } from "@/stores/gateway"
-import { Cpu, HardDrive } from "lucide-react"
+import { useChatDataStore } from "@/stores/chat"
+import { useAgentCacheStore } from "@/stores/agent"
+import { useEffect, useState } from "react"
+import { MessageSquare, Database, Bot, Activity } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 export function StatusBar() {
   const { t } = useTranslation()
   const gwStatus = useGatewayStore((s) => s.status)
   const gwPing = useGatewayStore((s) => s.pingLatencyMs)
+  const sessionCount = useChatDataStore((s) => s.sessions.length)
+  const agentList = useAgentCacheStore((s) => s.listResult)
+  const [kbCount, setKbCount] = useState(0)
+
+  useEffect(() => {
+    void window.electron.knowledge.base.list().then((list) => setKbCount(list.length))
+  }, [])
+
+  const agentCount = agentList ? agentList.mine.length + agentList.unsynced.length : 0
 
   return (
     <div className="border-border/40 bg-card/80 text-muted-foreground flex h-8 shrink-0 items-center justify-between border-t px-4 text-xs transition-colors">
       <div className="flex items-center gap-4">
-        {/* Gateway 状态 */}
         <div className="hover:text-foreground flex cursor-pointer items-center gap-1.5 transition-colors">
           {gwStatus === "connected" ? (
             <>
@@ -30,23 +41,28 @@ export function StatusBar() {
           )}
         </div>
 
-        {/* 占位：未来可以展示的其他实时信息 */}
-        <div className="hover:text-foreground flex cursor-pointer items-center gap-1.5 transition-colors">
-          <Cpu size={14} className="opacity-70" />
-          <span className="font-mono tracking-wide">
-            {t("layout.status.localLlm")}: {t("layout.status.idle")}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="hover:text-foreground flex cursor-pointer items-center gap-1 transition-colors" title={t("layout.status.sessions")}>
+            <MessageSquare size={12} className="opacity-70" />
+            <span className="font-mono">{sessionCount}</span>
+          </div>
+          <div className="hover:text-foreground flex cursor-pointer items-center gap-1 transition-colors" title={t("layout.status.knowledgeBases")}>
+            <Database size={12} className="opacity-70" />
+            <span className="font-mono">{kbCount}</span>
+          </div>
+          <div className="hover:text-foreground flex cursor-pointer items-center gap-1 transition-colors" title={t("layout.status.agents")}>
+            <Bot size={12} className="opacity-70" />
+            <span className="font-mono">{agentCount}</span>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
-          <HardDrive size={14} className="opacity-70" />
-          <span className="font-mono tracking-wide">
-            {t("layout.status.db")}: {t("layout.status.ready")}
-          </span>
+          <Activity size={12} className="opacity-50" />
+          <span className="font-mono tracking-wide opacity-50">{t("layout.status.systemReady")}</span>
         </div>
-        <span className="font-mono tracking-wide opacity-50">v1.0.0</span>
+        <span className="font-mono tracking-wide opacity-50">v{__APP_VERSION__}</span>
       </div>
     </div>
   )

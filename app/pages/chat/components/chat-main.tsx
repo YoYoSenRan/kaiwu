@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Send, Sparkles, AlertCircle, RotateCcw, Square, User as UserIcon, Bot, Users, ChevronDown, X } from "lucide-react"
+import { Send, Sparkles, AlertCircle, ArrowDown, ArrowUp, RotateCcw, Square, User as UserIcon, Bot, Users, ChevronDown, X } from "lucide-react"
 import { toast } from "sonner"
 import { Streamdown, type BundledTheme } from "streamdown"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAgentCacheStore } from "@/stores/agent"
 import { useChatDataStore, useChatUiStore, type StreamBuffer } from "@/stores/chat"
 import type { ChatMember, ChatMessage } from "../../../../electron/features/chat/types"
+import { DeliveryChips } from "./delivery-chips"
 
 /** Shiki 代码高亮主题，light/dark 各一套。 */
 const SHIKI_THEME: [BundledTheme, BundledTheme] = ["github-light", "github-dark"]
@@ -26,37 +27,20 @@ function escapeRegex(s: string): string {
 }
 
 /**
- * agent 头像 ring 调色盘（多 agent 群聊区分发言人）。
- * 例外：agent 身份标识浮层，允许绕 token 体系。选 6 个常见 hue。
+ * 把 @agentId 包成行内标记,与正文文字区分开。仅匹配 members 中已存在的 agentId;跳过 code 块内的匹配。
+ *
+ * 样式按气泡色分流:
+ *   - user 气泡(bg-primary): 用 `**@id**` 加粗(code 样式在 primary 背景上底色冲突)
+ *   - agent 气泡(bg-muted): 用 `\`@id\`` 行内 code(现状)
  */
-const AGENT_RING_CLASSES = [
-  "ring-sky-400/60",
-  "ring-emerald-400/60",
-  "ring-amber-400/60",
-  "ring-violet-400/60",
-  "ring-rose-400/60",
-  "ring-cyan-400/60",
-]
-function agentRingClass(agentId: string | null | undefined): string {
-  if (!agentId) return "ring-foreground/10"
-  let h = 0
-  for (let i = 0; i < agentId.length; i++) h = (h * 31 + agentId.charCodeAt(i)) | 0
-  return AGENT_RING_CLASSES[Math.abs(h) % AGENT_RING_CLASSES.length]
-}
-
-/**
- * 把 @agentId 包成 markdown 行内 code（会被 Streamdown 渲染成带底色的等宽标记），
- * 与正文文字区分开。仅匹配 members 中已存在的 agentId；跳过已在 code 块内的匹配。
- */
-function highlightMentions(text: string, agentIds: string[]): string {
+function highlightMentions(text: string, agentIds: string[], isUser: boolean): string {
   if (!text || agentIds.length === 0) return text
-  // 按 fenced ``` ... ``` 和 inline `...` 拆开，偶数段是普通文本，奇数段是 code
   const parts = text.split(/(```[\s\S]*?```|`[^`\n]*`)/)
   for (let i = 0; i < parts.length; i += 2) {
     let seg = parts[i]
     for (const id of agentIds) {
       const re = new RegExp(`@${escapeRegex(id)}(?![\\w-])`, "g")
-      seg = seg.replace(re, `\`@${id}\``)
+      seg = seg.replace(re, isUser ? `**@${id}**` : `\`@${id}\``)
     }
     parts[i] = seg
   }
@@ -292,6 +276,8 @@ export function ChatMain() {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
     }
+    // 发送动作必滚底:对齐 Slack/Discord 惯例(不管此刻滚动位置)
+    followBottomRef.current = true
     dismissError(currentSessionId)
     try {
       if (isHitl && pending) {
@@ -337,52 +323,75 @@ export function ChatMain() {
   }
 
   // ========== sticky bottom scroll ==========
-  // 设计:
-  //   - atBottomRef 记录用户当前是否贴在底部（40px 容差）
-  //   - 新消息 / 流式 delta 到来 → 仅当贴底时自动滚到底；否则保持当前位置
-  //   - 用户滚动触发 handleScroll 更新 atBottomRef
-  //   - 切换 session 时强制滚到底 + 重置 atBottom=true
+  // 核心设计:
+  //   - followBottomRef 追踪"是否应该跟随底部"(用户贴底 + 刚发送消息)
+  //   - 程序触发的 scrollTop = scrollHeight 会发 scroll 事件,需 programmaticScrollRef 防竞态
+  //     (否则 chip 异步挂载抬高 scrollHeight 时,scroll event 里 distance 被误判为 >40)
+  //   - ResizeObserver 观察稳定的 contentRef(而非 firstElementChild,避免条件渲染切换失效)
+  //   - 切 session / 发送 / 手动 jump 都强制 follow=true
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const atBottomRef = useRef(true)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const followBottomRef = useRef(true)
+  const programmaticScrollRef = useRef(false)
   const [showJumpBtn, setShowJumpBtn] = useState(false)
 
+  /** 程序触发的底部滚动:设 flag 屏蔽一次 handleScroll 的竞态判定。 */
+  const scrollToBottomProgrammatic = () => {
+    const el = scrollAreaRef.current
+    if (!el) return
+    programmaticScrollRef.current = true
+    el.scrollTop = el.scrollHeight
+    // 清 flag:scroll 事件可能 sync 或 next tick 派发,双保险用 rAF + setTimeout(0) 都不够稳,
+    // 最保险是 next microtask + rAF。setTimeout 0 够用且简单。
+    setTimeout(() => {
+      programmaticScrollRef.current = false
+    }, 0)
+  }
+
   const handleScroll = () => {
+    // 程序触发的滚动跳过判定,避免 chip 异步挂载高度争用
+    if (programmaticScrollRef.current) return
     const el = scrollAreaRef.current
     if (!el) return
     const distance = el.scrollHeight - el.scrollTop - el.clientHeight
     const atBottom = distance < 40
-    atBottomRef.current = atBottom
+    followBottomRef.current = atBottom
     setShowJumpBtn(!atBottom)
   }
 
   const jumpToBottom = () => {
-    const el = scrollAreaRef.current
-    if (!el) return
-    el.scrollTop = el.scrollHeight
-    atBottomRef.current = true
+    followBottomRef.current = true
     setShowJumpBtn(false)
+    scrollToBottomProgrammatic()
   }
 
   // 切 session 时重置
   useEffect(() => {
-    atBottomRef.current = true
-    const el = scrollAreaRef.current
-    if (el) {
-      el.scrollTop = el.scrollHeight
-    }
-    const raf = requestAnimationFrame(() => setShowJumpBtn(false))
-    return () => cancelAnimationFrame(raf)
+    followBottomRef.current = true
+    setShowJumpBtn(false)
+    scrollToBottomProgrammatic()
   }, [currentSessionId])
 
-  // 消息 / 流式长度变化时，贴底才自动滚
+  // 消息 / 流式长度变化时,follow 模式下贴底
   const streamingSig = useMemo(() => Object.values(streamingMap).reduce((acc, buf) => acc + buf.content.length, 0), [streamingMap])
   const sortedStreams = useMemo(() => Object.entries(streamingMap).sort((a, b) => a[1].startedAt - b[1].startedAt), [streamingMap])
 
   useEffect(() => {
-    if (!atBottomRef.current) return
-    const el = scrollAreaRef.current
-    if (el) el.scrollTop = el.scrollHeight
+    if (!followBottomRef.current) return
+    scrollToBottomProgrammatic()
   }, [messages.length, streamingSig])
+
+  // 观察稳定 contentRef 的高度变化:DeliveryChips / footer badges 等异步挂载节点使
+  // scrollHeight 增长时 messages.length 不变,useEffect 不触发,RO 兜底。
+  useEffect(() => {
+    const content = contentRef.current
+    if (!content) return
+    const ro = new ResizeObserver(() => {
+      if (followBottomRef.current) scrollToBottomProgrammatic()
+    })
+    ro.observe(content)
+    return () => ro.disconnect()
+  }, [])
 
   if (!currentSessionId) {
     return (
@@ -400,27 +409,33 @@ export function ChatMain() {
 
       {lastError &&
         (lastError.kind === "disconnected" ? (
-          <div className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-700 dark:text-yellow-400">
-            <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+          <div
+            role="status"
+            className="text-foreground mx-4 mt-3 flex items-start gap-2 rounded-lg border-l-4 border-yellow-500/70 bg-yellow-500/10 px-3 py-2 text-xs shadow-sm"
+          >
+            <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-yellow-600 dark:text-yellow-400" />
             <span className="flex-1 whitespace-pre-wrap">{t("chat.error.disconnected")}</span>
             <button
               type="button"
               onClick={() => currentSessionId && dismissError(currentSessionId)}
               aria-label={t("chat.error.dismiss")}
-              className="hover:bg-yellow-500/20 flex size-5 shrink-0 items-center justify-center rounded transition-colors"
+              className="btn-focus hover:bg-yellow-500/20 text-muted-foreground hover:text-foreground flex size-5 shrink-0 items-center justify-center rounded transition-colors"
             >
               <X className="size-3" />
             </button>
           </div>
         ) : (
-          <div className="bg-destructive/10 text-destructive ring-destructive/30 mx-4 mt-3 flex items-start gap-2 rounded-lg px-3 py-2 text-xs ring-1">
-            <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+          <div
+            role="alert"
+            className="bg-destructive/10 text-foreground border-destructive/60 mx-4 mt-3 flex items-start gap-2 rounded-lg border-l-4 px-3 py-2 text-xs shadow-sm"
+          >
+            <AlertCircle className="text-destructive mt-0.5 size-3.5 shrink-0" />
             <span className="flex-1 whitespace-pre-wrap">{t("chat.error.banner", { msg: lastError.text })}</span>
             {!isRunning && (
               <button
                 type="button"
                 onClick={() => void handleRetry()}
-                className="hover:bg-destructive/20 flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 transition-colors"
+                className="btn-focus hover:bg-destructive/20 text-destructive flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 font-medium transition-colors"
               >
                 <RotateCcw className="size-3" />
                 <span>{t("chat.retry")}</span>
@@ -430,7 +445,7 @@ export function ChatMain() {
               type="button"
               onClick={() => currentSessionId && dismissError(currentSessionId)}
               aria-label={t("chat.error.dismiss")}
-              className="hover:bg-destructive/20 flex size-5 shrink-0 items-center justify-center rounded transition-colors"
+              className="btn-focus hover:bg-destructive/20 text-muted-foreground hover:text-foreground flex size-5 shrink-0 items-center justify-center rounded transition-colors"
             >
               <X className="size-3" />
             </button>
@@ -442,14 +457,24 @@ export function ChatMain() {
           onClick={jumpToBottom}
           aria-hidden={!showJumpBtn}
           tabIndex={showJumpBtn ? 0 : -1}
-          className={`bg-card text-foreground ring-foreground/10 hover:bg-muted absolute bottom-6 left-1/2 z-10 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs shadow-md ring-1 transition-all duration-200 ease-out ${
+          className={`btn-focus bg-card text-foreground ring-foreground/10 hover:bg-muted absolute bottom-6 left-1/2 z-10 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs shadow-md ring-1 transition-all duration-200 ease-out ${
             showJumpBtn ? "-translate-x-1/2 translate-y-0 opacity-100" : "pointer-events-none -translate-x-1/2 translate-y-2 opacity-0"
           }`}
         >
           <ChevronDown className="size-3.5" />
           <span>{t("chat.jumpToBottom")}</span>
         </button>
-        <div ref={scrollAreaRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4">
+        <div
+          ref={scrollAreaRef}
+          onScroll={handleScroll}
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          aria-label={t("chat.details.title")}
+          className="flex-1 overflow-y-auto p-4"
+        >
+          {/* 稳定 contentRef:条件渲染切换(EmptyHint ↔ 消息列表)不换引用,RO 持续生效 */}
+          <div ref={contentRef}>
           {messages.length === 0 && sortedStreams.length === 0 ? (
             <EmptyHint t={t} mode={session?.mode} />
           ) : (
@@ -458,6 +483,8 @@ export function ChatMain() {
                 const agent = msg.senderId ? getGatewayRow(msg.senderId) : undefined
                 const prev = idx > 0 ? messages[idx - 1] : undefined
                 const needDivider = !prev || msg.createdAtLocal - prev.createdAtLocal > TIME_DIVIDER_GAP_MS
+                // 群聊 user 消息下显示多 agent 投递态 chips
+                const showDeliveryChips = session?.mode === "group" && msg.senderType === "user" && currentSessionId != null
                 return (
                   <Fragment key={msg.id}>
                     {needDivider && <TimeDivider ts={msg.createdAtLocal} />}
@@ -469,6 +496,7 @@ export function ChatMain() {
                       agentModel={agent?.model?.primary}
                       memberAgentIds={memberAgentIds}
                     />
+                    {showDeliveryChips && <DeliveryChips sessionId={currentSessionId} messageId={msg.id} />}
                   </Fragment>
                 )
               })}
@@ -481,7 +509,6 @@ export function ChatMain() {
                   <StreamingRow
                     key={`stream:${key}`}
                     content={buf.content}
-                    agentId={agentId ?? undefined}
                     agentName={agent?.name ?? agentId ?? undefined}
                     avatarUrl={agent?.identity?.avatarUrl}
                     emoji={agent?.identity?.emoji}
@@ -490,6 +517,7 @@ export function ChatMain() {
               })}
             </div>
           )}
+          </div>
         </div>
       </div>
 
@@ -503,10 +531,18 @@ export function ChatMain() {
 
         <div className="bg-card ring-foreground/10 relative flex flex-col rounded-xl ring-1 transition-shadow focus-within:ring-2 focus-within:ring-primary/20">
           {mention && mentionCandidates.length > 0 && (
-            <div className="bg-card ring-foreground/10 absolute bottom-full left-0 mb-2 w-64 overflow-hidden rounded-lg shadow-md ring-1">
+            <div
+              id="chat-mention-listbox"
+              role="listbox"
+              aria-label={t("chat.details.participants")}
+              className="bg-card ring-foreground/10 absolute bottom-full left-0 mb-2 w-64 overflow-hidden rounded-lg shadow-md ring-1"
+            >
               {mentionCandidates.map((c, i) => (
                 <button
                   key={c.memberId}
+                  id={`chat-mention-option-${i}`}
+                  role="option"
+                  aria-selected={i === mentionIdx}
                   type="button"
                   onMouseDown={(e) => {
                     e.preventDefault()
@@ -540,6 +576,11 @@ export function ChatMain() {
             placeholder={isRunning ? "" : t("chat.placeholder")}
             disabled={isRunning}
             rows={1}
+            role={mention ? "combobox" : undefined}
+            aria-autocomplete={mention ? "list" : undefined}
+            aria-expanded={mention && mentionCandidates.length > 0 ? true : undefined}
+            aria-controls={mention && mentionCandidates.length > 0 ? "chat-mention-listbox" : undefined}
+            aria-activedescendant={mention && mentionCandidates.length > 0 ? `chat-mention-option-${mentionIdx}` : undefined}
             className="min-h-[40px] max-h-[200px] resize-none border-0 bg-transparent px-3 py-2.5 text-sm shadow-none focus-visible:ring-0"
           />
 
@@ -594,7 +635,7 @@ function MessageRow({ msg, agentName, avatarUrl, emoji, agentModel, memberAgentI
   const isAborted = msg.tags?.includes("aborted")
   const isSystem = msg.senderType === "system"
   const text = messageText(msg)
-  const rendered = isUser || !isSystem ? highlightMentions(text, memberAgentIds) : text
+  const rendered = isUser || !isSystem ? highlightMentions(text, memberAgentIds, isUser) : text
 
   // system：居中、小字灰色、无气泡
   if (isSystem) {
@@ -607,7 +648,7 @@ function MessageRow({ msg, agentName, avatarUrl, emoji, agentModel, memberAgentI
 
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
-      <Avatar isUser={isUser} avatarUrl={avatarUrl} emoji={emoji} ringClass={agentRingClass(msg.senderId)} />
+      <Avatar isUser={isUser} avatarUrl={avatarUrl} emoji={emoji} />
       <div className={`flex max-w-[70%] flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
         <div
           className={`min-w-0 overflow-hidden rounded-2xl px-3 py-2 text-sm ${isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"} ${
@@ -637,20 +678,18 @@ function TimeDivider({ ts }: { ts: number }) {
 
 function StreamingRow({
   content,
-  agentId,
   agentName,
   avatarUrl,
   emoji,
 }: {
   content: string
-  agentId?: string
   agentName?: string
   avatarUrl?: string
   emoji?: string
 }) {
   return (
-    <div className="flex flex-row gap-3">
-      <Avatar isUser={false} avatarUrl={avatarUrl} emoji={emoji} ringClass={agentRingClass(agentId)} />
+    <div className="flex flex-row gap-3" aria-live="polite" aria-busy="true">
+      <Avatar isUser={false} avatarUrl={avatarUrl} emoji={emoji} />
       <div className="flex max-w-[70%] flex-col items-start gap-1">
         <div className="bg-muted text-foreground ring-primary/30 rounded-2xl px-3 py-2 text-sm ring-1">
           {content ? (
@@ -667,11 +706,10 @@ function StreamingRow({
   )
 }
 
-function Avatar({ isUser, avatarUrl, emoji, ringClass }: { isUser: boolean; avatarUrl?: string; emoji?: string; ringClass?: string }) {
-  const ring = isUser ? "ring-primary/30" : (ringClass ?? "ring-foreground/10")
+function Avatar({ isUser, avatarUrl, emoji }: { isUser: boolean; avatarUrl?: string; emoji?: string }) {
   return (
     <div
-      className={`flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg ring-2 ${ring} ${
+      className={`flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg ${
         isUser ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
       }`}
     >
@@ -713,14 +751,16 @@ function MessageFooter({ msg, agentName, isUser, agentModel }: { msg: ChatMessag
     )
   if (inTok)
     parts.push(
-      <span key="in" title="input tokens" className="text-muted-foreground cursor-help">
-        ↑{inTok}
+      <span key="in" title="input tokens" className="text-muted-foreground inline-flex items-center gap-0.5 cursor-help">
+        <ArrowUp className="size-2.5" aria-hidden />
+        {inTok}
       </span>,
     )
   if (outTok)
     parts.push(
-      <span key="out" title="output tokens" className="text-muted-foreground cursor-help">
-        ↓{outTok}
+      <span key="out" title="output tokens" className="text-muted-foreground inline-flex items-center gap-0.5 cursor-help">
+        <ArrowDown className="size-2.5" aria-hidden />
+        {outTok}
       </span>,
     )
   if (cacheR)

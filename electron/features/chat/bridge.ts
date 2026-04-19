@@ -27,6 +27,10 @@ export const chat: ChatBridge = {
     get: (sessionId) => bridge.invoke("budget:get", sessionId),
     reset: (sessionId) => bridge.invoke("budget:reset", sessionId),
   },
+  usage: {
+    get: (sessionId) => bridge.invoke("usage:get", sessionId),
+    getMembers: (sessionId) => bridge.invoke("usage:getMembers", sessionId),
+  },
   on: {
     message: (l) => bridge.on("message:new", l),
     messagesRefresh: (l) => bridge.on("messages:refresh", l),
@@ -35,5 +39,6 @@ export const chat: ChatBridge = {
     streamDelta: (l) => bridge.on("stream:delta", l),
     streamEnd: (l) => bridge.on("stream:end", l),
     error: (l) => bridge.on("chat:error", l),
+    delivery: (l) => bridge.on("delivery:update", l),
   },
 }

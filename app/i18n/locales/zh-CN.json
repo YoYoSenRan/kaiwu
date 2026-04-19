@@ -308,6 +308,22 @@
       "resetDone": "预算已重置",
       "resetFailed": "重置失败：{{msg}}"
     },
+    "usage": {
+      "context": "上下文",
+      "stale": "缓存"
+    },
+    "delivery": {
+      "queued": "排队中",
+      "replying": "回复中",
+      "done": "完成",
+      "error": "失败",
+      "aborted": "已中断"
+    },
+    "memberCard": {
+      "noModel": "未配置模型",
+      "noContext": "暂无上下文",
+      "lastCompaction": "上次压缩 {{when}}"
+    },
     "members": {
       "empty": "暂无成员",
       "replyAuto": "自动",
@@ -448,10 +464,10 @@
     "status": {
       "connected": "网关已连接",
       "offline": "网关已离线",
-      "localLlm": "本地模型",
-      "idle": "空闲",
-      "db": "数据库",
-      "ready": "就绪"
+      "sessions": "会话",
+      "knowledgeBases": "知识库",
+      "agents": "智能体",
+      "systemReady": "系统就绪"
     }
   }
 }

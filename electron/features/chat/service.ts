@@ -35,6 +35,8 @@ import { getBridgeServer, getGateway } from "../openclaw/runtime"
 import { call as invokePluginBridge } from "../openclaw/bridge/call"
 import type { EventFrame } from "../openclaw/gateway/contract"
 import type { PluginEvent } from "../openclaw/contracts/plugin"
+import { stripMentionsForAgent } from "./mention-utils"
+import { fetchManySessionUsages, fetchSessionUsage } from "./usage"
 import type {
   AddMemberInput,
   AnswerAskInput,
@@ -46,7 +48,9 @@ import type {
   ChatMessage,
   ChatSession,
   CreateSessionInput,
+  DeliveryUpdateEvent,
   MemberPatch,
+  SessionUsage,
 } from "./types"
 
 const log = scope("chat:service")
@@ -95,6 +99,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
         const kind: "disconnected" | "error" = /disconnect/i.test(message) ? "disconnected" : "error"
         this.emit("chat:error", { sessionId, idempotencyKey, openclawSessionKey, message, kind })
       },
+      emitDelivery: (ev: DeliveryUpdateEvent) => this.emit("delivery:update", ev),
       resolveAgentDisplayName: (agentId) => this.resolveAgentDisplayName(agentId),
       trackKeyStart: (sessionId, idempotencyKey, openclawKey) => {
         let set = this.activeKeysBySession.get(sessionId)
@@ -112,16 +117,18 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
       fetchAssistantMeta: (sessionKey) => this.fetchAssistantMeta(sessionKey),
     }
 
+    const d = this.deps
     this.directDeps = {
-      backend: this.deps.backend,
-      emitMessage: this.deps.emitMessage,
-      emitLoop: this.deps.emitLoop,
-      emitStreamDelta: this.deps.emitStreamDelta,
-      emitStreamEnd: this.deps.emitStreamEnd,
-      emitError: this.deps.emitError,
-      trackKeyStart: this.deps.trackKeyStart,
-      trackKeyEnd: this.deps.trackKeyEnd,
-      fetchAssistantMeta: this.deps.fetchAssistantMeta,
+      backend: d.backend,
+      emitMessage: d.emitMessage,
+      emitLoop: d.emitLoop,
+      emitStreamDelta: d.emitStreamDelta,
+      emitStreamEnd: d.emitStreamEnd,
+      emitError: d.emitError,
+      emitDelivery: d.emitDelivery,
+      trackKeyStart: d.trackKeyStart,
+      trackKeyEnd: d.trackKeyEnd,
+      fetchAssistantMeta: d.fetchAssistantMeta,
     }
 
     // 启动时全量对账（等 gateway 连上后自动跑，不阻塞 onReady）
@@ -378,6 +385,28 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     resetBudgetState(sessionId)
   }
 
+  // ========== usage ==========
+  @Handle("usage:get") async usageGet(sessionId: string): Promise<SessionUsage | null> {
+    // 单聊:取第一个(唯一) member 的 usage。群聊不推荐走此路径。
+    const members = listMembers(sessionId)
+    const member = members[0]
+    if (!member) return null
+    return fetchSessionUsage(member.openclawKey)
+  }
+
+  @Handle("usage:getMembers") async usageGetMembers(sessionId: string): Promise<Record<string, SessionUsage>> {
+    // 一次 sessions.list 取全,按 openclawKey 映射回 memberId 返回
+    const members = listMembers(sessionId)
+    if (members.length === 0) return {}
+    const keyMap = await fetchManySessionUsages(members.map((m) => m.openclawKey))
+    const out: Record<string, SessionUsage> = {}
+    for (const m of members) {
+      const u = keyMap[m.openclawKey]
+      if (u) out[m.id] = u
+    }
+    return out
+  }
+
   // ========== private ==========
   private buildBackend(): ChatBackend {
     return {
@@ -503,9 +532,11 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     // 三层去重键：
     //   ① strongId = __openclaw.id（来自 transcript 文件，UUID，最稳）
     //   ② syntheticId = role + timestamp（id 缺失时的次佳合成键）
-    //   ③ fuzzyKey = role + 文本前缀 80 字（防 kaiwu 自己发的没填 id 被二次入库）
+    //   ③ fuzzyKey = role + 剥离 @mention 后的文本前缀 80 字
+    //      (kaiwu 本地存含 @ 的原文,发给 openclaw 的是 stripped 版本,两边 key 必须同口径)
     const existingKeys = this.buildFuzzyKeySet(sessionId)
     const existingOpenclawIds = listOpenclawMessageIds(sessionId)
+    const activeMembers = members
     let imported = 0
 
     for (const member of members) {
@@ -539,7 +570,8 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
           const strongId = r.__openclaw?.id ?? null
           const syntheticId = !strongId && r.timestamp ? `${r.role}:${r.timestamp}` : null
           const storedId = strongId ?? syntheticId
-          const fuzzyKey = `${r.role}:${contentText.slice(0, 80)}`
+          // 与 buildFuzzyKeySet 口径一致:两边都用 stripMentions 后的文本
+          const fuzzyKey = `${r.role}:${stripMentionsForAgent(contentText, activeMembers).slice(0, 80)}`
 
           // 三层去重
           if (storedId && existingOpenclawIds.has(storedId)) continue
@@ -590,13 +622,19 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     return { imported }
   }
 
-  /** 构造 fuzzy 幂等键集合：role + 文本前缀。用于防 kaiwu 自己发过的消息被 reconcile 二次入库。 */
+  /**
+   * 构造 fuzzy 幂等键集合:role + 剥离 @mention 后的文本前缀。
+   * 剥离理由:kaiwu 本地存的是含 @ 的原文,发给 openclaw 的是 stripped 版本;
+   * openclaw 返回的 history 是 stripped,两边必须同口径才对得上。
+   */
   private buildFuzzyKeySet(sessionId: string): Set<string> {
+    const members = listMembers(sessionId)
     const set = new Set<string>()
     for (const m of listMessages(sessionId)) {
       const text = extractHistoryText(m.content)
+      const cleaned = stripMentionsForAgent(text, members)
       const role = m.senderType === "user" ? "user" : m.senderType === "agent" ? "assistant" : m.role
-      set.add(`${role}:${text.slice(0, 80)}`)
+      set.add(`${role}:${cleaned.slice(0, 80)}`)
     }
     return set
   }

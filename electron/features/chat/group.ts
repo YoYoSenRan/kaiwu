@@ -16,11 +16,12 @@ import { scope } from "../../infra/logger"
 import { addTokens, checkAndIncrementRound, checkStopPhrase } from "./budget"
 import { buildSharedContext } from "./context"
 import { interpretReply } from "./interpret"
+import { stripMentionsForAgent } from "./mention-utils"
 import { newIdempotencyKey, runStep } from "../../agent/executor"
 import { decideTargets } from "./routing"
 import { getSession, insertMessage, listActiveMembers, nextSeq } from "./repository"
 import type { ChatBackend } from "../../agent/executor"
-import type { ChatMember, ChatMention, ChatMessage, LoopEndedReason, LoopPausedEvent } from "./types"
+import type { ChatMember, ChatMention, ChatMessage, DeliveryUpdateEvent, LoopEndedReason, LoopPausedEvent } from "./types"
 
 const log = scope("chat:group")
 
@@ -39,6 +40,8 @@ export interface GroupDeps {
   emitStreamEnd: (sessionId: string, idempotencyKey: string, openclawSessionKey: string) => void
   /** 运行错误事件（transient banner，不入 DB）。对齐 openclaw UI lastError 语义。 */
   emitError: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, message: string) => void
+  /** 投递态更新事件（transient）:每 member 对一条触发消息的处理进度。 */
+  emitDelivery: (ev: DeliveryUpdateEvent) => void
   /** 查 agent 的 display name；失败返回 undefined。 */
   resolveAgentDisplayName: (agentId: string) => Promise<string | undefined>
   /** 登记活跃 idempotencyKey（供 abort 查表）。sendToMember 调 runStep 前调用。 */
@@ -139,117 +142,154 @@ export async function onNewMessage(deps: GroupDeps, sessionId: string, msg: Chat
 
 async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMessage, target: ChatMember): Promise<void> {
   log.info(`sendToMember enter member=${target.id} agent=${target.agentId}`)
-  const displayName = await deps.resolveAgentDisplayName(target.agentId).catch((err) => {
-    log.warn(`resolveAgentDisplayName failed: ${(err as Error).message}`)
-    return undefined
-  })
-  log.info(`sendToMember resolved displayName member=${target.id} name=${displayName ?? "<none>"}`)
 
-  const ctx = buildSharedContext(sessionId, target, {
-    agentDisplayName: displayName,
-    includeHistory: target.seedHistory || target.joinedAt <= incoming.createdAtLocal,
-  })
-  log.info(`sendToMember built ctx member=${target.id} ctxKeys=${Object.keys(ctx).join(",")}`)
-
-  try {
-    await deps.pushContext(ctx)
-    log.info(`sendToMember pushContext ok member=${target.id}`)
-  } catch (err) {
-    log.warn(`pushContext failed for member=${target.id}: ${(err as Error).message}`)
+  // delivery 态锁定:必然以 done/error/aborted 之一结束
+  let terminalEmitted = false
+  const emitTerminal = (status: "done" | "error" | "aborted", errorMsg?: string): void => {
+    if (terminalEmitted) return
+    terminalEmitted = true
+    deps.emitDelivery({ sessionId, anchorMsgId: incoming.id, memberId: target.id, status, errorMsg, at: Date.now() })
   }
+  deps.emitDelivery({ sessionId, anchorMsgId: incoming.id, memberId: target.id, status: "queued", at: Date.now() })
 
-  const idempotencyKey = newIdempotencyKey()
-  const text = extractText(incoming.content)
-  log.info(`sendToMember calling runStep member=${target.id} agent=${target.agentId} key=${idempotencyKey} sessionKey=${target.openclawKey} msgLen=${text.length}`)
-  deps.trackKeyStart(sessionId, idempotencyKey, target.openclawKey)
-  let result
+  // queued 永久卡死 watchdog:pushContext / runStep 超 60s 无动静 → error
+  let replyingEmitted = false
+  const startWatchdog = setTimeout(() => {
+    if (!replyingEmitted) emitTerminal("error", "start timeout")
+  }, 60_000)
+
   try {
-    result = await runStep(deps.backend, { sessionKey: target.openclawKey, agentId: target.agentId, message: text, idempotencyKey }, (ev) => {
-      if (ev.kind === "delta") {
-        deps.emitStreamDelta(sessionId, idempotencyKey, target.openclawKey, ev.content)
-      }
+    const displayName = await deps.resolveAgentDisplayName(target.agentId).catch((err) => {
+      log.warn(`resolveAgentDisplayName failed: ${(err as Error).message}`)
+      return undefined
     })
-  } finally {
-    deps.trackKeyEnd(sessionId, idempotencyKey)
-    deps.emitStreamEnd(sessionId, idempotencyKey, target.openclawKey)
-  }
-  log.info(`sendToMember done member=${target.id} key=${idempotencyKey} success=${result.success} contentLen=${result.content?.length ?? 0} error=${result.error ?? "none"}`)
+    log.info(`sendToMember resolved displayName member=${target.id} name=${displayName ?? "<none>"}`)
 
-  if (!result.success) {
-    if (result.error === "aborted") {
-      // 对齐 openclaw UI：中断保留 partial 作为 assistant 消息
-      const partial = result.content?.trim() ?? ""
-      if (partial) {
-        const abortedMsg = buildAndInsertAbortedMessage(sessionId, target, result.content, idempotencyKey)
-        deps.emitMessage(abortedMsg)
+    const ctx = buildSharedContext(sessionId, target, {
+      agentDisplayName: displayName,
+      includeHistory: target.seedHistory || target.joinedAt <= incoming.createdAtLocal,
+    })
+    log.info(`sendToMember built ctx member=${target.id} ctxKeys=${Object.keys(ctx).join(",")}`)
+
+    try {
+      await deps.pushContext(ctx)
+      log.info(`sendToMember pushContext ok member=${target.id}`)
+    } catch (err) {
+      log.warn(`pushContext failed for member=${target.id}: ${(err as Error).message}`)
+    }
+
+    const idempotencyKey = newIdempotencyKey()
+    // 发给 agent 的文本剥离 @mention 标记:kaiwu routing 已用 mentions 数组分发,不应带到消息体里
+    const members = listActiveMembers(sessionId)
+    const text = stripMentionsForAgent(extractText(incoming.content), members)
+    log.info(`sendToMember calling runStep member=${target.id} agent=${target.agentId} key=${idempotencyKey} sessionKey=${target.openclawKey} msgLen=${text.length}`)
+    deps.trackKeyStart(sessionId, idempotencyKey, target.openclawKey)
+    let result
+    try {
+      result = await runStep(deps.backend, { sessionKey: target.openclawKey, agentId: target.agentId, message: text, idempotencyKey }, (ev) => {
+        if (ev.kind === "delta") {
+          if (!replyingEmitted) {
+            replyingEmitted = true
+            deps.emitDelivery({ sessionId, anchorMsgId: incoming.id, memberId: target.id, status: "replying", at: Date.now() })
+          }
+          deps.emitStreamDelta(sessionId, idempotencyKey, target.openclawKey, ev.content)
+        }
+      })
+    } finally {
+      deps.trackKeyEnd(sessionId, idempotencyKey)
+      deps.emitStreamEnd(sessionId, idempotencyKey, target.openclawKey)
+    }
+    log.info(`sendToMember done member=${target.id} key=${idempotencyKey} success=${result.success} contentLen=${result.content?.length ?? 0} error=${result.error ?? "none"}`)
+
+    if (!result.success) {
+      if (result.error === "aborted") {
+        // 对齐 openclaw UI：中断保留 partial 作为 assistant 消息
+        const partial = result.content?.trim() ?? ""
+        if (partial) {
+          const abortedMsg = buildAndInsertAbortedMessage(sessionId, target, result.content, idempotencyKey)
+          deps.emitMessage(abortedMsg)
+        }
+        emitTerminal("aborted")
+        return
       }
+      // 其他错误 → emit chat:error banner，不入 DB（对齐 openclaw UI）
+      deps.emitError(sessionId, idempotencyKey, target.openclawKey, result.error ?? "unknown error")
+      emitTerminal("error", result.error ?? "unknown error")
       return
     }
-    // 其他错误 → emit chat:error banner，不入 DB（对齐 openclaw UI）
-    deps.emitError(sessionId, idempotencyKey, target.openclawKey, result.error ?? "unknown error")
-    return
+
+    const interp = interpretReply(result.content)
+    if (interp.shouldSuppress) {
+      emitTerminal("done")
+      return
+    }
+    // 空 final 不落库 —— openclaw 偶尔对无实质内容的 turn 返空字符串
+    if (!interp.content.trim()) {
+      log.info(`sendToMember empty final suppressed member=${target.id} key=${idempotencyKey}`)
+      emitTerminal("done")
+      return
+    }
+
+    // 从 openclaw chat.history 补元数据（usage / model / stopReason）——event stream 不带这些
+    const meta = await deps.fetchAssistantMeta(target.openclawKey).catch(() => null)
+    const usage = meta?.usage ?? result.usage ?? null
+    const model = meta?.model ?? null
+    const stopReason = meta?.stopReason ?? result.stopReason ?? null
+
+    // 把这一轮消耗的 token 累计到 session 预算里；maxTokens 检查在下一轮 checkAndIncrementRound
+    const totalTokens = usage?.total ?? (usage?.input ?? 0) + (usage?.output ?? 0)
+    if (totalTokens > 0) addTokens(sessionId, totalTokens)
+
+    // 持久化 agent 回复 —— 顺便把此 turn 间累积的 mention_next 事件合并进来
+    const assistantMsg: ChatMessage = {
+      id: nanoid(),
+      sessionId,
+      seq: nextSeq(sessionId),
+      openclawSessionKey: target.openclawKey,
+      openclawMessageId: meta?.id ?? null,
+      senderType: "agent",
+      senderId: target.agentId,
+      role: "assistant",
+      content: { text: interp.content },
+      mentions: drainPendingMentions(sessionId),
+      turnRunId: idempotencyKey,
+      tags: [],
+      model,
+      usage,
+      stopReason,
+      createdAtLocal: Date.now(),
+      createdAtRemote: null,
+    }
+    insertMessage({
+      id: assistantMsg.id,
+      sessionId: assistantMsg.sessionId,
+      seq: assistantMsg.seq,
+      openclawSessionKey: assistantMsg.openclawSessionKey,
+      openclawMessageId: assistantMsg.openclawMessageId,
+      senderType: assistantMsg.senderType,
+      senderId: assistantMsg.senderId,
+      role: assistantMsg.role,
+      content: assistantMsg.content,
+      mentions: assistantMsg.mentions,
+      turnRunId: assistantMsg.turnRunId,
+      tags: assistantMsg.tags,
+      model: assistantMsg.model,
+      usage: assistantMsg.usage,
+      stopReason: assistantMsg.stopReason,
+      createdAtRemote: assistantMsg.createdAtRemote,
+    })
+    deps.emitMessage(assistantMsg)
+    emitTerminal("done")
+
+    // 递归继续（下一个 target 由 decideTargets 根据新消息的 mentions 决定）
+    await onNewMessage(deps, sessionId, assistantMsg)
+  } catch (err) {
+    emitTerminal("error", (err as Error).message)
+    throw err
+  } finally {
+    clearTimeout(startWatchdog)
+    if (!terminalEmitted) emitTerminal("error", "unknown termination")
   }
-
-  const interp = interpretReply(result.content)
-  if (interp.shouldSuppress) return
-  // 空 final 不落库 —— openclaw 偶尔对无实质内容的 turn 返空字符串
-  if (!interp.content.trim()) {
-    log.info(`sendToMember empty final suppressed member=${target.id} key=${idempotencyKey}`)
-    return
-  }
-
-  // 从 openclaw chat.history 补元数据（usage / model / stopReason）——event stream 不带这些
-  const meta = await deps.fetchAssistantMeta(target.openclawKey).catch(() => null)
-  const usage = meta?.usage ?? result.usage ?? null
-  const model = meta?.model ?? null
-  const stopReason = meta?.stopReason ?? result.stopReason ?? null
-
-  // 把这一轮消耗的 token 累计到 session 预算里；maxTokens 检查在下一轮 checkAndIncrementRound
-  const totalTokens = usage?.total ?? (usage?.input ?? 0) + (usage?.output ?? 0)
-  if (totalTokens > 0) addTokens(sessionId, totalTokens)
-
-  // 持久化 agent 回复 —— 顺便把此 turn 间累积的 mention_next 事件合并进来
-  const assistantMsg: ChatMessage = {
-    id: nanoid(),
-    sessionId,
-    seq: nextSeq(sessionId),
-    openclawSessionKey: target.openclawKey,
-    openclawMessageId: meta?.id ?? null,
-    senderType: "agent",
-    senderId: target.agentId,
-    role: "assistant",
-    content: { text: interp.content },
-    mentions: drainPendingMentions(sessionId),
-    turnRunId: idempotencyKey,
-    tags: [],
-    model,
-    usage,
-    stopReason,
-    createdAtLocal: Date.now(),
-    createdAtRemote: null,
-  }
-  insertMessage({
-    id: assistantMsg.id,
-    sessionId: assistantMsg.sessionId,
-    seq: assistantMsg.seq,
-    openclawSessionKey: assistantMsg.openclawSessionKey,
-    openclawMessageId: assistantMsg.openclawMessageId,
-    senderType: assistantMsg.senderType,
-    senderId: assistantMsg.senderId,
-    role: assistantMsg.role,
-    content: assistantMsg.content,
-    mentions: assistantMsg.mentions,
-    turnRunId: assistantMsg.turnRunId,
-    tags: assistantMsg.tags,
-    model: assistantMsg.model,
-    usage: assistantMsg.usage,
-    stopReason: assistantMsg.stopReason,
-    createdAtRemote: assistantMsg.createdAtRemote,
-  })
-  deps.emitMessage(assistantMsg)
-
-  // 递归继续（下一个 target 由 decideTargets 根据新消息的 mentions 决定）
-  await onNewMessage(deps, sessionId, assistantMsg)
 }
 
 function buildAndInsertAbortedMessage(sessionId: string, target: ChatMember, content: string, idempotencyKey: string): ChatMessage {
