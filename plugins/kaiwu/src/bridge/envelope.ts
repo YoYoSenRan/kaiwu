@@ -1,10 +1,10 @@
 /**
- * kaiwu ↔ kaiwu 的 JSON 消息协议契约。
+ * 插件 ↔ 控制端 的 JSON 消息协议契约。
  *
- * 所有消息必须带 `type` 字段。请求/响应类型复用同一个联合，通过 `type` 判别。
- * kaiwu 端在 electron/openclaw/types.ts 里应镜像这份定义。
+ * 所有消息必须带 `type` 字段。请求/响应类型复用同一个联合,通过 `type` 判别。
+ * 控制端侧应镜像这份定义。
  *
- * 纯契约文件：不含运行时副作用，host 在 discovery 阶段可直接静态读。
+ * 纯契约文件:不含运行时副作用,host 在 discovery 阶段可直接静态读。
  */
 
 /** 协议版本号。协议形状变更时递增并更新两端的 SUPPORTED_PROTOCOL_VERSIONS。 */
@@ -24,15 +24,15 @@ export interface BridgeEnvelope<T extends string, P = unknown> {
   payload: P
 }
 
-// --- 出站事件：plugin → kaiwu ---
+// --- 出站事件:plugin → 控制端 ---
 
 /** 插件完成启动、WebSocket 鉴权成功。 */
 export type PluginReadyEvent = BridgeEnvelope<"plugin.ready", { pluginVersion: string; hostGatewayPort: number; protocolVersion: number }>
 
-/** 插件即将停止（OpenClaw gateway_stop 钩子触发）。 */
+/** 插件即将停止(宿主 gateway_stop 钩子触发)。 */
 export type PluginShutdownEvent = BridgeEnvelope<"plugin.shutdown", { reason?: string }>
 
-/** 会话开始/结束。占位，具体字段按 OpenClaw hook 补。 */
+/** 会话开始/结束。占位,具体字段按宿主 hook 补。 */
 export type SessionStartedEvent = BridgeEnvelope<"session.started", { sessionId: string }>
 export type SessionEndedEvent = BridgeEnvelope<"session.ended", { sessionId: string; outcome?: string }>
 
@@ -45,7 +45,7 @@ export type ToolInvokedEvent = BridgeEnvelope<"tool.invoked", { sessionId: strin
 /** 插件内部异常上报。 */
 export type ErrorOccurredEvent = BridgeEnvelope<"error.occurred", { message: string; stack?: string; context?: string }>
 
-/** 透传业务事件，kaiwu 按 type 分发。 */
+/** 透传业务事件,控制端按 type 分发。 */
 export type CustomEvent = BridgeEnvelope<"custom", { channel: string; data: unknown }>
 
 export type BridgeOutboundMessage =
@@ -58,7 +58,7 @@ export type BridgeOutboundMessage =
   | ErrorOccurredEvent
   | CustomEvent
 
-// --- 入站命令：kaiwu → plugin（通过 HTTP 路由）---
+// --- 入站命令:控制端 → plugin(通过 HTTP 路由)---
 
 export interface HealthResponse {
   ok: true

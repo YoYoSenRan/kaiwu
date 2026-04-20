@@ -1,13 +1,12 @@
 /**
- * 订阅 OpenClaw 运行时 hook，归一化为 MonitorEvent。
+ * 运行时事件采集 hook — 订阅宿主 hook 列表,归一化为 MonitorEvent 后通过 bridge 推给控制端。
  *
- * 每个 hook handler 从 event + ctx 中提取关键字段，
- * 不做过滤或聚合——原样采集，由 kaiwu 主进程侧决定展示逻辑。
+ * 每个 hook handler 从 event + ctx 中提取关键字段,不做过滤或聚合 —
+ * 原样采集,由控制端侧决定展示逻辑。
  */
 
-import type { MonitorEvent, MonitorHookName } from "./contract.js"
-
-import { MONITOR_HOOKS } from "./contract.js"
+import type { MonitorEvent, MonitorHookName } from "../bridge/monitor.js"
+import { MONITOR_HOOKS } from "../bridge/monitor.js"
 
 type HookRegisterFn = (event: string, handler: (event: unknown, ctx: unknown) => unknown) => void
 
@@ -20,11 +19,9 @@ interface AgentContext {
 }
 
 /**
- * 向 OpenClaw 注册所有监控 hook，采集到的事件推入 sink。
- * @param on api.on 方法引用
- * @param sink 接收归一化事件的回调，由 relay 提供
+ * 向宿主注册所有监控 hook,采集到的事件推入 sink(由 bridge/monitor 提供)。
  */
-export function setupCollector(on: HookRegisterFn, sink: MonitorSink): void {
+export function setupMonitorCollector(on: HookRegisterFn, sink: MonitorSink): void {
   for (const hookName of MONITOR_HOOKS) {
     on(hookName, (event: unknown, ctx: unknown) => {
       sink(normalize(hookName, event, ctx))
@@ -32,7 +29,6 @@ export function setupCollector(on: HookRegisterFn, sink: MonitorSink): void {
   }
 }
 
-/** 从 hook 参数提取关键上下文字段，构造统一的 MonitorEvent。 */
 function normalize(hookName: MonitorHookName, event: unknown, ctx: unknown): MonitorEvent {
   const agentCtx = (ctx ?? {}) as AgentContext
   return {

@@ -1,41 +1,34 @@
 /**
- * kaiwu 插件的运行时注册入口。
+ * 插件运行时注册入口。
  *
- * 装配模式：创建共享基础设施（transport + http），然后遍历各能力域的 setup 函数。
- * 新增能力域只需：1) 创建 src/<domain>/setup.ts  2) 在 DOMAINS 数组里加一行。
+ * 目录结构 = 宿主 SDK 方法 / 通信通道:
+ *   - tools/   : api.registerTool()         给 agent LLM 用
+ *   - hooks/   : api.on(event, handler)     订阅宿主运行时
+ *   - routes/  : registerHttpRoute + action dispatcher,控制端 RPC 入口
+ *   - bridge/  : WS 到控制端(transport + 事件 schema)
+ *   - core/    : handshake / http framework(无业务)
+ *
+ * 启动流程:
+ *   1. 解析 bridge 配置(handshake 或 pluginConfig)
+ *   2. 创建 WS client(bridge/transport)
+ *   3. 注册 HTTP 路由 — 所有 action 走统一前缀分发器
+ *   4. 依次装配 tools / hooks / routes
+ *   5. gateway_start 时连 WS,gateway_stop 时断开
  */
 
 import type { OpenClawPluginApi } from "../api.js"
-import type { DomainSetup } from "./domain.js"
 
+import { createBridgeClient } from "./bridge/transport.js"
 import { resolveBridgeConfig } from "./core/handshake.js"
-import { createKaiwuRouteHandler, createDomainRegistrar } from "./core/http.js"
-import { createBridgeClient } from "./core/transport.js"
-import { setupContext } from "./context/setup.js"
-import { setupMonitor } from "./monitor/setup.js"
-import { setupChat } from "./chat/setup.js"
+import { createKaiwuRouteHandler } from "./core/http.js"
+import { setupHooks } from "./hooks/setup.js"
+import { setupRoutes } from "./routes/setup.js"
+import { setupTools } from "./tools/setup.js"
 
-/** HTTP 路由前缀。 */
 const HTTP_ROUTE_PREFIX = "/kaiwu/"
 
-/**
- * 能力域注册清单。
- * 新增域只需在这里加一行 [域名, setup 函数]。
- * 域名会作为 action 前缀（如 "context" → "context.set"）。
- */
-const DOMAINS: Array<[string, DomainSetup]> = [
-  ["context", setupContext],
-  ["monitor", setupMonitor],
-  ["chat", setupChat],
-]
-
-/**
- * 插件启动入口。创建基础设施，遍历能力域 setup。
- * @param api OpenClaw 插件 API
- */
 export async function registerBridgePlugin(api: OpenClawPluginApi): Promise<void> {
-  // --- 基础设施 ---
-  const bridgeClient = createBridgeClient({
+  const bridge = createBridgeClient({
     logger: api.logger,
     configFactory: () =>
       resolveBridgeConfig({
@@ -45,6 +38,7 @@ export async function registerBridgePlugin(api: OpenClawPluginApi): Promise<void
       }),
   })
 
+  // 一个前缀路由接住所有 action,内部 dispatch
   api.registerHttpRoute({
     path: HTTP_ROUTE_PREFIX,
     auth: "plugin",
@@ -53,22 +47,16 @@ export async function registerBridgePlugin(api: OpenClawPluginApi): Promise<void
     handler: createKaiwuRouteHandler(),
   })
 
-  // gateway 起来时启动 WS 连接；停止时断开
+  // WS 生命周期跟宿主 gateway
   api.on("gateway_start", async () => {
-    bridgeClient.start()
+    bridge.start()
   })
   api.on("gateway_stop", async () => {
-    bridgeClient.stop("gateway_stop")
+    bridge.stop("gateway_stop")
   })
 
-  // --- 遍历能力域 ---
-  for (const [name, setup] of DOMAINS) {
-    await setup({
-      api,
-      registerAction: createDomainRegistrar(name),
-      bridge: bridgeClient,
-    })
-  }
-
-  api.logger.info?.(`[kaiwu] registered ${DOMAINS.length} domains: ${DOMAINS.map(([n]) => n).join(", ")}`)
+  // 装配三层(顺序无关:tools 注册不依赖 hooks/routes)
+  setupTools(api, bridge)
+  setupHooks(api, bridge)
+  setupRoutes()
 }

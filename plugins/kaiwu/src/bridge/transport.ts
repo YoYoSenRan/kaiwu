@@ -1,6 +1,6 @@
 import type { PluginLogger } from "../../api.js"
 import type { BridgeOutboundMessage } from "./envelope.js"
-import type { BridgeConfig } from "./handshake.js"
+import type { BridgeConfig } from "../core/handshake.js"
 
 /** 首次重连延迟（ms）。指数退避起点。 */
 const INITIAL_RECONNECT_MS = 500
@@ -17,11 +17,11 @@ export interface BridgeClient {
 }
 
 /**
- * 创建插件 → kaiwu 的 WebSocket 客户端。
- * 断线自动指数退避重连；kaiwu 未启动时不会抛错，静默重试。
- * configFactory 在**每次重连前**被调用，这样 kaiwu 重启写入新 handshake 后，
- * 插件能自动采用新的 port/token，无需重启 OpenClaw。
- * @param params.configFactory 返回当前有效配置，无配置返回 null
+ * 创建插件 → 控制端的 WebSocket 客户端。
+ * 断线自动指数退避重连;控制端未启动时不会抛错,静默重试。
+ * configFactory 在**每次重连前**被调用,这样控制端重启写入新 handshake 后,
+ * 插件能自动采用新的 port/token,无需重启宿主。
+ * @param params.configFactory 返回当前有效配置,无配置返回 null
  */
 export function createBridgeClient(params: {
   configFactory: () => BridgeConfig | null
@@ -45,14 +45,11 @@ export function createBridgeClient(params: {
     if (stopped) return
     const config = configFactory()
     if (!config) {
-      logger.debug?.("[kaiwu] no config yet, retrying later")
       scheduleReconnect()
       return
     }
-    const url = buildUrl(config)
-    logger.debug?.(`[kaiwu] connecting ${url}`)
     try {
-      ws = new WebSocket(url)
+      ws = new WebSocket(buildUrl(config))
     } catch (err) {
       logger.warn?.(`[kaiwu] ws construct failed: ${(err as Error).message}`)
       scheduleReconnect()
@@ -60,7 +57,6 @@ export function createBridgeClient(params: {
     }
 
     ws.addEventListener("open", () => {
-      logger.info?.("[kaiwu] connected to kaiwu")
       reconnectDelay = INITIAL_RECONNECT_MS
       flushOutbox()
       startHeartbeat()
@@ -69,14 +65,13 @@ export function createBridgeClient(params: {
 
     ws.addEventListener("close", (ev) => {
       stopHeartbeat()
-      logger.debug?.(`[kaiwu] ws closed code=${ev.code}`)
       params.onClose?.(`close:${ev.code}`)
       ws = null
       scheduleReconnect()
     })
 
     ws.addEventListener("error", () => {
-      // 错误事件后紧跟 close，统一在 close 里处理重连
+      // 错误事件后紧跟 close,统一在 close 里处理重连
     })
   }
 
