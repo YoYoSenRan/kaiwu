@@ -659,4 +659,3 @@ export function ChatMain() {
     </div>
   )
 }
-

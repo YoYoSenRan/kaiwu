@@ -5,27 +5,15 @@
 import { asc, eq } from "drizzle-orm"
 import { database } from "../../../database/client"
 import { chatMessages } from "../../../database/schema"
-import type { ChatMention, ChatMessage, MessageRole, MessageUsage, SenderType } from "../types"
+import type { ChatMention, ChatMessage, MessageUsage } from "../types"
 
-export function insertMessage(m: {
-  id: string
-  sessionId: string
-  seq: number
-  openclawSessionKey: string | null
-  openclawMessageId: string | null
-  senderType: SenderType
-  senderId: string | null
-  role: MessageRole
-  content: unknown
-  mentions: ChatMention[]
-  inReplyToMessageId: string | null
-  turnRunId: string | null
-  tags: string[]
-  model: string | null
-  usage: MessageUsage | null
-  stopReason: string | null
-  createdAtRemote: number | null
-}): void {
+/**
+ * 落库一条消息。直接接收 ChatMessage 对象,内部负责 JSON 序列化。
+ * 调用方不再需要逐字段拷贝(节省 ~18 行/调用点)。
+ *
+ * 注意:`createdAtLocal` 由 DB 自动填(默认值),传入也会被忽略。
+ */
+export function insertMessage(m: ChatMessage): void {
   database()
     .insert(chatMessages)
     .values({

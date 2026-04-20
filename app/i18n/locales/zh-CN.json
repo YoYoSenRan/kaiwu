@@ -427,6 +427,7 @@
     },
     "members": {
       "empty": "暂无成员",
+      "count": "成员",
       "replyAuto": "自动",
       "replyMention": "仅 @",
       "replyModeHint": "点击切换回复模式",
@@ -441,6 +442,13 @@
       "removeFailed": "移除失败：{{msg}}",
       "removedToast": "已移除 {{name}}",
       "allAdded": "所有可用智能体已在会话中"
+    },
+    "mode": {
+      "direct": "单聊",
+      "group": "群聊"
+    },
+    "status": {
+      "running": "运行中"
     },
     "hitl": {
       "prompt": "{{agentId}} 问你：{{question}}"

@@ -1,9 +1,6 @@
 /**
- * 会话 loop 子域:处理消息的编排逻辑。
- *
- *  - direct: 单聊 (1 agent,线性 send → stream → final)
- *  - group:  群聊 (N agent,fan-out + 递归 + mention 路由 + ask_user 挂起)
+ * 会话 loop 子域:统一编排,direct 是 group N=1 特例,共享 onNewMessage + sendToMember 主流程。
+ * 区别:direct 不 pushContext / sharedHistory,decideTargets 自然不递归。
  */
 
-export { sendDirect, type DirectDeps } from "./direct"
 export { hasPending, onAskUserEvent, onMentionNextEvent, onNewMessage, takePending, type GroupDeps } from "./group"

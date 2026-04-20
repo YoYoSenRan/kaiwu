@@ -427,6 +427,7 @@
     },
     "members": {
       "empty": "No members",
+      "count": "members",
       "replyAuto": "Auto",
       "replyMention": "Only @",
       "replyModeHint": "Click to toggle reply mode",
@@ -441,6 +442,13 @@
       "removeFailed": "Remove failed: {{msg}}",
       "removedToast": "Removed {{name}}",
       "allAdded": "All available agents already in session"
+    },
+    "mode": {
+      "direct": "Direct",
+      "group": "Group"
+    },
+    "status": {
+      "running": "Running"
     },
     "hitl": {
       "prompt": "{{agentId}} asks: {{question}}"

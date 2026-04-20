@@ -1,69 +1,76 @@
 /**
- * @mention 文本处理:user 输入里的 @agentId 是 kaiwu 内部路由标识,
- * 不应带到真正发给 agent 的消息体里(agent 通过 context 感知"被 at")。
+ * @mention 文本处理:从消息文本中提取被 @ 的成员 + 清洗发给 agent 的副本。
  *
- * UI 展示(chat_messages.content_json)保留原文带 @,发给 openclaw chat.send
- * 的 message 参数走 stripMentionsForAgent 清洗。
+ * 心智模型:
+ *   - chat_messages.content 保留原文(含 @),用于 UI 展示和审计
+ *   - 真正发给 openclaw chat.send 的 message 走 cleaned 副本(剥掉 @,因为路由已通过 mentions 数组传达)
+ *
+ * 单次扫描设计:scanMentions 一次正则遍历同时输出 mentions + cleaned text,
+ * 避免 parseMentionsFromText / stripMentionsForAgent 各自再扫一遍。
  */
 
 import type { ChatMember, ChatMention } from "../types"
 
-/**
- * 从文本里移除所有匹配 member.agentId 的 @ 标记,保留其余内容。
- *
- * 规则:
- *   - 匹配 `@<agentId>` + 可选尾部空白,整体删除
- *   - 不匹配未登记 agent(防用户手滑删掉无关文本)
- *   - 末尾单个 @ 标记删除后不留多余空格
- *   - 大小写不敏感,对齐 parseMentionsFromText
- *
- * 例:
- *   stripMentionsForAgent("@Alice 你好,@bob 也来看看", [Alice,bob])
- *     → "你好,也来看看"
- *   stripMentionsForAgent("hi @Alice", [Alice]) → "hi"
- */
-export function stripMentionsForAgent(text: string, members: Pick<ChatMember, "agentId">[]): string {
-  if (!text || members.length === 0) return text
-  let out = text
-  for (const m of members) {
-    const escaped = m.agentId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    // 匹配 @agentId 后可选空白(多个),整体吃掉
-    const re = new RegExp(`@${escaped}\\b\\s*`, "gi")
-    out = out.replace(re, "")
-  }
-  // 收尾:多余空白压单空格 + trim
-  return out.replace(/[ \t]+/g, " ").trim()
+/** scan 输出。 */
+export interface MentionScanResult {
+  /** 解析到的 mention(去重,首次出现即记录,source="plain")。 */
+  mentions: ChatMention[]
+  /** 剥掉 @ 后的干净文本(用于发给 agent)。 */
+  stripped: string
 }
 
 /**
- * 从文本里解析出所有 @<agentId> 标记,返回对应 ChatMention 数组,带 range。
- * user/agent 消息都用同一套解析,保证文本 @ 路由一致。
- *
- * @param excludeSelfAgentId 排除的 sender 自己的 agentId,避免 agent @ 自己导致死循环
+ * 单次扫描:遍历 text,把 @<agentId>(member 列表中的)同时收集 + 删除。
+ * - 大小写不敏感
+ * - 同 agentId 多次出现只保留第一次的 range
+ * - 排除 sender 自己
  */
-export function parseMentionsFromText(text: string, members: Pick<ChatMember, "agentId">[], excludeSelfAgentId?: string): ChatMention[] {
-  if (!text) return []
-  const found: ChatMention[] = []
+export function scanMentions(text: string, members: Pick<ChatMember, "agentId">[], excludeSelfAgentId?: string): MentionScanResult {
+  if (!text || members.length === 0) return { mentions: [], stripped: text.replace(/[ \t]+/g, " ").trim() }
+
+  const idsByLower = new Map<string, string>()
+  for (const m of members) {
+    if (excludeSelfAgentId && m.agentId.toLowerCase() === excludeSelfAgentId.toLowerCase()) continue
+    idsByLower.set(m.agentId.toLowerCase(), m.agentId)
+  }
+
+  // 单 regex 匹配所有候选 @,按出现顺序处理。
+  const re = /@([\w-]+)\b\s*/g
+  const mentions: ChatMention[] = []
   const seen = new Set<string>()
-  for (const m of members) {
-    if (excludeSelfAgentId && m.agentId === excludeSelfAgentId) continue
-    if (seen.has(m.agentId)) continue
-    const escaped = m.agentId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    const re = new RegExp(`@${escaped}\\b`, "gi")
-    let match: RegExpExecArray | null
-    while ((match = re.exec(text)) !== null) {
-      if (!seen.has(m.agentId)) {
-        found.push({ agentId: m.agentId, source: "plain", range: [match.index, match.index + match[0].length] })
-        seen.add(m.agentId)
-        break
-      }
+  let stripped = ""
+  let lastEnd = 0
+  let match: RegExpExecArray | null
+  while ((match = re.exec(text)) !== null) {
+    const lower = match[1].toLowerCase()
+    const agentId = idsByLower.get(lower)
+    if (!agentId) continue // 未登记的 @ 名字保留在文本里(不识别为 mention)
+    // 收集 mention(去重)
+    if (!seen.has(agentId)) {
+      seen.add(agentId)
+      mentions.push({ agentId, source: "plain", range: [match.index, match.index + match[0].trimEnd().length] })
     }
+    // 把 [lastEnd, match.index) 拼到 stripped,跳过 match 整体
+    stripped += text.slice(lastEnd, match.index)
+    lastEnd = match.index + match[0].length
   }
-  return found
+  stripped += text.slice(lastEnd)
+  stripped = stripped.replace(/[ \t]+/g, " ").trim()
+  return { mentions, stripped }
+}
+
+/** 从文本里仅提取 mentions(常见调用方:agent 回复落库时不需要 stripped)。 */
+export function parseMentionsFromText(text: string, members: Pick<ChatMember, "agentId">[], excludeSelfAgentId?: string): ChatMention[] {
+  return scanMentions(text, members, excludeSelfAgentId).mentions
+}
+
+/** 从文本里仅获取剥 @ 后的干净文本(发给 agent 的消息体)。 */
+export function stripMentionsForAgent(text: string, members: Pick<ChatMember, "agentId">[]): string {
+  return scanMentions(text, members).stripped
 }
 
 /**
- * 校验结构化 mentions:
+ * 校验结构化 mentions(来自 composer 的 user 输入):
  *   - agentId 必须是 members 之一
  *   - range 在 text 范围内,且字串与 `@<agentId>` 匹配
  *   - 同一 agentId 去重保留首个
@@ -94,10 +101,7 @@ export function sanitizeStructuredMentions(text: string, mentions: ChatMention[]
   return out
 }
 
-/**
- * 合并结构化 + 文本解析 mentions:结构化优先,文本解析仅补充未覆盖的 agentId。
- * agent 回复没有结构化来源时,文本解析结果直接当主路径(所有 source="plain")。
- */
+/** 合并结构化 + 文本解析 mentions:结构化优先,文本解析仅补充未覆盖的 agentId。 */
 export function mergeMentions(primary: ChatMention[], fallback: ChatMention[]): ChatMention[] {
   const out: ChatMention[] = []
   const seen = new Set<string>()

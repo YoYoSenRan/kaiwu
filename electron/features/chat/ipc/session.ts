@@ -3,8 +3,8 @@
  */
 
 import { nanoid } from "nanoid"
-import { buildSessionInitParams } from "../bootstrap"
-import { deleteSession as deleteSessionRow, getSession, insertMember, insertSession, listMembers, listSessions, setSessionArchived } from "../repository"
+import { buildSessionInitParams } from "../keys"
+import { deleteSession as deleteSessionRow, getSession, insertMember, insertSession, listMembers, listSessions, setSessionArchived, setSessionSupervisor } from "../repository"
 import type { ChatSession, CreateSessionInput } from "../types"
 import type { ChatService } from "../service"
 
@@ -23,13 +23,23 @@ export async function create(svc: ChatService, input: CreateSessionInput): Promi
     openclawKey: null,
     budget: input.budget ?? {},
     strategy: { kind: "broadcast" },
-    supervisorId: input.supervisorId ?? null,
+    // supervisor 先空,member 落库后回填(取首个 member 作默认,直聊时该 member 即唯一成员)
+    supervisorId: null,
   })
+  let firstMemberId: string | null = null
+  let resolvedSupervisorId: string | null = null
   for (const m of input.members) {
     const memberId = nanoid()
+    if (!firstMemberId) firstMemberId = memberId
+    if (input.supervisorId && input.supervisorId === m.agentId) resolvedSupervisorId = memberId
     const params = buildSessionInitParams({ sessionId, memberId, agentId: m.agentId, mode: input.mode, replyMode: m.replyMode })
     await svc.createOpenClawSession(params.key, m.agentId)
     insertMember({ id: memberId, sessionId, agentId: m.agentId, openclawKey: params.key, replyMode: m.replyMode, seedHistory: m.seedHistory ?? false })
+  }
+  // 默认值:用户传 supervisorId(agentId)→ 解析为 memberId;否则取首个 member
+  const finalSupervisorId = resolvedSupervisorId ?? firstMemberId
+  if (finalSupervisorId) {
+    setSessionSupervisor(sessionId, finalSupervisorId)
   }
   const created = getSession(sessionId)
   if (!created) throw new Error("failed to load created session")

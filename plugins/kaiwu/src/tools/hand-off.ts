@@ -33,33 +33,15 @@ interface HandOffArgs {
   reason?: string
 }
 
-/** 仅允许这些 agent 调 kaiwu_hand_off。中心化调度,其他 agent 完成任务静默退出。 */
-const ALLOWED_AGENTS = new Set<string>(["minion"])
-
 export function createHandOffFactory(bridge: BridgeClient): OpenClawPluginToolFactory {
   return (ctx: OpenClawPluginToolContext) => {
     const sessionKey = ctx.sessionKey ?? ""
-    const selfAgentId = ctx.agentId ?? ""
     const tool: AnyAgentTool = {
       name: "kaiwu_hand_off",
       label: "Hand Off",
-      description:
-        "把群聊发言权交给另一个成员。调用后当前回合结束,被交接的成员会收到消息。" +
-        "这是唯一的路由方式 — 在回复正文里写 @<name> 只用于引用/展示,不会触发对方接话。" +
-        "仅调度型 agent(例如 minion)可调用,其他成员调用会被拒绝。",
+      description: "把群聊发言权交给另一个成员。调用后当前回合结束,被交接的成员会收到消息。" + "若你不是本群主持人(supervisor),调用会被静默忽略 — 完成自己任务即可,不必尝试。",
       parameters: HandOffParams,
       execute: async (_toolCallId: string, rawParams: unknown) => {
-        if (!ALLOWED_AGENTS.has(selfAgentId)) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `kaiwu_hand_off is only available to orchestrator agents. "${selfAgentId}" cannot route — complete your task and yield silently.`,
-              },
-            ],
-            details: { rejected: true, reason: "agent not whitelisted", selfAgentId },
-          }
-        }
         const params = rawParams as HandOffArgs
         const event: HandOffEvent = {
           kind: "hand_off",

@@ -180,7 +180,7 @@ export function ChatSidebar() {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="btn-focus hover:bg-muted text-muted-foreground absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md opacity-60 transition-opacity hover:opacity-100 group-hover:opacity-100 focus:opacity-100"
+                      className="btn-focus hover:bg-muted text-muted-foreground absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md opacity-60 transition-opacity group-hover:opacity-100 hover:opacity-100 focus:opacity-100"
                       aria-label={t("common.detail")}
                     >
                       <MoreVertical className="size-4" />

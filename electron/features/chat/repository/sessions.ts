@@ -44,6 +44,10 @@ export function setSessionArchived(id: string, archived: boolean): void {
   database().update(chatSessions).set({ archived }).where(eq(chatSessions.id, id)).run()
 }
 
+export function setSessionSupervisor(id: string, supervisorId: string | null): void {
+  database().update(chatSessions).set({ supervisor_id: supervisorId }).where(eq(chatSessions.id, id)).run()
+}
+
 export function deleteSession(id: string): void {
   database().delete(chatSessions).where(eq(chatSessions.id, id)).run()
 }

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(kill -9 29333)",
+      "Bash(rm -rf ~/.claude-mem)",
+      "Bash(sed -i '' '/alias claude-mem=/d' ~/.zshrc)",
+      "Bash(rm -f /Users/macos/WebProject/kaiwu/AGENTS.md)",
+      "Bash(rtk ps *)",
+      "Read(//Users/macos/**)"
+    ]
+  }
+}

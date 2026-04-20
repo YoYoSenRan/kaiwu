@@ -100,11 +100,9 @@ export async function onNewMessage(deps: GroupDeps, sessionId: string, msg: Chat
       replyToAgentId = parent.senderId
     }
   }
-  let targets = decideTargets(members, msg.mentions, msg.senderType, replyToAgentId)
-  // 剔除 sender 自己：防御性兜底 —— agent 若 @ 自己时 routing 也不转给自己
-  if (msg.senderType === "agent" && msg.senderId) {
-    targets = targets.filter((t) => t.agentId !== msg.senderId)
-  }
+  // agent 消息时,把 senderId(agentId)反查到 member.id 用于 supervisor 判定 + 排除自己
+  const senderMemberId = msg.senderType === "agent" && msg.senderId ? (members.find((m) => m.agentId === msg.senderId)?.id ?? null) : null
+  const targets = decideTargets({ members, mentions: msg.mentions, senderType: msg.senderType, senderMemberId, replyToAgentId, session })
   log.info(`onNewMessage session=${sessionId} sender=${msg.senderType} senderId=${msg.senderId ?? "<none>"} members=${members.length} targets=${targets.length}`)
 
   if (targets.length === 0) {
@@ -172,17 +170,23 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
     })
     log.info(`sendToMember resolved displayName member=${target.id} name=${displayName ?? "<none>"}`)
 
+    // direct 模式不注入 sharedHistory(单聊 openclaw session 自带完整对话历史)。
+    // group 模式才需要 plugin context.set 推送群聊感知。
+    const session = getSession(sessionId)
+    const isGroup = session?.mode === "group"
     const ctx = buildSharedContext(sessionId, target, {
       agentDisplayName: displayName,
-      includeHistory: target.seedHistory || target.joinedAt <= incoming.createdAtLocal,
+      includeHistory: isGroup && (target.seedHistory || target.joinedAt <= incoming.createdAtLocal),
     })
     log.info(`sendToMember built ctx member=${target.id} ctxKeys=${Object.keys(ctx).join(",")}`)
 
-    try {
-      await deps.pushContext(ctx)
-      log.info(`sendToMember pushContext ok member=${target.id}`)
-    } catch (err) {
-      log.warn(`pushContext failed for member=${target.id}: ${(err as Error).message}`)
+    if (isGroup) {
+      try {
+        await deps.pushContext(ctx)
+        log.info(`sendToMember pushContext ok member=${target.id}`)
+      } catch (err) {
+        log.warn(`pushContext failed for member=${target.id}: ${(err as Error).message}`)
+      }
     }
 
     const idempotencyKey = newIdempotencyKey()
@@ -322,25 +326,7 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
       createdAtLocal: Date.now(),
       createdAtRemote: null,
     }
-    insertMessage({
-      id: assistantMsg.id,
-      sessionId: assistantMsg.sessionId,
-      seq: assistantMsg.seq,
-      openclawSessionKey: assistantMsg.openclawSessionKey,
-      openclawMessageId: assistantMsg.openclawMessageId,
-      senderType: assistantMsg.senderType,
-      senderId: assistantMsg.senderId,
-      role: assistantMsg.role,
-      content: assistantMsg.content,
-      mentions: assistantMsg.mentions,
-      inReplyToMessageId: assistantMsg.inReplyToMessageId,
-      turnRunId: assistantMsg.turnRunId,
-      tags: assistantMsg.tags,
-      model: assistantMsg.model,
-      usage: assistantMsg.usage,
-      stopReason: assistantMsg.stopReason,
-      createdAtRemote: assistantMsg.createdAtRemote,
-    })
+    insertMessage(assistantMsg)
     deps.emitMessage(assistantMsg)
     // 异步对账:向 openclaw chat.history 拉权威元数据回填
     void deps.resolveMessageMeta({
@@ -383,25 +369,7 @@ function buildAndInsertAbortedMessage(sessionId: string, target: ChatMember, con
     createdAtLocal: Date.now(),
     createdAtRemote: null,
   }
-  insertMessage({
-    id: msg.id,
-    sessionId: msg.sessionId,
-    seq: msg.seq,
-    openclawSessionKey: msg.openclawSessionKey,
-    openclawMessageId: msg.openclawMessageId,
-    senderType: msg.senderType,
-    senderId: msg.senderId,
-    role: msg.role,
-    content: msg.content,
-    mentions: msg.mentions,
-    inReplyToMessageId: msg.inReplyToMessageId,
-    turnRunId: msg.turnRunId,
-    tags: msg.tags,
-    model: msg.model,
-    usage: msg.usage,
-    stopReason: msg.stopReason,
-    createdAtRemote: msg.createdAtRemote,
-  })
+  insertMessage(msg)
   return msg
 }
 

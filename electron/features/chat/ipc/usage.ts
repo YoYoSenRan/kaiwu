@@ -1,25 +1,24 @@
 /**
- * @Handle("usage:*") 处理器 + openclaw `sessions.list` 读取封装。
+ * @Handle("usage:*" | "budget:*" | "inspect:*") 处理器集中地。
  *
- * 所有 token / context 数据都来自 openclaw gateway(`sessions.list`)。
- * kaiwu 不本地累加,不持久化,纯转发读。
+ * 三类只读 RPC 合并到一个文件:都是会话粒度的状态/统计读取。
  *
- * 字段语义对齐 openclaw `deriveSessionTotalTokens`:
- *   - `totalTokens` 是 prompt 侧快照(input + cacheRead + cacheWrite),不含 output
- *   - `contextTokens` 是当前模型的 context window 容量
- *   - `fresh=false` 时 UI 应降级显示
+ * usage:    openclaw `sessions.list` 取 token / context window / cost(无本地累加)
+ * budget:   kaiwu 本地 `chat_budget_state` 行的 maxRounds / 已用次数
+ * inspect:  会话详情聚合(session + members + messages + turns)
  */
 
 import { scope } from "../../../infra/logger"
 import { getGateway } from "../../openclaw/runtime"
 import type { GatewaySessionRow, SessionsListResult } from "../../openclaw/contracts/rpc"
-import { listMembers } from "../repository"
-import type { SessionUsage } from "../types"
+import { getBudgetState, getSession, getTurn, listMembers, listMessages, listTurns, resetBudgetState } from "../repository"
+import type { BudgetState, ChatSessionDetail, ChatTurn, SessionUsage } from "../types"
 
 const log = scope("chat:ipc:usage")
 
+// ---------- usage:* ----------
+
 export async function get(sessionId: string): Promise<SessionUsage | null> {
-  // 单聊:取第一个(唯一)member 的 usage。群聊不推荐走此路径。
   const members = listMembers(sessionId)
   const member = members[0]
   if (!member) return null
@@ -27,7 +26,6 @@ export async function get(sessionId: string): Promise<SessionUsage | null> {
 }
 
 export async function getMembers(sessionId: string): Promise<Record<string, SessionUsage>> {
-  // 一次 sessions.list 取全,按 openclawKey 映射回 memberId 返回
   const members = listMembers(sessionId)
   if (members.length === 0) return {}
   const keyMap = await fetchManySessionUsages(members.map((m) => m.openclawKey))
@@ -39,27 +37,18 @@ export async function getMembers(sessionId: string): Promise<Record<string, Sess
   return out
 }
 
-/**
- * 按 openclawKey 查一次 sessions.list,筛出对应 row 的 usage 快照。
- * 未命中或 RPC 失败返 null。
- */
 async function fetchSessionUsage(openclawKey: string): Promise<SessionUsage | null> {
   try {
     const resp = await getGateway().call<SessionsListResult>("sessions.list", { includeGlobal: true })
     const needle = openclawKey.toLowerCase()
     const row = resp.sessions.find((s) => s.key.toLowerCase() === needle)
-    if (!row) return null
-    return rowToUsage(row)
+    return row ? rowToUsage(row) : null
   } catch (err) {
     log.warn(`fetchSessionUsage failed openclawKey=${openclawKey}: ${(err as Error).message}`)
     return null
   }
 }
 
-/**
- * 一次 sessions.list 取全,按 lowercase openclawKey 建查询表。
- * 群聊 N 个 member 共享一次 RPC,避免 N 次 round-trip。
- */
 async function fetchManySessionUsages(openclawKeys: string[]): Promise<Record<string, SessionUsage>> {
   if (openclawKeys.length === 0) return {}
   try {
@@ -87,4 +76,31 @@ function rowToUsage(row: GatewaySessionRow): SessionUsage {
     estimatedCostUsd: row.estimatedCostUsd ?? null,
     latestCompactionAt: row.latestCompactionCheckpoint?.at ?? null,
   }
+}
+
+// ---------- budget:* ----------
+
+export async function budgetGet(sessionId: string): Promise<BudgetState | null> {
+  return getBudgetState(sessionId)
+}
+
+export async function budgetReset(sessionId: string): Promise<void> {
+  resetBudgetState(sessionId)
+}
+
+// ---------- inspect:* ----------
+
+export async function inspectSessionDetail(sessionId: string): Promise<ChatSessionDetail | null> {
+  const session = getSession(sessionId)
+  if (!session) return null
+  return {
+    session,
+    members: listMembers(sessionId),
+    messages: listMessages(sessionId),
+    turns: listTurns(sessionId),
+  }
+}
+
+export async function inspectTurn(turnRunId: string): Promise<ChatTurn | null> {
+  return getTurn(turnRunId)
 }

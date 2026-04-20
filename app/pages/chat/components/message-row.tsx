@@ -94,7 +94,9 @@ export function MessageRow({ msg, agentName, avatarUrl, emoji, agentModel, conte
       <Avatar isUser={isUser} avatarUrl={avatarUrl} emoji={emoji} />
       <div className={`flex max-w-[72%] flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
         <div className="flex items-start gap-1">
-          <div className={`bg-card ring-foreground/10 mt-1 flex shrink-0 items-center rounded-md opacity-0 shadow-sm ring-1 transition-opacity group-hover:opacity-100 focus-within:opacity-100 ${isUser ? "order-1" : "order-2"}`}>
+          <div
+            className={`bg-card ring-foreground/10 mt-1 flex shrink-0 items-center rounded-md opacity-0 shadow-sm ring-1 transition-opacity group-hover:opacity-100 focus-within:opacity-100 ${isUser ? "order-1" : "order-2"}`}
+          >
             {canReply && (
               <button
                 type="button"
@@ -195,7 +197,19 @@ export function Avatar({ isUser, avatarUrl, emoji }: { isUser: boolean; avatarUr
   )
 }
 
-function MessageFooter({ msg, agentName, isUser, agentModel, contextWindow }: { msg: ChatMessage; agentName?: string; isUser: boolean; agentModel?: string; contextWindow?: number | null }) {
+function MessageFooter({
+  msg,
+  agentName,
+  isUser,
+  agentModel,
+  contextWindow,
+}: {
+  msg: ChatMessage
+  agentName?: string
+  isUser: boolean
+  agentModel?: string
+  contextWindow?: number | null
+}) {
   const time = formatTime(msg.createdAtLocal)
   const model = shortenModel(msg.model ?? agentModel ?? null)
   const usage = msg.usage
@@ -210,10 +224,30 @@ function MessageFooter({ msg, agentName, isUser, agentModel, contextWindow }: { 
   )
   if (!isUser && agentName) parts.push(<span key="n">{agentName}</span>)
   // token 用量 + cache 统计(仅 agent 消息)
-  if (!isUser && usage?.input) parts.push(<span key="in" className="text-muted-foreground tabular-nums">↑{fmtTokens(usage.input)}</span>)
-  if (!isUser && usage?.output) parts.push(<span key="out" className="text-muted-foreground tabular-nums">↓{fmtTokens(usage.output)}</span>)
-  if (!isUser && usage?.cacheRead) parts.push(<span key="cr" className="text-muted-foreground tabular-nums">R{fmtTokens(usage.cacheRead)}</span>)
-  if (!isUser && usage?.cacheWrite) parts.push(<span key="cw" className="text-muted-foreground tabular-nums">W{fmtTokens(usage.cacheWrite)}</span>)
+  if (!isUser && usage?.input)
+    parts.push(
+      <span key="in" className="text-muted-foreground tabular-nums">
+        ↑{fmtTokens(usage.input)}
+      </span>,
+    )
+  if (!isUser && usage?.output)
+    parts.push(
+      <span key="out" className="text-muted-foreground tabular-nums">
+        ↓{fmtTokens(usage.output)}
+      </span>,
+    )
+  if (!isUser && usage?.cacheRead)
+    parts.push(
+      <span key="cr" className="text-muted-foreground tabular-nums">
+        R{fmtTokens(usage.cacheRead)}
+      </span>,
+    )
+  if (!isUser && usage?.cacheWrite)
+    parts.push(
+      <span key="cw" className="text-muted-foreground tabular-nums">
+        W{fmtTokens(usage.cacheWrite)}
+      </span>,
+    )
   if (ctxPct != null) {
     const cls = ctxPct >= 90 ? "text-destructive" : ctxPct >= 75 ? "text-warn" : "text-muted-foreground"
     parts.push(

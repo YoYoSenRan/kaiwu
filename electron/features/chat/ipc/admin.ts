@@ -1,11 +1,11 @@
 /**
- * @Handle("debug:*") 处理器 — 调试/重置用。
+ * @Handle("debug:*") 处理器 — 调试/重置/危险操作集中地。
  */
 
 import { scope } from "../../../infra/logger"
 import { clearAllChatTables } from "../repository"
 
-const log = scope("chat:ipc:debug")
+const log = scope("chat:ipc:admin")
 
 export async function clearAll(): Promise<{ cleared: Record<string, number> }> {
   const result = clearAllChatTables()

@@ -1,14 +1,17 @@
 /**
- * @Handle("message:*") 处理器。
+ * @Handle("message:*" | "member:*") 处理器集中地。
+ *
+ * message 与 member 操作合并:都围绕 session 内成员/消息做增删改读。
  */
 
 import { nanoid } from "nanoid"
 import { scope } from "../../../infra/logger"
-import { getSession, insertMessage, listActiveMembers, listMessages, nextSeq } from "../repository"
-import { hasPending, onNewMessage, sendDirect, takePending } from "../loops"
+import { buildSessionInitParams } from "../keys"
+import { getSession, insertMember, insertMessage, listActiveMembers, listMembers, listMessages, markMemberLeft, nextSeq, patchMember as patchMemberRow } from "../repository"
+import { hasPending, onNewMessage, takePending } from "../loops"
 import { parseMentionsFromText, sanitizeStructuredMentions } from "../routing"
 import { getGateway } from "../../openclaw/runtime"
-import type { AnswerAskInput, ChatMention, ChatMessage } from "../types"
+import type { AddMemberInput, AnswerAskInput, ChatMember, ChatMention, ChatMessage, MemberPatch } from "../types"
 import type { ChatService } from "../service"
 
 const log = scope("chat:ipc:message")
@@ -49,33 +52,11 @@ export async function send(svc: ChatService, sessionId: string, content: string,
     createdAtLocal: Date.now(),
     createdAtRemote: null,
   }
-  insertMessage({
-    id: userMsg.id,
-    sessionId,
-    seq: userMsg.seq,
-    openclawSessionKey: null,
-    openclawMessageId: null,
-    senderType: "user",
-    senderId: null,
-    role: "user",
-    content: userMsg.content,
-    mentions: userMsg.mentions,
-    inReplyToMessageId: userMsg.inReplyToMessageId,
-    turnRunId: null,
-    tags: [],
-    model: null,
-    usage: null,
-    stopReason: null,
-    createdAtRemote: null,
-  })
+  insertMessage(userMsg)
   svc.emitMessageNew(userMsg)
 
-  if (preSession.mode === "direct") {
-    if (!svc.directDeps) throw new Error("direct deps not ready")
-    await sendDirect(svc.directDeps, sessionId, userMsg)
-  } else {
-    await onNewMessage(svc.deps, sessionId, userMsg)
-  }
+  // 不再分支 direct/group:onNewMessage 内部按 session.mode 决定要不要 pushContext / 是否递归
+  await onNewMessage(svc.deps, sessionId, userMsg)
 }
 
 export async function answer(svc: ChatService, sessionId: string, input: AnswerAskInput): Promise<void> {
@@ -100,4 +81,38 @@ export async function abort(svc: ChatService, sessionId: string): Promise<{ abor
     ),
   )
   return { aborted: keys.size }
+}
+
+// ---------- member:* ----------
+
+export async function memberList(sessionId: string): Promise<ChatMember[]> {
+  return listMembers(sessionId)
+}
+
+export async function memberAdd(svc: ChatService, sessionId: string, input: AddMemberInput): Promise<ChatMember> {
+  const session = getSession(sessionId)
+  if (!session) throw new Error(`session ${sessionId} not found`)
+  const memberId = nanoid()
+  const params = buildSessionInitParams({ sessionId, memberId, agentId: input.agentId, mode: session.mode, replyMode: input.replyMode })
+  await svc.createOpenClawSession(params.key, input.agentId)
+  insertMember({ id: memberId, sessionId, agentId: input.agentId, openclawKey: params.key, replyMode: input.replyMode, seedHistory: input.seedHistory ?? false })
+  const m = listMembers(sessionId).find((x) => x.id === memberId)
+  if (!m) throw new Error("failed to load new member")
+  return m
+}
+
+export async function memberRemove(svc: ChatService, sessionId: string, memberId: string): Promise<void> {
+  const m = listMembers(sessionId).find((x) => x.id === memberId)
+  if (!m) return
+  await svc.deleteOpenClawSession(m.openclawKey).catch(() => {
+    /* best effort */
+  })
+  markMemberLeft(memberId)
+}
+
+export async function memberPatch(sessionId: string, memberId: string, p: MemberPatch): Promise<ChatMember> {
+  patchMemberRow(memberId, p)
+  const m = listMembers(sessionId).find((x) => x.id === memberId)
+  if (!m) throw new Error("member not found after patch")
+  return m
 }
