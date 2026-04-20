@@ -5,8 +5,8 @@
  * token / 墙钟 / context 由龙虾自身管理,kaiwu 不做自判。
  */
 
-import { getBudgetState, upsertBudgetState } from "./repository"
-import type { BudgetConfig, BudgetState, LoopEndedReason } from "./types"
+import { getBudgetState, upsertBudgetState } from "../repository"
+import type { BudgetConfig, BudgetState, LoopEndedReason } from "../types"
 
 const DEFAULT_MAX_ROUNDS = 200
 

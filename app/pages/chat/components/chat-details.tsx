@@ -116,14 +116,17 @@ export function ChatDetails() {
                 {canEditMembers && (
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setAddOpen(true); }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setAddOpen(true)
+                    }}
                     className="btn-focus text-muted-foreground hover:text-foreground flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] transition-colors"
                   >
                     <Plus className="size-3" />
                     <span>{t("chat.members.add")}</span>
                   </button>
                 )}
-                <ChevronDown className="size-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
+                <ChevronDown className="text-muted-foreground size-4 transition-transform data-[state=open]:rotate-180" />
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
@@ -161,14 +164,17 @@ export function ChatDetails() {
                   <button
                     type="button"
                     disabled={resetting || !budgetState}
-                    onClick={(e) => { e.stopPropagation(); void handleResetBudget(); }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void handleResetBudget()
+                    }}
                     title={t("chat.budget.reset")}
                     className="btn-focus text-muted-foreground hover:text-foreground flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] transition-colors disabled:opacity-50"
                   >
                     <RotateCcw className="size-3" />
                     <span>{t("chat.budget.reset")}</span>
                   </button>
-                  <ChevronDown className="size-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
+                  <ChevronDown className="text-muted-foreground size-4 transition-transform data-[state=open]:rotate-180" />
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -202,9 +208,7 @@ export function ChatDetails() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("chat.members.remove")}</DialogTitle>
-            <DialogDescription>
-              {pendingRemove && t("chat.members.removeConfirm", { name: byAgentId[pendingRemove.agentId]?.name ?? pendingRemove.agentId })}
-            </DialogDescription>
+            <DialogDescription>{pendingRemove && t("chat.members.removeConfirm", { name: byAgentId[pendingRemove.agentId]?.name ?? pendingRemove.agentId })}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPendingRemove(null)}>

@@ -1,7 +1,13 @@
 /**
- * `ask_user` agent 工具 — 需要用户介入时调用,群聊挂起等待回复。
+ * `kaiwu_ask_user` agent 工具 — 需要用户介入时调用,群聊挂起等待回复。
  *
- * 支持 options 参数,UI 端渲染为按钮组,一键回复(比自由打字快)。
+ * 用途:
+ *   agent 需要用户决策/补信息/做选择时调此工具。调用后整个群聊暂停,
+ *   等用户回复后才继续 loop。区别于 kaiwu_show_card(不挂起,只展示)。
+ *
+ * options 参数:
+ *   传数组时 UI 渲染为按钮组,用户点一下就等于回答。省去打字。
+ *   不传时 UI 显示自由输入框。
  */
 
 import { Type, type Static } from "@sinclair/typebox"
@@ -18,7 +24,7 @@ export function createAskUserFactory(bridge: BridgeClient): OpenClawPluginToolFa
   return (ctx: OpenClawPluginToolContext) => {
     const sessionKey = ctx.sessionKey ?? ""
     const tool: AnyAgentTool = {
-      name: "ask_user",
+      name: "kaiwu_ask_user",
       label: "Ask User",
       description: "需要用户回答问题或做选择时调用。调用后当前回合结束,群聊暂停等待用户回复。",
       parameters: AskUserParams,

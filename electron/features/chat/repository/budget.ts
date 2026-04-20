@@ -24,9 +24,7 @@ export function upsertBudgetState(s: BudgetState): void {
 
 export function getBudgetState(sessionId: string): BudgetState | null {
   const row = database().select().from(chatBudgetState).where(eq(chatBudgetState.session_id, sessionId)).get()
-  return row
-    ? { sessionId: row.session_id, roundsUsed: row.rounds_used, startedAt: row.started_at, updatedAt: row.updated_at }
-    : null
+  return row ? { sessionId: row.session_id, roundsUsed: row.rounds_used, startedAt: row.started_at, updatedAt: row.updated_at } : null
 }
 
 export function resetBudgetState(sessionId: string): void {

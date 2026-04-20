@@ -55,8 +55,7 @@ function tryParseCard(raw: string): ChatCard | null {
     const label = typeof e.label === "string" ? e.label.trim() : ""
     if (!label) continue
     const value = typeof e.value === "string" && e.value.trim() ? e.value.trim() : label
-    const style =
-      e.style === "primary" || e.style === "danger" || e.style === "default" ? (e.style as ChatCardOption["style"]) : undefined
+    const style = e.style === "primary" || e.style === "danger" || e.style === "default" ? (e.style as ChatCardOption["style"]) : undefined
     options.push({ label, value, style })
   }
   if (options.length === 0) return null

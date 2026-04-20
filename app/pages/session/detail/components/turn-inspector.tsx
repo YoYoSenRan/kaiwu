@@ -20,7 +20,7 @@ export function TurnInspector({ turnRunId, turns, messages, onClose }: Props) {
   const byAgentId = useAgentCacheStore((s) => s.byAgentId)
 
   // 优先本地 turns 列表找(详情 API 一次返全量);找不到再 fallback 调 IPC
-  const local = useMemo(() => (turnRunId ? turns.find((tt) => tt.turnRunId === turnRunId) ?? null : null), [turnRunId, turns])
+  const local = useMemo(() => (turnRunId ? (turns.find((tt) => tt.turnRunId === turnRunId) ?? null) : null), [turnRunId, turns])
   const turn = local ?? fetched
 
   useEffect(() => {
@@ -72,9 +72,7 @@ export function TurnInspector({ turnRunId, turns, messages, onClose }: Props) {
 
             <Section title={t("session.inspect.systemPrompt")} hint={t("session.inspect.systemPromptHint")} text={turn.systemPrompt} />
 
-            {turn.historyText && (
-              <Section title={t("session.inspect.historyText")} hint={t("session.inspect.historyTextHint")} text={turn.historyText} maxHeight="max-h-80" />
-            )}
+            {turn.historyText && <Section title={t("session.inspect.historyText")} hint={t("session.inspect.historyTextHint")} text={turn.historyText} maxHeight="max-h-80" />}
 
             {assistant && (
               <Section title={t("session.inspect.assistantReply")} hint={`${assistant.model ?? "?"} · ${assistant.stopReason ?? "?"}`} text={assistantText} tone="primary">

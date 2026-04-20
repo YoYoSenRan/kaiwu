@@ -57,7 +57,7 @@ export interface ChatMention {
    * 来源权威度(高→低):
    *   "structured" = composer 点选插入的结构化 token(UI 权威,100% 确定)
    *   "plain"      = 文本正则匹配 @<agentId>(用户手打或 agent 吐字后升级)
-   *   "tool"       = mention_next 工具触发(无 range)
+   *   "tool"       = hand_off 工具触发(无 range)
    */
   source: "structured" | "plain" | "tool"
   /** @ token 在 text 中的字符范围 [start, endExclusive)。tool 来源无 range。 */

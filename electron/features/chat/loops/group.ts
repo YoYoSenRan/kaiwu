@@ -6,16 +6,16 @@
  *   2. decideTargets 选目标成员
  *   3. 对每个 target：context.set → chat.send → 订阅流式 → 落库 agent 回复 → 递归 loop
  *   4. 预算/终止检查
- *   5. 收到 mention_next / ask_user 工具事件时：更新 mentions 或挂起
+ *   5. 收到 hand_off / ask_user 工具事件时：更新 mentions 或挂起
  *
  * 依赖注入：backend（调 openclaw）、events（emit 给 renderer）——便于测试替换。
  */
 
 import { nanoid } from "nanoid"
 import { scope } from "../../../infra/logger"
-import { checkAndIncrementRound, checkStopPhrase } from "../budget"
-import { buildSharedContext, type ContextPayload } from "../context"
-import { interpretReply } from "../interpret"
+import { checkAndIncrementRound, checkStopPhrase } from "./budget"
+import { buildSharedContext, type ContextPayload } from "./prompt"
+import { interpretReply } from "./interpret"
 import { decideTargets, extractCardsFromText, parseMentionsFromText, stripMentionsForAgent } from "../routing"
 import { newIdempotencyKey, runStep } from "../../../agent/executor"
 import { getMessageById, getSession, insertMessage, insertTurn, listActiveMembers, nextSeq } from "../repository"
@@ -286,7 +286,7 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
     const stopReason = meta?.stopReason ?? result.stopReason ?? null
 
     // 存两类 mention(UI 展示 + 路由区分都靠 source 字段):
-    //   - tool 事件(mention_next 工具触发) → source="tool" → 参与路由(确定意图)
+    //   - tool 事件(hand_off 工具触发) → source="tool" → 参与路由(确定意图)
     //   - 正文 @<agentId>                  → source="plain" → 仅 UI 展示,不参与路由(见 routing.ts)
     //   排除 sender 自己,防 agent @ 自己导致 onNewMessage 路由回自己
     const activeMembers = listActiveMembers(sessionId)
@@ -355,13 +355,7 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
   }
 }
 
-function buildAndInsertAbortedMessage(
-  sessionId: string,
-  target: ChatMember,
-  content: string,
-  idempotencyKey: string,
-  inReplyToMessageId: string | null,
-): ChatMessage {
+function buildAndInsertAbortedMessage(sessionId: string, target: ChatMember, content: string, idempotencyKey: string, inReplyToMessageId: string | null): ChatMessage {
   const msg: ChatMessage = {
     id: nanoid(),
     sessionId,
@@ -404,7 +398,7 @@ function buildAndInsertAbortedMessage(
   return msg
 }
 
-/** 收到 plugin 推的 mention_next 事件 —— 积攒到桶里，assistant 落库时被 drain。 */
+/** 收到 plugin 推的 hand_off 事件 —— 积攒到桶里,assistant 落库时被 drain。 */
 export function onMentionNextEvent(_deps: GroupDeps, sessionId: string, ev: { agentId: string }): void {
   const bucket = pendingMentions.get(sessionId) ?? []
   bucket.push({ agentId: ev.agentId, source: "tool" })

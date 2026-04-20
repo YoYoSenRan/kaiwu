@@ -25,11 +25,7 @@ export interface BridgeConfig {
  * 解析插件运行时配置。
  * 优先级:pluginConfig(用户在宿主配置里显式写的)→ handshake 文件 → 未配置时返回 null。
  */
-export function resolveBridgeConfig(params: {
-  rootDir: string | undefined
-  pluginConfig: Record<string, unknown> | undefined
-  logger: PluginLogger
-}): BridgeConfig | null {
+export function resolveBridgeConfig(params: { rootDir: string | undefined; pluginConfig: Record<string, unknown> | undefined; logger: PluginLogger }): BridgeConfig | null {
   const { rootDir, pluginConfig, logger } = params
   const logLevel = readLogLevel(pluginConfig)
 

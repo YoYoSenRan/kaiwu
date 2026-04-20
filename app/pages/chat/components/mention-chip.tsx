@@ -18,7 +18,7 @@ export function MentionChip(props: Record<string, unknown>) {
   const emoji = agent?.identity?.emoji
   const avatarUrl = agent?.identity?.avatarUrl
   return (
-    <span className="ring-foreground/15 bg-foreground/5 mx-0.5 inline-flex items-center gap-1 rounded-md px-1 py-0.5 align-baseline text-[0.92em] font-medium leading-none ring-1">
+    <span className="ring-foreground/15 bg-foreground/5 mx-0.5 inline-flex items-center gap-1 rounded-md px-1 py-0.5 align-baseline text-[0.92em] leading-none font-medium ring-1">
       {avatarUrl ? (
         <img src={avatarUrl} alt="" className="size-3.5 shrink-0 rounded-full object-cover" />
       ) : emoji ? (

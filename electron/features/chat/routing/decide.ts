@@ -12,8 +12,8 @@
  *
  * 为什么 agent 消息的 `plain` 来源不参与路由:
  *   LLM 正文里写 `@X` 经常是"描述"/"引用"/"条件未来",而非"呼叫 X 接话"(例:表格列成员/"交付后@X")。
- *   把 plain 当路由 → 连锁误路由爆炸。只认 tool(mention_next) + structured 即可。
- *   agent 想显式交接 → 必须调 mention_next 工具(确定性来源);正文 @ 仅 UI 展示。
+ *   把 plain 当路由 → 连锁误路由爆炸。只认 tool(hand_off) + structured 即可。
+ *   agent 想显式交接 → 必须调 hand_off 工具(确定性来源);正文 @ 仅 UI 展示。
  *
  * user 侧保留文本 @ 路由 + reply-to 隐式路由:
  *   - 手打 `@X` 是直觉交互,无需学工具
@@ -26,12 +26,7 @@
 
 import type { ChatMember, ChatMention, SenderType } from "../types"
 
-export function decideTargets(
-  members: ChatMember[],
-  mentions: ChatMention[],
-  senderType: SenderType,
-  replyToAgentId?: string | null,
-): ChatMember[] {
+export function decideTargets(members: ChatMember[], mentions: ChatMention[], senderType: SenderType, replyToAgentId?: string | null): ChatMember[] {
   const active = members.filter((m) => m.leftAt === null)
 
   // agent / tool / system 消息:只认 tool + structured mention 作为路由信号。

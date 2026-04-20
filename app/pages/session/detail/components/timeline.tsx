@@ -34,7 +34,7 @@ export function Timeline({ messages, onInspectTurn }: Props) {
         const isSystem = msg.senderType === "system"
         const isTool = msg.senderType === "tool"
         const agent = msg.senderId ? byAgentId[msg.senderId] : undefined
-        const name = isUser ? t("session.detail.user") : isSystem ? "system" : isTool ? "tool" : agent?.name ?? msg.senderId ?? "?"
+        const name = isUser ? t("session.detail.user") : isSystem ? "system" : isTool ? "tool" : (agent?.name ?? msg.senderId ?? "?")
         const text = (msg.content as { text?: string } | null)?.text ?? ""
         const isAborted = msg.tags?.includes("aborted")
         const usage = msg.usage
@@ -66,7 +66,7 @@ export function Timeline({ messages, onInspectTurn }: Props) {
                     <span className="text-muted-foreground ml-1 text-[10px]">· {msg.stopReason}</span>
                   )}
                 </div>
-                <div className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed">{text || <span className="text-muted-foreground italic">(empty)</span>}</div>
+                <div className="mt-1 text-xs leading-relaxed break-words whitespace-pre-wrap">{text || <span className="text-muted-foreground italic">(empty)</span>}</div>
                 <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-2 text-[10px]">
                   {msg.model && <code className="bg-muted rounded px-1.5 py-0.5 text-[10px]">{msg.model}</code>}
                   {ttl && <span>{ttl} tok</span>}

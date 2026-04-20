@@ -65,10 +65,10 @@ export function SettingsTab({ detail, onUpdated, onDeleted }: Props) {
       <Card>
         <CardContent>
           <div className="flex items-start justify-between gap-4">
-            <div className="space-y-4 flex-1">
+            <div className="flex-1 space-y-4">
               <div>
                 <p className="text-base font-semibold">{t("agent.settings.basicInfo")}</p>
-                <p className="text-xs text-muted-foreground">{t("agent.settings.basicInfoHint")}</p>
+                <p className="text-muted-foreground text-xs">{t("agent.settings.basicInfoHint")}</p>
               </div>
               <div className="space-y-2">
                 <Label>{t("agent.dialog.create.name")}</Label>
@@ -88,7 +88,7 @@ export function SettingsTab({ detail, onUpdated, onDeleted }: Props) {
           <div className="space-y-4">
             <div>
               <p className="text-base font-semibold">{t("agent.settings.modelConfig")}</p>
-              <p className="text-xs text-muted-foreground">{t("agent.settings.modelConfigHint")}</p>
+              <p className="text-muted-foreground text-xs">{t("agent.settings.modelConfigHint")}</p>
             </div>
             <div className="space-y-2">
               <Label>{t("agent.dialog.create.model")}</Label>
@@ -118,7 +118,7 @@ export function SettingsTab({ detail, onUpdated, onDeleted }: Props) {
           <div className="space-y-4">
             <div>
               <p className="text-base font-semibold">{t("agent.settings.identity")}</p>
-              <p className="text-xs text-muted-foreground">{t("agent.settings.identityHint")}</p>
+              <p className="text-muted-foreground text-xs">{t("agent.settings.identityHint")}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -138,10 +138,10 @@ export function SettingsTab({ detail, onUpdated, onDeleted }: Props) {
         <CardContent>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="mt-0.5 size-4 text-destructive shrink-0" />
+              <AlertTriangle className="text-destructive mt-0.5 size-4 shrink-0" />
               <div>
-                <p className="text-base font-semibold text-destructive">{t("agent.settings.danger")}</p>
-                <p className="text-xs text-muted-foreground">{t("agent.settings.dangerHint")}</p>
+                <p className="text-destructive text-base font-semibold">{t("agent.settings.danger")}</p>
+                <p className="text-muted-foreground text-xs">{t("agent.settings.dangerHint")}</p>
               </div>
             </div>
             <div className="shrink-0">

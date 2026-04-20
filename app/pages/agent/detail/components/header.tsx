@@ -59,7 +59,7 @@ export function AgentDetailHeader({ detail, defaultId, onEdit, onDelete }: Props
       </div>
 
       <div className="flex items-start gap-5">
-        <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary">
+        <div className="from-primary/20 to-primary/5 text-primary flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br">
           {avatarUrl ? <img src={avatarUrl} alt="" className="size-full object-cover" /> : emoji ? <span className="text-3xl">{emoji}</span> : <Bot className="size-8" />}
         </div>
 
@@ -81,7 +81,7 @@ export function AgentDetailHeader({ detail, defaultId, onEdit, onDelete }: Props
           {detail?.agentId && (
             <div className="flex items-center gap-1.5">
               <p className="text-muted-foreground font-mono text-xs">{detail.agentId}</p>
-              <Button variant="ghost" size="icon" className="size-5 text-muted-foreground hover:text-foreground" onClick={handleCopyId}>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground size-5" onClick={handleCopyId}>
                 <Copy className={`size-3 ${copied ? "text-green-500" : ""}`} />
               </Button>
             </div>

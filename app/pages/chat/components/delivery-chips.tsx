@@ -65,7 +65,13 @@ function DeliveryChip({ name, avatarUrl, emoji, state }: { name: string; avatarU
   return (
     <span title={title} className={`inline-flex items-center gap-1.5 rounded-full px-1.5 py-0.5 text-[11px] leading-none ring-1 ${TONE[state.status]}`}>
       <span className="bg-background/70 flex size-4 shrink-0 items-center justify-center overflow-hidden rounded-full">
-        {avatarUrl ? <img src={avatarUrl} alt="" className="size-full object-cover" /> : emoji ? <span className="text-[10px] leading-none">{emoji}</span> : <Bot className="size-2.5" />}
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="size-full object-cover" />
+        ) : emoji ? (
+          <span className="text-[10px] leading-none">{emoji}</span>
+        ) : (
+          <Bot className="size-2.5" />
+        )}
       </span>
       <span className="max-w-28 truncate font-medium">{name}</span>
       <StatusIndicator status={state.status} />
@@ -88,9 +94,9 @@ function StatusIndicator({ status }: { status: DeliveryState["status"] }) {
 function TypingDots() {
   return (
     <span className="inline-flex items-center gap-0.5" aria-label="typing">
-      <span className="bg-current inline-block size-1 animate-bounce rounded-full [animation-delay:-0.3s]" />
-      <span className="bg-current inline-block size-1 animate-bounce rounded-full [animation-delay:-0.15s]" />
-      <span className="bg-current inline-block size-1 animate-bounce rounded-full" />
+      <span className="inline-block size-1 animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
+      <span className="inline-block size-1 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
+      <span className="inline-block size-1 animate-bounce rounded-full bg-current" />
     </span>
   )
 }

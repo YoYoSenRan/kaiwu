@@ -1,6 +1,19 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import type { BudgetState, ChatErrorEvent, ChatMessage, ChatMember, ChatSession, DeliveryStatus, DeliveryUpdateEvent, LoopEvent, LoopPausedEvent, SessionUsage, StreamDeltaEvent, StreamEndEvent } from "../../electron/features/chat/types"
+import type {
+  BudgetState,
+  ChatErrorEvent,
+  ChatMessage,
+  ChatMember,
+  ChatSession,
+  DeliveryStatus,
+  DeliveryUpdateEvent,
+  LoopEvent,
+  LoopPausedEvent,
+  SessionUsage,
+  StreamDeltaEvent,
+  StreamEndEvent,
+} from "../../electron/features/chat/types"
 
 /** 每 (sessionId, anchorMsgId, memberId) 的投递态快照。 */
 export interface DeliveryState {

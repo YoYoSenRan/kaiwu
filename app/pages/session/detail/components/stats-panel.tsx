@@ -25,7 +25,9 @@ export function StatsPanel({ session, messages, turns }: Props) {
   const userMsgs = messages.filter((m) => m.senderType === "user").length
   const agentMsgs = messages.filter((m) => m.senderType === "agent").length
   const abortedMsgs = messages.filter((m) => m.tags?.includes("aborted")).length
-  const errorMsgs = messages.filter((m) => m.stopReason && m.stopReason !== "end_turn" && m.stopReason !== "stop" && m.stopReason !== "stop_sequence" && m.stopReason !== "aborted").length
+  const errorMsgs = messages.filter(
+    (m) => m.stopReason && m.stopReason !== "end_turn" && m.stopReason !== "stop" && m.stopReason !== "stop_sequence" && m.stopReason !== "aborted",
+  ).length
 
   return (
     <aside className="bg-card ring-foreground/10 w-64 shrink-0 space-y-4 overflow-y-auto rounded-xl p-4 ring-1">

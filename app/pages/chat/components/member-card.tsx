@@ -118,7 +118,13 @@ export function MemberCard({ sessionId, member, usage, disabled, onToggleReplyMo
 
   const barCls = warn ? "bg-destructive" : notice ? "bg-amber-500" : "bg-primary"
 
-  const tooltipTitle = [name, model, `${formatCompact(totalT)} / ${formatCompact(ctxT)}${pct != null ? ` (${pct.toFixed(1)}%)` : ""}`, cost ?? undefined, compactionLabel ? t("chat.memberCard.lastCompaction", { when: compactionLabel }) : undefined]
+  const tooltipTitle = [
+    name,
+    model,
+    `${formatCompact(totalT)} / ${formatCompact(ctxT)}${pct != null ? ` (${pct.toFixed(1)}%)` : ""}`,
+    cost ?? undefined,
+    compactionLabel ? t("chat.memberCard.lastCompaction", { when: compactionLabel }) : undefined,
+  ]
     .filter(Boolean)
     .join(" · ")
 
@@ -130,7 +136,7 @@ export function MemberCard({ sessionId, member, usage, disabled, onToggleReplyMo
           {avatarUrl ? <img src={avatarUrl} alt="" className="size-full object-cover" /> : emoji ? <span className="text-lg">{emoji}</span> : <Bot className="size-5" />}
         </div>
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
-          <span className="truncate text-sm font-medium leading-tight">{name}</span>
+          <span className="truncate text-sm leading-tight font-medium">{name}</span>
           <StatusChip state={delivery} />
         </div>
         <button
@@ -206,29 +212,54 @@ function StatusChip({ state }: { state: DeliveryState | undefined }) {
   const { t } = useTranslation()
   if (!state) return null
   const status = state.status
-  if (status === "queued") return <span className="text-muted-foreground inline-flex shrink-0 items-center gap-0.5 text-[10px]"><MoreHorizontal className="size-3" aria-hidden /> {t("chat.delivery.queued")}</span>
-  if (status === "thinking") return <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400"><Brain className="size-3 animate-pulse" aria-hidden /> {t("chat.delivery.thinking")}</span>
+  if (status === "queued")
+    return (
+      <span className="text-muted-foreground inline-flex shrink-0 items-center gap-0.5 text-[10px]">
+        <MoreHorizontal className="size-3" aria-hidden /> {t("chat.delivery.queued")}
+      </span>
+    )
+  if (status === "thinking")
+    return (
+      <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400">
+        <Brain className="size-3 animate-pulse" aria-hidden /> {t("chat.delivery.thinking")}
+      </span>
+    )
   if (status === "tool") {
     const label = state.toolName ? t("chat.delivery.toolNamed", { name: state.toolName }) : t("chat.delivery.tool")
-    return <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-sky-600 dark:text-sky-400"><Wrench className="size-3 animate-pulse" aria-hidden /> <span className="max-w-24 truncate">{label}</span></span>
+    return (
+      <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-sky-600 dark:text-sky-400">
+        <Wrench className="size-3 animate-pulse" aria-hidden /> <span className="max-w-24 truncate">{label}</span>
+      </span>
+    )
   }
-  if (status === "replying") return (
-    <span className="text-primary inline-flex shrink-0 items-center gap-1 text-[10px]">
-      <TypingDots />
-      {t("chat.delivery.replying")}
-    </span>
-  )
-  if (status === "done") return <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-emerald-600 dark:text-emerald-400"><CheckCheck className="size-3" aria-hidden /> {t("chat.delivery.done")}</span>
-  if (status === "error") return <span className="text-destructive inline-flex shrink-0 items-center gap-0.5 text-[10px]"><AlertTriangle className="size-3" aria-hidden /> {t("chat.delivery.error")}</span>
+  if (status === "replying")
+    return (
+      <span className="text-primary inline-flex shrink-0 items-center gap-1 text-[10px]">
+        <TypingDots />
+        {t("chat.delivery.replying")}
+      </span>
+    )
+  if (status === "done")
+    return (
+      <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-emerald-600 dark:text-emerald-400">
+        <CheckCheck className="size-3" aria-hidden /> {t("chat.delivery.done")}
+      </span>
+    )
+  if (status === "error")
+    return (
+      <span className="text-destructive inline-flex shrink-0 items-center gap-0.5 text-[10px]">
+        <AlertTriangle className="size-3" aria-hidden /> {t("chat.delivery.error")}
+      </span>
+    )
   return <span className="text-muted-foreground inline-flex shrink-0 items-center gap-0.5 text-[10px]">{t("chat.delivery.aborted")}</span>
 }
 
 function TypingDots() {
   return (
     <span className="inline-flex items-center gap-0.5" aria-label="typing">
-      <span className="bg-current inline-block size-1 animate-bounce rounded-full [animation-delay:-0.3s]" />
-      <span className="bg-current inline-block size-1 animate-bounce rounded-full [animation-delay:-0.15s]" />
-      <span className="bg-current inline-block size-1 animate-bounce rounded-full" />
+      <span className="inline-block size-1 animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
+      <span className="inline-block size-1 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
+      <span className="inline-block size-1 animate-bounce rounded-full bg-current" />
     </span>
   )
 }

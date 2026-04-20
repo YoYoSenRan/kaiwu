@@ -7,14 +7,7 @@ import { database } from "../../../database/client"
 import { chatSessionMembers } from "../../../database/schema"
 import type { ChatMember, MemberPatch, ReplyMode } from "../types"
 
-export function insertMember(m: {
-  id: string
-  sessionId: string
-  agentId: string
-  openclawKey: string
-  replyMode: ReplyMode
-  seedHistory: boolean
-}): void {
+export function insertMember(m: { id: string; sessionId: string; agentId: string; openclawKey: string; replyMode: ReplyMode; seedHistory: boolean }): void {
   database()
     .insert(chatSessionMembers)
     .values({

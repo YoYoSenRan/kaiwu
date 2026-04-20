@@ -80,12 +80,8 @@
           "name": "chat_budget_state_session_id_chat_sessions_id_fk",
           "tableFrom": "chat_budget_state",
           "tableTo": "chat_sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -223,12 +219,8 @@
           "name": "chat_messages_session_id_chat_sessions_id_fk",
           "tableFrom": "chat_messages",
           "tableTo": "chat_sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -303,12 +295,8 @@
           "name": "chat_session_members_session_id_chat_sessions_id_fk",
           "tableFrom": "chat_session_members",
           "tableTo": "chat_sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -394,9 +382,7 @@
       "indexes": {
         "chat_sessions_openclaw_key_unique": {
           "name": "chat_sessions_openclaw_key_unique",
-          "columns": [
-            "openclaw_key"
-          ],
+          "columns": ["openclaw_key"],
           "isUnique": true
         }
       },
@@ -503,9 +489,7 @@
       "indexes": {
         "chat_turns_turn_run_id_unique": {
           "name": "chat_turns_turn_run_id_unique",
-          "columns": [
-            "turn_run_id"
-          ],
+          "columns": ["turn_run_id"],
           "isUnique": true
         }
       },
@@ -514,12 +498,8 @@
           "name": "chat_turns_session_id_chat_sessions_id_fk",
           "tableFrom": "chat_turns",
           "tableTo": "chat_sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -527,12 +507,8 @@
           "name": "chat_turns_member_id_chat_session_members_id_fk",
           "tableFrom": "chat_turns",
           "tableTo": "chat_session_members",
-          "columnsFrom": [
-            "member_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["member_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

@@ -37,7 +37,7 @@ export function EmptyState({ type }: Props) {
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium">{t(TITLE_KEY_MAP[type])}</p>
-            <p className="text-muted-foreground text-xs max-w-[280px]">{t(DESC_KEY_MAP[type])}</p>
+            <p className="text-muted-foreground max-w-[280px] text-xs">{t(DESC_KEY_MAP[type])}</p>
           </div>
         </div>
       </CardContent>

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Send, Sparkles, AlertCircle, RotateCcw, Square, User as UserIcon, Bot, Users, ChevronDown, X, CornerUpLeft } from "lucide-react"
 import { toast } from "sonner"
@@ -333,12 +333,7 @@ export function ChatMain() {
         await window.electron.chat.message.answer(currentSessionId, { pendingId: pending.pendingId, answer: text })
         setPending(null)
       } else {
-        await window.electron.chat.message.send(
-          currentSessionId,
-          text,
-          structuredMentions.length > 0 ? structuredMentions : undefined,
-          inReplyToMessageId,
-        )
+        await window.electron.chat.message.send(currentSessionId, text, structuredMentions.length > 0 ? structuredMentions : undefined, inReplyToMessageId)
       }
     } catch (err) {
       toast.error((err as Error).message)
@@ -388,40 +383,43 @@ export function ChatMain() {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches
   }, [])
 
-  const scrollToBottomProgrammatic = (smooth = false) => {
-    const el = scrollAreaRef.current
-    if (!el) return
-    programmaticScrollRef.current = true
+  const scrollToBottomProgrammatic = useCallback(
+    (smooth = false) => {
+      const el = scrollAreaRef.current
+      if (!el) return
+      programmaticScrollRef.current = true
 
-    const useSmooth = smooth && !prefersReducedMotion
-    const scrollTop = el.scrollHeight
+      const useSmooth = smooth && !prefersReducedMotion
+      const scrollTop = el.scrollHeight
 
-    if (typeof el.scrollTo === "function" && useSmooth) {
-      el.scrollTo({ top: scrollTop, behavior: "smooth" })
-    } else {
-      el.scrollTop = scrollTop
-    }
-
-    setTimeout(() => {
-      programmaticScrollRef.current = false
-    }, 0)
-
-    if (scrollRetryTimeoutRef.current) {
-      clearTimeout(scrollRetryTimeoutRef.current)
-    }
-    scrollRetryTimeoutRef.current = setTimeout(() => {
-      const el2 = scrollAreaRef.current
-      if (!el2 || !followBottomRef.current) return
-      const distance = el2.scrollHeight - el2.scrollTop - el2.clientHeight
-      if (distance > 1) {
-        programmaticScrollRef.current = true
-        el2.scrollTop = el2.scrollHeight
-        setTimeout(() => {
-          programmaticScrollRef.current = false
-        }, 0)
+      if (typeof el.scrollTo === "function" && useSmooth) {
+        el.scrollTo({ top: scrollTop, behavior: "smooth" })
+      } else {
+        el.scrollTop = scrollTop
       }
-    }, 100)
-  }
+
+      setTimeout(() => {
+        programmaticScrollRef.current = false
+      }, 0)
+
+      if (scrollRetryTimeoutRef.current) {
+        clearTimeout(scrollRetryTimeoutRef.current)
+      }
+      scrollRetryTimeoutRef.current = setTimeout(() => {
+        const el2 = scrollAreaRef.current
+        if (!el2 || !followBottomRef.current) return
+        const distance = el2.scrollHeight - el2.scrollTop - el2.clientHeight
+        if (distance > 1) {
+          programmaticScrollRef.current = true
+          el2.scrollTop = el2.scrollHeight
+          setTimeout(() => {
+            programmaticScrollRef.current = false
+          }, 0)
+        }
+      }, 100)
+    },
+    [prefersReducedMotion],
+  )
 
   const handleScroll = () => {
     if (programmaticScrollRef.current) return
@@ -443,7 +441,7 @@ export function ChatMain() {
     followBottomRef.current = true
     setShowJumpBtn(false)
     scrollToBottomProgrammatic()
-  }, [currentSessionId])
+  }, [currentSessionId, scrollToBottomProgrammatic])
 
   const streamingSig = useMemo(() => Object.values(streamingMap).reduce((acc, buf) => acc + buf.content.length, 0), [streamingMap])
   const sortedStreams = useMemo(() => Object.entries(streamingMap).sort((a, b) => a[1].startedAt - b[1].startedAt), [streamingMap])
@@ -456,9 +454,7 @@ export function ChatMain() {
       const prevBuf = prev[key]
       return (!prevBuf || prevBuf.content.length === 0) && buf.content.length > 0
     })
-    prevStreamingMapRef.current = Object.fromEntries(
-      Object.entries(current).map(([k, v]) => [k, { content: v.content }])
-    )
+    prevStreamingMapRef.current = Object.fromEntries(Object.entries(current).map(([k, v]) => [k, { content: v.content }]))
     return justStarted
   }, [streamingMap])
 
@@ -468,7 +464,7 @@ export function ChatMain() {
       followBottomRef.current = true
     }
     scrollToBottomProgrammatic()
-  }, [messages.length, streamingSig, streamJustStarted])
+  }, [messages.length, streamingSig, streamJustStarted, scrollToBottomProgrammatic])
 
   useEffect(() => {
     const content = contentRef.current
@@ -483,7 +479,7 @@ export function ChatMain() {
         clearTimeout(scrollRetryTimeoutRef.current)
       }
     }
-  }, [])
+  }, [scrollToBottomProgrammatic])
 
   if (!currentSessionId) {
     return (
@@ -500,17 +496,8 @@ export function ChatMain() {
           <h2 className="text-sm font-semibold tracking-tight">{session?.label ?? currentSessionId}</h2>
           {session && (
             <div className="flex items-center gap-1.5">
-              {session.mode === "group" ? (
-                <Users className="size-3.5 text-muted-foreground" />
-              ) : (
-                <Bot className="size-3.5 text-muted-foreground" />
-              )}
-              <span className="text-[11px] text-muted-foreground">
-                {session.mode === "group" 
-                  ? `${members.length} ${t("chat.members.count")}` 
-                  : t("chat.mode.direct")
-                }
-              </span>
+              {session.mode === "group" ? <Users className="text-muted-foreground size-3.5" /> : <Bot className="text-muted-foreground size-3.5" />}
+              <span className="text-muted-foreground text-[11px]">{session.mode === "group" ? `${members.length} ${t("chat.members.count")}` : t("chat.mode.direct")}</span>
             </div>
           )}
         </div>
@@ -522,7 +509,7 @@ export function ChatMain() {
                 return (
                   <div
                     key={m.id}
-                    className="bg-muted text-muted-foreground flex size-6 items-center justify-center overflow-hidden rounded-full ring-2 ring-card"
+                    className="bg-muted text-muted-foreground ring-card flex size-6 items-center justify-center overflow-hidden rounded-full ring-2"
                     title={agent?.name ?? m.agentId}
                   >
                     {agent?.identity?.avatarUrl ? (
@@ -535,18 +522,16 @@ export function ChatMain() {
                   </div>
                 )
               })}
-              {members.length > 3 && (
-                <span className="text-muted-foreground ml-1 text-[11px]">+{members.length - 3}</span>
-              )}
+              {members.length > 3 && <span className="text-muted-foreground ml-1 text-[11px]">+{members.length - 3}</span>}
             </div>
           )}
           {isRunning && (
             <div className="flex items-center gap-1.5">
               <span className="relative flex size-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex size-2 rounded-full bg-primary" />
+                <span className="bg-primary absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
+                <span className="bg-primary relative inline-flex size-2 rounded-full" />
               </span>
-              <span className="text-[11px] text-primary">{t("chat.status.running")}</span>
+              <span className="text-primary text-[11px]">{t("chat.status.running")}</span>
             </div>
           )}
         </div>
@@ -554,26 +539,20 @@ export function ChatMain() {
 
       {lastError &&
         (lastError.kind === "disconnected" ? (
-          <div
-            role="status"
-            className="text-foreground mx-4 mt-3 flex items-start gap-2 rounded-lg border-l-4 border-yellow-500/70 bg-yellow-500/10 px-3 py-2 text-xs shadow-sm"
-          >
+          <div role="status" className="text-foreground mx-4 mt-3 flex items-start gap-2 rounded-lg border-l-4 border-yellow-500/70 bg-yellow-500/10 px-3 py-2 text-xs shadow-sm">
             <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-yellow-600 dark:text-yellow-400" />
             <span className="flex-1 whitespace-pre-wrap">{t("chat.error.disconnected")}</span>
             <button
               type="button"
               onClick={() => currentSessionId && dismissError(currentSessionId)}
               aria-label={t("chat.error.dismiss")}
-              className="btn-focus hover:bg-yellow-500/20 text-muted-foreground hover:text-foreground flex size-5 shrink-0 items-center justify-center rounded transition-colors"
+              className="btn-focus text-muted-foreground hover:text-foreground flex size-5 shrink-0 items-center justify-center rounded transition-colors hover:bg-yellow-500/20"
             >
               <X className="size-3" />
             </button>
           </div>
         ) : (
-          <div
-            role="alert"
-            className="bg-destructive/10 text-foreground border-destructive/60 mx-4 mt-3 flex items-start gap-2 rounded-lg border-l-4 px-3 py-2 text-xs shadow-sm"
-          >
+          <div role="alert" className="bg-destructive/10 text-foreground border-destructive/60 mx-4 mt-3 flex items-start gap-2 rounded-lg border-l-4 px-3 py-2 text-xs shadow-sm">
             <AlertCircle className="text-destructive mt-0.5 size-3.5 shrink-0" />
             <span className="flex-1 whitespace-pre-wrap">{t("chat.error.banner", { msg: lastError.text })}</span>
             {!isRunning && (
@@ -620,63 +599,70 @@ export function ChatMain() {
         >
           {/* 稳定 contentRef:条件渲染切换(EmptyHint ↔ 消息列表)不换引用,RO 持续生效 */}
           <div ref={contentRef}>
-          {messages.length === 0 && sortedStreams.length === 0 ? (
-            <EmptyHint t={t} mode={session?.mode} onCreate={(mode) => { setCreateOpen(true); setCreateMode(mode); }} />
-          ) : (
-            <div className="flex flex-col gap-3">
-              {messages.map((msg, idx) => {
-                const agent = msg.senderId ? byAgentId[msg.senderId] : undefined
-                const prev = idx > 0 ? messages[idx - 1] : undefined
-                const needDivider = !prev || msg.createdAtLocal - prev.createdAtLocal > TIME_DIVIDER_GAP_MS
-                // 群聊 user 消息下显示多 agent 投递态 chips
-                const showDeliveryChips = session?.mode === "group" && msg.senderType === "user" && currentSessionId != null
-                return (
-                  <Fragment key={msg.id}>
-                    {needDivider && <TimeDivider ts={msg.createdAtLocal} />}
-                    <MessageRow
-                      msg={msg}
-                      agentName={agent?.name ?? msg.senderId ?? undefined}
+            {messages.length === 0 && sortedStreams.length === 0 ? (
+              <EmptyHint
+                t={t}
+                mode={session?.mode}
+                onCreate={(mode) => {
+                  setCreateOpen(true)
+                  setCreateMode(mode)
+                }}
+              />
+            ) : (
+              <div className="flex flex-col gap-3">
+                {messages.map((msg, idx) => {
+                  const agent = msg.senderId ? byAgentId[msg.senderId] : undefined
+                  const prev = idx > 0 ? messages[idx - 1] : undefined
+                  const needDivider = !prev || msg.createdAtLocal - prev.createdAtLocal > TIME_DIVIDER_GAP_MS
+                  // 群聊 user 消息下显示多 agent 投递态 chips
+                  const showDeliveryChips = session?.mode === "group" && msg.senderType === "user" && currentSessionId != null
+                  return (
+                    <Fragment key={msg.id}>
+                      {needDivider && <TimeDivider ts={msg.createdAtLocal} />}
+                      <MessageRow
+                        msg={msg}
+                        agentName={agent?.name ?? msg.senderId ?? undefined}
+                        avatarUrl={agent?.identity?.avatarUrl}
+                        emoji={agent?.identity?.emoji}
+                        agentModel={agent?.model?.primary}
+                        memberAgentIds={memberAgentIds}
+                        onReply={(m, name) => {
+                          const snippet = messageText(m).slice(0, 60)
+                          setReplyTarget({ id: m.id, name, snippet })
+                          textareaRef.current?.focus()
+                        }}
+                        onCardAction={async (_cardId, optionValue) => {
+                          if (!currentSessionId) return
+                          try {
+                            // 卡片按钮 = 带 reply-to 的结构化 user 消息,路由到卡片发起者
+                            await window.electron.chat.message.send(currentSessionId, optionValue, undefined, msg.id)
+                          } catch (err) {
+                            toast.error((err as Error).message)
+                          }
+                        }}
+                      />
+                      {showDeliveryChips && <DeliveryChips sessionId={currentSessionId} messageId={msg.id} />}
+                    </Fragment>
+                  )
+                })}
+                {/* 流式气泡：按 buffer.openclawSessionKey 反查发言 member → agent（支持 group 多 agent 并发） */}
+                {sortedStreams.map(([key, buf]) => {
+                  const member = members.find((m) => m.openclawKey === buf.openclawSessionKey)
+                  const agentId = member?.agentId
+                  const agent = agentId ? byAgentId[agentId] : undefined
+                  return (
+                    <StreamingRow
+                      key={`stream:${key}`}
+                      content={buf.content}
+                      agentName={agent?.name ?? agentId ?? undefined}
                       avatarUrl={agent?.identity?.avatarUrl}
                       emoji={agent?.identity?.emoji}
-                      agentModel={agent?.model?.primary}
                       memberAgentIds={memberAgentIds}
-                      onReply={(m, name) => {
-                        const snippet = messageText(m).slice(0, 60)
-                        setReplyTarget({ id: m.id, name, snippet })
-                        textareaRef.current?.focus()
-                      }}
-                      onCardAction={async (_cardId, optionValue) => {
-                        if (!currentSessionId) return
-                        try {
-                          // 卡片按钮 = 带 reply-to 的结构化 user 消息,路由到卡片发起者
-                          await window.electron.chat.message.send(currentSessionId, optionValue, undefined, msg.id)
-                        } catch (err) {
-                          toast.error((err as Error).message)
-                        }
-                      }}
                     />
-                    {showDeliveryChips && <DeliveryChips sessionId={currentSessionId} messageId={msg.id} />}
-                  </Fragment>
-                )
-              })}
-              {/* 流式气泡：按 buffer.openclawSessionKey 反查发言 member → agent（支持 group 多 agent 并发） */}
-              {sortedStreams.map(([key, buf]) => {
-                const member = members.find((m) => m.openclawKey === buf.openclawSessionKey)
-                const agentId = member?.agentId
-                const agent = agentId ? byAgentId[agentId] : undefined
-                return (
-                  <StreamingRow
-                    key={`stream:${key}`}
-                    content={buf.content}
-                    agentName={agent?.name ?? agentId ?? undefined}
-                    avatarUrl={agent?.identity?.avatarUrl}
-                    emoji={agent?.identity?.emoji}
-                    memberAgentIds={memberAgentIds}
-                  />
-                )
-              })}
-            </div>
-          )}
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -714,7 +700,7 @@ export function ChatMain() {
           </div>
         )}
 
-        <div className="bg-card ring-foreground/10 relative flex flex-col rounded-xl ring-1 transition-shadow focus-within:ring-2 focus-within:ring-primary/20">
+        <div className="bg-card ring-foreground/10 focus-within:ring-primary/20 relative flex flex-col rounded-xl ring-1 transition-shadow focus-within:ring-2">
           {mention && mentionCandidates.length > 0 && (
             <div
               id="chat-mention-listbox"
@@ -782,7 +768,7 @@ export function ChatMain() {
             aria-expanded={mention && mentionCandidates.length > 0 ? true : undefined}
             aria-controls={mention && mentionCandidates.length > 0 ? "chat-mention-listbox" : undefined}
             aria-activedescendant={mention && mentionCandidates.length > 0 ? `chat-mention-option-${mentionIdx}` : undefined}
-            className="min-h-[40px] max-h-[200px] resize-none border-0 bg-transparent px-3 py-2.5 text-sm shadow-none focus-visible:ring-0"
+            className="max-h-[200px] min-h-[40px] resize-none border-0 bg-transparent px-3 py-2.5 text-sm shadow-none focus-visible:ring-0"
           />
 
           <div className="flex items-center justify-end border-t px-2 py-1.5">
@@ -800,9 +786,9 @@ export function ChatMain() {
           </div>
         </div>
       </div>
-      <CreateChatDialog 
-        open={createOpen} 
-        onOpenChange={setCreateOpen} 
+      <CreateChatDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
         onCreated={(sessionId) => {
           void window.electron.chat.session.list().then(() => {
             useChatDataStore.getState().refreshSessions()
@@ -830,11 +816,11 @@ function EmptyHint({ t, mode, onCreate }: { t: (k: string) => string; mode?: "di
         {onCreate && (
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => onCreate("direct")}>
-              <Bot className="size-4 mr-1" />
+              <Bot className="mr-1 size-4" />
               {t("chat.empty.newDirect")}
             </Button>
             <Button variant="outline" size="sm" onClick={() => onCreate("group")}>
-              <Users className="size-4 mr-1" />
+              <Users className="mr-1 size-4" />
               {t("chat.empty.newGroup")}
             </Button>
           </div>
@@ -886,28 +872,28 @@ function MessageRow({ msg, agentName, avatarUrl, emoji, agentModel, memberAgentI
               aria-label={t("chat.reply.action")}
               title={t("chat.reply.action")}
               onClick={() => onReply?.(msg, agentName ?? msg.senderId ?? "")}
-              className="text-muted-foreground hover:text-foreground hover:bg-accent mt-1 opacity-0 rounded-md p-1 transition-opacity group-hover:opacity-100"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent mt-1 rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100"
             >
               <CornerUpLeft className="size-3.5" />
             </button>
           )}
-        <div
-          className={`min-w-0 overflow-hidden rounded-2xl px-3 py-2 text-sm ${isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"} ${
-            isAborted ? "ring-muted-foreground/40 ring-1 ring-dashed" : ""
-          }`}
-        >
-          <Streamdown
-            mode="static"
-            shikiTheme={SHIKI_THEME}
-            className="markdown-prose"
-            allowedTags={STREAMDOWN_ALLOWED_TAGS}
-            literalTagContent={STREAMDOWN_LITERAL_TAGS}
-            components={STREAMDOWN_COMPONENTS}
+          <div
+            className={`min-w-0 overflow-hidden rounded-2xl px-3 py-2 text-sm ${isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"} ${
+              isAborted ? "ring-muted-foreground/40 ring-dashed ring-1" : ""
+            }`}
           >
-            {rendered || "—"}
-          </Streamdown>
-          {isAborted && <span className="text-muted-foreground mt-1 block text-[10px]">{t("chat.aborted")}</span>}
-        </div>
+            <Streamdown
+              mode="static"
+              shikiTheme={SHIKI_THEME}
+              className="markdown-prose"
+              allowedTags={STREAMDOWN_ALLOWED_TAGS}
+              literalTagContent={STREAMDOWN_LITERAL_TAGS}
+              components={STREAMDOWN_COMPONENTS}
+            >
+              {rendered || "—"}
+            </Streamdown>
+            {isAborted && <span className="text-muted-foreground mt-1 block text-[10px]">{t("chat.aborted")}</span>}
+          </div>
         </div>
         {cards.length > 0 && (
           <div className="flex flex-col gap-2">
@@ -995,11 +981,7 @@ function StreamingRow({
 
 function Avatar({ isUser, avatarUrl, emoji }: { isUser: boolean; avatarUrl?: string; emoji?: string }) {
   return (
-    <div
-      className={`flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg ${
-        isUser ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
-      }`}
-    >
+    <div className={`flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg ${isUser ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
       {!isUser && avatarUrl ? (
         <img src={avatarUrl} alt="" className="size-full object-cover" />
       ) : !isUser && emoji ? (

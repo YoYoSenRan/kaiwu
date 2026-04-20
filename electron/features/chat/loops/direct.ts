@@ -11,8 +11,8 @@
 
 import { nanoid } from "nanoid"
 import { scope } from "../../../infra/logger"
-import { buildSharedContext } from "../context"
-import { interpretReply } from "../interpret"
+import { buildSharedContext } from "./prompt"
+import { interpretReply } from "./interpret"
 import { extractCardsFromText, stripMentionsForAgent } from "../routing"
 import { newIdempotencyKey, runStep } from "../../../agent/executor"
 import { getSession, insertMessage, insertTurn, listActiveMembers, nextSeq } from "../repository"
@@ -230,13 +230,7 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
   }
 }
 
-function buildAndInsertAbortedMessage(
-  sessionId: string,
-  member: ChatMember,
-  content: string,
-  idempotencyKey: string,
-  inReplyToMessageId: string | null,
-): ChatMessage {
+function buildAndInsertAbortedMessage(sessionId: string, member: ChatMember, content: string, idempotencyKey: string, inReplyToMessageId: string | null): ChatMessage {
   const msg: ChatMessage = {
     id: nanoid(),
     sessionId,

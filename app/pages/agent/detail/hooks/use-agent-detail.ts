@@ -31,7 +31,6 @@ export function useAgentDetail(agentId: string | undefined) {
   }, [agentId])
 
   useEffect(() => {
-     
     void refresh()
   }, [refresh])
 

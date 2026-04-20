@@ -73,7 +73,9 @@ export function SessionCard({ session }: Props) {
               </div>
             )
           })}
-          {activeMembers.length > 4 && <div className="ring-card bg-muted text-muted-foreground flex size-6 items-center justify-center rounded-full text-[9px] ring-2">+{activeMembers.length - 4}</div>}
+          {activeMembers.length > 4 && (
+            <div className="ring-card bg-muted text-muted-foreground flex size-6 items-center justify-center rounded-full text-[9px] ring-2">+{activeMembers.length - 4}</div>
+          )}
         </div>
         <span className="text-muted-foreground text-[11px]">{formatRelative(session.updatedAt, i18n.language)}</span>
       </div>

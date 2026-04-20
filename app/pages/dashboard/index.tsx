@@ -7,17 +7,7 @@ import { useGatewayStore } from "@/stores/gateway"
 import { useChatDataStore } from "@/stores/chat"
 import { useAgentCacheStore } from "@/stores/agent"
 import { gatewayDotColor } from "@/utils/gateway"
-import {
-  Activity,
-  Bot,
-  Database,
-  HardDrive,
-  ListChecks,
-  MessageSquare,
-  Plug,
-  Plus,
-  Terminal,
-} from "lucide-react"
+import { Activity, Bot, Database, HardDrive, ListChecks, MessageSquare, Plug, Plus, Terminal } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 type KnowledgeBase = Awaited<ReturnType<typeof window.electron.knowledge.base.list>>[number]
@@ -78,31 +68,14 @@ export default function Dashboard() {
     <div className="grid gap-5 xl:grid-cols-3">
       <div className="space-y-5 xl:col-span-2">
         <div className="grid gap-5 sm:grid-cols-3">
-          <OverviewMetric
-            title={t("dashboard.systemStatus.sessions", "Active Sessions")}
-            value={activeSessions.toString()}
-            icon={MessageSquare}
-          />
-          <OverviewMetric
-            title={t("dashboard.systemStatus.knowledgeBases", "Knowledge Bases")}
-            value={list.length.toString()}
-            icon={Database}
-          />
-          <OverviewMetric
-            title={t("dashboard.systemStatus.documents", "Documents")}
-            value={totalDocs.toString()}
-            icon={HardDrive}
-          />
+          <OverviewMetric title={t("dashboard.systemStatus.sessions", "Active Sessions")} value={activeSessions.toString()} icon={MessageSquare} />
+          <OverviewMetric title={t("dashboard.systemStatus.knowledgeBases", "Knowledge Bases")} value={list.length.toString()} icon={Database} />
+          <OverviewMetric title={t("dashboard.systemStatus.documents", "Documents")} value={totalDocs.toString()} icon={HardDrive} />
         </div>
 
         <QuickActions onNew={() => navigate("/knowledge")} onConnect={() => navigate("/connect")} onTasks={() => navigate("/task")} />
 
-        <AgentOverviewCard
-          totalAgents={totalAgents}
-          mineCount={mineCount}
-          unsyncedCount={unsyncedCount}
-          missingCount={missingCount}
-        />
+        <AgentOverviewCard totalAgents={totalAgents} mineCount={mineCount} unsyncedCount={unsyncedCount} missingCount={missingCount} />
 
         <Card>
           <CardHeader>
@@ -136,12 +109,7 @@ export default function Dashboard() {
       <div className="space-y-5">
         <GatewayStatusCard />
 
-        <ChatOverviewCard
-          totalSessions={sessions.length}
-          activeSessions={activeSessions}
-          totalMessages={totalMessages}
-          totalUnread={totalUnread}
-        />
+        <ChatOverviewCard totalSessions={sessions.length} activeSessions={activeSessions} totalMessages={totalMessages} totalUnread={totalUnread} />
 
         <RecentActivityCard events={monitorEvents} />
       </div>
@@ -228,9 +196,7 @@ function ChatOverviewCard({
           <div className="space-y-1">
             <p className="text-muted-foreground text-xs">{t("dashboard.chatOverview.totalMessages", "Total Messages")}</p>
             <p className="text-xl font-bold">{totalMessages}</p>
-            {totalUnread > 0 && (
-              <p className="text-xs text-amber-500">{totalUnread} unread</p>
-            )}
+            {totalUnread > 0 && <p className="text-xs text-amber-500">{totalUnread} unread</p>}
           </div>
         </div>
         <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => navigate("/chat")}>
@@ -242,17 +208,7 @@ function ChatOverviewCard({
   )
 }
 
-function AgentOverviewCard({
-  totalAgents,
-  mineCount,
-  unsyncedCount,
-  missingCount,
-}: {
-  totalAgents: number
-  mineCount: number
-  unsyncedCount: number
-  missingCount: number
-}) {
+function AgentOverviewCard({ totalAgents, mineCount, unsyncedCount, missingCount }: { totalAgents: number; mineCount: number; unsyncedCount: number; missingCount: number }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 

@@ -38,11 +38,9 @@ export function OverviewTab({ detail, defaultId }: Props) {
       <CardContent>
         <div className="space-y-6">
           <section>
-            <h3 className="text-muted-foreground mb-4 text-xs font-semibold uppercase tracking-wide">
-              {t("agent.overview.identity", "Identity")}
-            </h3>
+            <h3 className="text-muted-foreground mb-4 text-xs font-semibold tracking-wide uppercase">{t("agent.overview.identity", "Identity")}</h3>
             <div className="grid grid-cols-2 gap-6">
-              <FieldItem icon={<User className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.name")}>
+              <FieldItem icon={<User className="text-muted-foreground mt-0.5 size-4" />} label={t("agent.overview.name")}>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{name ?? <Empty />}</span>
                   {isDefault && (
@@ -53,15 +51,15 @@ export function OverviewTab({ detail, defaultId }: Props) {
                 </div>
               </FieldItem>
 
-              <FieldItem icon={<Smile className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.emoji")}>
+              <FieldItem icon={<Smile className="text-muted-foreground mt-0.5 size-4" />} label={t("agent.overview.emoji")}>
                 <span className="text-sm font-medium">{emoji ?? <Empty />}</span>
               </FieldItem>
 
-              <FieldItem icon={<Palette className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.theme")}>
+              <FieldItem icon={<Palette className="text-muted-foreground mt-0.5 size-4" />} label={t("agent.overview.theme")}>
                 <span className="text-sm font-medium">{theme ?? <Empty />}</span>
               </FieldItem>
 
-              <FieldItem icon={<Image className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.avatar")}>
+              <FieldItem icon={<Image className="text-muted-foreground mt-0.5 size-4" />} label={t("agent.overview.avatar")}>
                 {avatar ? (
                   avatar.startsWith("http") ? (
                     <img src={avatar} alt="avatar" className="h-8 w-8 rounded-full object-cover" />
@@ -73,16 +71,11 @@ export function OverviewTab({ detail, defaultId }: Props) {
                 )}
               </FieldItem>
 
-              <FieldItem icon={<FolderOpen className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.workspace")}>
+              <FieldItem icon={<FolderOpen className="text-muted-foreground mt-0.5 size-4" />} label={t("agent.overview.workspace")}>
                 {workspace ? (
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{workspace}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                      onClick={() => copy(workspace, t("agent.overview.workspace"))}
-                    >
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => copy(workspace, t("agent.overview.workspace"))}>
                       <Copy className="size-3.5" />
                     </Button>
                   </div>
@@ -94,11 +87,9 @@ export function OverviewTab({ detail, defaultId }: Props) {
           </section>
 
           <section>
-            <h3 className="text-muted-foreground mb-4 text-xs font-semibold uppercase tracking-wide">
-              {t("agent.overview.configuration", "Configuration")}
-            </h3>
+            <h3 className="text-muted-foreground mb-4 text-xs font-semibold tracking-wide uppercase">{t("agent.overview.configuration", "Configuration")}</h3>
             <div className="grid grid-cols-2 gap-6">
-              <FieldItem icon={<Cpu className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.primaryModel")}>
+              <FieldItem icon={<Cpu className="text-muted-foreground mt-0.5 size-4" />} label={t("agent.overview.primaryModel")}>
                 {primary ? (
                   <Badge variant="secondary" className="font-normal">
                     {primary}
@@ -108,7 +99,7 @@ export function OverviewTab({ detail, defaultId }: Props) {
                 )}
               </FieldItem>
 
-              <FieldItem icon={<RefreshCw className="text-muted-foreground size-4 mt-0.5" />} label={t("agent.overview.fallbacks")}>
+              <FieldItem icon={<RefreshCw className="text-muted-foreground mt-0.5 size-4" />} label={t("agent.overview.fallbacks")}>
                 {fallbacks.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {fallbacks.map((m) => (
@@ -134,7 +125,7 @@ function FieldItem({ icon, label, children }: { icon: React.ReactNode; label: st
     <div className="flex items-start gap-3">
       {icon}
       <div className="min-w-0 flex-1">
-        <div className="text-muted-foreground text-xs uppercase tracking-wide">{label}</div>
+        <div className="text-muted-foreground text-xs tracking-wide uppercase">{label}</div>
         <div className="mt-1">{children}</div>
       </div>
     </div>

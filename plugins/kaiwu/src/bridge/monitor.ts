@@ -11,16 +11,7 @@ import { makeEvent } from "./envelope.js"
 export const MONITOR_CHANNEL = "monitor"
 
 /** 可订阅的宿主 hook 名称。按需扩展。 */
-export const MONITOR_HOOKS = [
-  "llm_input",
-  "llm_output",
-  "agent_end",
-  "before_tool_call",
-  "after_tool_call",
-  "message_received",
-  "message_sending",
-  "message_sent",
-] as const
+export const MONITOR_HOOKS = ["llm_input", "llm_output", "agent_end", "before_tool_call", "after_tool_call", "message_received", "message_sending", "message_sent"] as const
 
 export type MonitorHookName = (typeof MONITOR_HOOKS)[number]
 

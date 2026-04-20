@@ -92,12 +92,7 @@ export function ChatSidebar() {
         </Button>
         <div className="relative">
           <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("chat.search")}
-            className="h-8 pl-8 pr-8 text-xs"
-          />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("chat.search")} className="h-8 pr-8 pl-8 text-xs" />
           {query && (
             <button
               type="button"
@@ -112,9 +107,7 @@ export function ChatSidebar() {
       </div>
       <div className="flex-1 space-y-1 overflow-y-auto p-3">
         {sortedSessions.length === 0 ? (
-          <p className="text-muted-foreground px-3 py-4 text-center text-sm">
-            {query ? t("chat.sessions.noMatch") : t("chat.sessions.empty")}
-          </p>
+          <p className="text-muted-foreground px-3 py-4 text-center text-sm">{query ? t("chat.sessions.noMatch") : t("chat.sessions.empty")}</p>
         ) : (
           sortedSessions.map((s) => {
             const active = s.id === currentSessionId
@@ -124,7 +117,7 @@ export function ChatSidebar() {
               <div
                 key={s.id}
                 onClick={() => handleSelect(s.id)}
-                className={`btn-focus group flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-3 text-sm text-left transition-colors ${active ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted/80"}`}
+                className={`btn-focus group flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-3 text-left text-sm transition-colors ${active ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted/80"}`}
               >
                 {s.mode === "group" ? (
                   <Users className={`size-4 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
@@ -143,7 +136,9 @@ export function ChatSidebar() {
                   <div className={`flex w-full items-center justify-between text-[11px] leading-none ${active ? "text-primary/70" : "text-muted-foreground"}`}>
                     <span className="truncate">{preview || (s.mode === "group" ? t("chat.mode.group") : t("chat.mode.direct"))}</span>
                     {s.mode === "group" && members[s.id]?.length > 0 && (
-                      <span className="shrink-0 ml-1">{members[s.id].length} {t("chat.members.count")}</span>
+                      <span className="ml-1 shrink-0">
+                        {members[s.id].length} {t("chat.members.count")}
+                      </span>
                     )}
                   </div>
                 </div>

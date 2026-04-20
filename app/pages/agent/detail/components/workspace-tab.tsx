@@ -99,11 +99,7 @@ export function WorkspaceTab({ detail, onRefresh }: Props) {
                     onClick={() => loadFile(f.name)}
                     className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors ${active ? "bg-primary/10 text-primary" : "hover:bg-muted/70"}`}
                   >
-                    {f.writable ? (
-                      <FileText className="size-3.5 shrink-0" />
-                    ) : (
-                      <Lock className="text-muted-foreground size-3.5 shrink-0" />
-                    )}
+                    {f.writable ? <FileText className="size-3.5 shrink-0" /> : <Lock className="text-muted-foreground size-3.5 shrink-0" />}
                     <div className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-xs font-medium">{f.name}</span>
                       {(f.size !== undefined || f.mtime) && (

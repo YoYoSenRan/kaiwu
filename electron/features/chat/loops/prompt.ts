@@ -10,9 +10,9 @@
  * 结构化 array of {sender, body, timestamp_ms},plugin hook 渲染为 untrusted JSON block。
  */
 
-import { renderRoster, type RosterEntry } from "../../agent/context"
-import { listMembers, listMessages } from "./repository"
-import type { ChatMember, ChatMessage } from "./types"
+import { renderRoster, type RosterEntry } from "../../../agent/context"
+import { listMembers, listMessages } from "../repository"
+import type { ChatMember, ChatMessage } from "../types"
 
 export interface SharedHistoryEntry {
   sender: string
@@ -41,13 +41,11 @@ export function buildSharedContext(sessionId: string, target: ChatMember, opts: 
 
   const selfName = opts.agentDisplayName ?? target.agentId
   // 极简 instruction(对齐 discord 模型):只告知身份 + 群成员 + 基本规则。
-  // 不教 agent 做"路由决策",让它像 discord bot 一样正常写回复。若它想让别人接话,
-  // 就在回复里自然写 `@<agent_id>`,kaiwu decideTargets 解析文本 @ 完成路由。
-  // 把 mention_next / 角色纪律 / 禁止扮演 等规则全删 — 越复杂 LLM 越不稳。
+  // 告诉 agent 群聊结构 + 给出最关键的两个工具提示。其他工具用法在 workspace 文档里细讲。
   const instruction = [
     `你是群聊中的 ${selfName}。这是一个多 agent 群聊,参与者如下:`,
     renderRoster(roster),
-    `如需要用户介入(做决策/提供信息),调用 ask_user(question) 工具;否则正常写回复即可。`,
+    `如需要用户介入(做决策/提供信息),调用 kaiwu_ask_user(question) 工具;否则正常写回复即可。`,
   ].join("\n\n")
 
   let sharedHistory: SharedHistoryEntry[] | undefined

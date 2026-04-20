@@ -44,11 +44,7 @@ export function UnsyncedTab({ entries, onChanged }: Props) {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {entries.map((e, i) => (
-          <div
-            key={e.agentId}
-            className="animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards"
-            style={{ animationDelay: `${i * 60}ms`, animationDuration: "400ms" }}
-          >
+          <div key={e.agentId} className="animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards" style={{ animationDelay: `${i * 60}ms`, animationDuration: "400ms" }}>
             <AgentCard
               id={e.agentId}
               name={e.gateway?.name}

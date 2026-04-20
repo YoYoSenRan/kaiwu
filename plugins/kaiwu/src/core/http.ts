@@ -8,9 +8,7 @@
 import type { HttpRouteHandler } from "../../api.js"
 
 /** action handler:接收 params,返回结果。 */
-export type ActionHandler = (
-  params: unknown,
-) => { ok: boolean; error?: string; result?: unknown } | Promise<{ ok: boolean; error?: string; result?: unknown }>
+export type ActionHandler = (params: unknown) => { ok: boolean; error?: string; result?: unknown } | Promise<{ ok: boolean; error?: string; result?: unknown }>
 
 /** 全局 action 注册表。key 是完整 action 名(如 "context.set")。 */
 const registry = new Map<string, ActionHandler>()

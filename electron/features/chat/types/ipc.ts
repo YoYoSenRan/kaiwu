@@ -2,27 +2,8 @@
  * IPC 契约:service 入参/出参 + ChatBridge (renderer 端调用形态)。
  */
 
-import type {
-  BudgetConfig,
-  BudgetState,
-  ChatMember,
-  ChatMention,
-  ChatMessage,
-  ChatMode,
-  ChatSession,
-  ChatTurn,
-  ReplyMode,
-  SessionUsage,
-} from "./domain"
-import type {
-  ChatErrorEvent,
-  DeliveryUpdateEvent,
-  LoopEvent,
-  LoopPausedEvent,
-  MessagesRefreshEvent,
-  StreamDeltaEvent,
-  StreamEndEvent,
-} from "./events"
+import type { BudgetConfig, BudgetState, ChatMember, ChatMention, ChatMessage, ChatMode, ChatSession, ChatTurn, ReplyMode, SessionUsage } from "./domain"
+import type { ChatErrorEvent, DeliveryUpdateEvent, LoopEvent, LoopPausedEvent, MessagesRefreshEvent, StreamDeltaEvent, StreamEndEvent } from "./events"
 
 // ---------- Service 入参/出参 ----------
 
