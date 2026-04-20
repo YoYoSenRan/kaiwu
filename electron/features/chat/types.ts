@@ -98,6 +98,26 @@ export interface BudgetState {
 }
 
 /**
+ * 一次 agent turn 的运行快照。调 openclaw chat.send 前落库,追踪完整链路:
+ * 输入(sent_message) + 注入(system_prompt / history_text) + 输出(JOIN chat_messages via turnRunId)。
+ */
+export interface ChatTurn {
+  id: string
+  sessionId: string
+  memberId: string
+  turnRunId: string
+  sessionKey: string
+  agentId: string
+  model: string | null
+  triggerMessageId: string | null
+  systemPrompt: string
+  historyText: string | null
+  sentMessage: string
+  sentAt: number
+  createdAt: number
+}
+
+/**
  * Session 级 usage 快照,数据源为 openclaw `sessions.list`。
  *
  * `totalTokens` 是 prompt 侧快照(不含 output),`contextTokens` 是模型 context window 容量。

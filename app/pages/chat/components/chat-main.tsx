@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAgentCacheStore } from "@/stores/agent"
 import { useChatDataStore, useChatUiStore, type StreamBuffer } from "@/stores/chat"
 import type { ChatMember, ChatMessage } from "../../../../electron/features/chat/types"
+import { CreateChatDialog } from "./create-dialog"
 import { DeliveryChips } from "./delivery-chips"
 
 /** Shiki 代码高亮主题，light/dark 各一套。 */
@@ -83,6 +84,8 @@ function shortenModel(m: string | null): string | null {
 export function ChatMain() {
   const { t } = useTranslation()
   const [input, setInput] = useState("")
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createMode, setCreateMode] = useState<"direct" | "group">("direct")
 
   const currentSessionId = useChatUiStore((s) => s.currentSessionId)
   const drafts = useChatUiStore((s) => s.drafts)
@@ -404,7 +407,60 @@ export function ChatMain() {
   return (
     <div className="bg-card text-card-foreground ring-foreground/10 flex flex-1 flex-col overflow-hidden rounded-xl ring-1">
       <div className="border-border/50 flex h-16 shrink-0 items-center justify-between border-b px-5">
-        <h2 className="text-sm font-semibold tracking-tight">{session?.label ?? currentSessionId}</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-semibold tracking-tight">{session?.label ?? currentSessionId}</h2>
+          {session && (
+            <div className="flex items-center gap-1.5">
+              {session.mode === "group" ? (
+                <Users className="size-3.5 text-muted-foreground" />
+              ) : (
+                <Bot className="size-3.5 text-muted-foreground" />
+              )}
+              <span className="text-[11px] text-muted-foreground">
+                {session.mode === "group" 
+                  ? `${members.length} ${t("chat.members.count")}` 
+                  : t("chat.mode.direct")
+                }
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {members.length > 0 && (
+            <div className="flex items-center -space-x-1">
+              {members.slice(0, 3).map((m) => {
+                const agent = getGatewayRow(m.agentId)
+                return (
+                  <div
+                    key={m.id}
+                    className="bg-muted text-muted-foreground flex size-6 items-center justify-center overflow-hidden rounded-full ring-2 ring-card"
+                    title={agent?.name ?? m.agentId}
+                  >
+                    {agent?.identity?.avatarUrl ? (
+                      <img src={agent.identity.avatarUrl} alt="" className="size-full object-cover" />
+                    ) : agent?.identity?.emoji ? (
+                      <span className="text-xs">{agent.identity.emoji}</span>
+                    ) : (
+                      <Bot className="size-3" />
+                    )}
+                  </div>
+                )
+              })}
+              {members.length > 3 && (
+                <span className="text-muted-foreground ml-1 text-[11px]">+{members.length - 3}</span>
+              )}
+            </div>
+          )}
+          {isRunning && (
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex size-2 rounded-full bg-primary" />
+              </span>
+              <span className="text-[11px] text-primary">{t("chat.status.running")}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {lastError &&
@@ -476,7 +532,7 @@ export function ChatMain() {
           {/* 稳定 contentRef:条件渲染切换(EmptyHint ↔ 消息列表)不换引用,RO 持续生效 */}
           <div ref={contentRef}>
           {messages.length === 0 && sortedStreams.length === 0 ? (
-            <EmptyHint t={t} mode={session?.mode} />
+            <EmptyHint t={t} mode={session?.mode} onCreate={(mode) => { setCreateOpen(true); setCreateMode(mode); }} />
           ) : (
             <div className="flex flex-col gap-3">
               {messages.map((msg, idx) => {
@@ -599,11 +655,22 @@ export function ChatMain() {
           </div>
         </div>
       </div>
+      <CreateChatDialog 
+        open={createOpen} 
+        onOpenChange={setCreateOpen} 
+        onCreated={(sessionId) => {
+          void window.electron.chat.session.list().then(() => {
+            useChatDataStore.getState().refreshSessions()
+            useChatUiStore.getState().setCurrent(sessionId)
+          })
+        }}
+        defaultMode={createMode}
+      />
     </div>
   )
 }
 
-function EmptyHint({ t, mode }: { t: (k: string) => string; mode?: "direct" | "group" }) {
+function EmptyHint({ t, mode, onCreate }: { t: (k: string) => string; mode?: "direct" | "group"; onCreate?: (mode: "direct" | "group") => void }) {
   const Icon = mode === "group" ? Users : mode === "direct" ? Bot : Sparkles
   return (
     <div className="flex h-full items-center justify-center transition-opacity duration-500 ease-out">
@@ -615,6 +682,18 @@ function EmptyHint({ t, mode }: { t: (k: string) => string; mode?: "direct" | "g
           <p className="text-foreground text-lg font-medium tracking-tight">{t("chat.empty.title")}</p>
           <p className="text-muted-foreground mx-auto max-w-[280px] text-sm leading-relaxed">{t("chat.empty.description")}</p>
         </div>
+        {onCreate && (
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => onCreate("direct")}>
+              <Bot className="size-4 mr-1" />
+              {t("chat.empty.newDirect")}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onCreate("group")}>
+              <Users className="size-4 mr-1" />
+              {t("chat.empty.newGroup")}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -649,7 +728,7 @@ function MessageRow({ msg, agentName, avatarUrl, emoji, agentModel, memberAgentI
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
       <Avatar isUser={isUser} avatarUrl={avatarUrl} emoji={emoji} />
-      <div className={`flex max-w-[70%] flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
+      <div className={`flex max-w-[85%] flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
         <div
           className={`min-w-0 overflow-hidden rounded-2xl px-3 py-2 text-sm ${isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"} ${
             isAborted ? "ring-muted-foreground/40 ring-1 ring-dashed" : ""
@@ -690,7 +769,7 @@ function StreamingRow({
   return (
     <div className="flex flex-row gap-3" aria-live="polite" aria-busy="true">
       <Avatar isUser={false} avatarUrl={avatarUrl} emoji={emoji} />
-      <div className="flex max-w-[70%] flex-col items-start gap-1">
+      <div className="flex max-w-[85%] flex-col items-start gap-1">
         <div className="bg-muted text-foreground ring-primary/30 rounded-2xl px-3 py-2 text-sm ring-1">
           {content ? (
             <Streamdown mode="streaming" parseIncompleteMarkdown caret="block" shikiTheme={SHIKI_THEME} className="markdown-prose">

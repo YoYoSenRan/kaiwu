@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Info, Bot, Plus, RotateCcw } from "lucide-react"
+import { Info, Bot, ChevronDown, Plus, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useAgentCacheStore } from "@/stores/agent"
 import { useChatDataStore, useChatUiStore } from "@/stores/chat"
@@ -105,73 +106,85 @@ export function ChatDetails() {
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
-              {t("chat.details.participants")}
-              {members.length > 0 && <span className="ml-1 normal-case opacity-70">({members.length})</span>}
-            </h4>
-            {canEditMembers && (
-              <button
-                type="button"
-                onClick={() => setAddOpen(true)}
-                className="btn-focus text-muted-foreground hover:text-foreground flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] transition-colors"
-              >
-                <Plus className="size-3" />
-                <span>{t("chat.members.add")}</span>
-              </button>
-            )}
-          </div>
-          {members.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-6">
-              <Bot className="text-muted-foreground size-8" />
-              <p className="text-muted-foreground text-sm">{t("chat.members.empty")}</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {currentSessionId &&
-                members.map((m) => (
-                  <MemberCard
-                    key={m.id}
-                    sessionId={currentSessionId}
-                    member={m}
-                    usage={memberUsages[m.id]}
-                    disabled={togglingId === m.id || removingId === m.id}
-                    onToggleReplyMode={() => void toggleReplyMode(m)}
-                    onRemove={() => setPendingRemove(m)}
-                    allowRemove={canEditMembers}
-                  />
-                ))}
-            </div>
-          )}
+          <Collapsible defaultOpen>
+            <CollapsibleTrigger className="flex w-full items-center justify-between">
+              <h4 className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
+                {t("chat.details.participants")}
+                {members.length > 0 && <span className="ml-1 normal-case opacity-70">({members.length})</span>}
+              </h4>
+              <div className="flex items-center gap-1">
+                {canEditMembers && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setAddOpen(true); }}
+                    className="btn-focus text-muted-foreground hover:text-foreground flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] transition-colors"
+                  >
+                    <Plus className="size-3" />
+                    <span>{t("chat.members.add")}</span>
+                  </button>
+                )}
+                <ChevronDown className="size-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              {members.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-6">
+                  <Bot className="text-muted-foreground size-8" />
+                  <p className="text-muted-foreground text-sm">{t("chat.members.empty")}</p>
+                </div>
+              ) : (
+                <div className="space-y-2 pt-2">
+                  {currentSessionId &&
+                    members.map((m) => (
+                      <MemberCard
+                        key={m.id}
+                        sessionId={currentSessionId}
+                        member={m}
+                        usage={memberUsages[m.id]}
+                        disabled={togglingId === m.id || removingId === m.id}
+                        onToggleReplyMode={() => void toggleReplyMode(m)}
+                        onRemove={() => setPendingRemove(m)}
+                        allowRemove={canEditMembers}
+                      />
+                    ))}
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* 群聊才有 rounds 护栏;单聊 context 已在 MemberCard 显示,此块省略 */}
           {session && !isDirect && (
-            <div className="space-y-2 pt-2">
-              <div className="flex items-center justify-between">
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex w-full items-center justify-between pt-2">
                 <h4 className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">{t("chat.budget.title")}</h4>
-                <button
-                  type="button"
-                  disabled={resetting || !budgetState}
-                  onClick={handleResetBudget}
-                  title={t("chat.budget.reset")}
-                  className="btn-focus text-muted-foreground hover:text-foreground flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] transition-colors disabled:opacity-50"
-                >
-                  <RotateCcw className="size-3" />
-                  <span>{t("chat.budget.reset")}</span>
-                </button>
-              </div>
-              <div className="space-y-1">
-                <div className="text-muted-foreground flex items-center justify-between text-[11px]">
-                  <span>{t("chat.budget.rounds")}</span>
-                  <span className={roundsWarn ? "text-destructive font-medium" : ""}>
-                    {roundsUsed} / {maxRounds}
-                  </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={resetting || !budgetState}
+                    onClick={(e) => { e.stopPropagation(); void handleResetBudget(); }}
+                    title={t("chat.budget.reset")}
+                    className="btn-focus text-muted-foreground hover:text-foreground flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] transition-colors disabled:opacity-50"
+                  >
+                    <RotateCcw className="size-3" />
+                    <span>{t("chat.budget.reset")}</span>
+                  </button>
+                  <ChevronDown className="size-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
                 </div>
-                <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
-                  <div className={`h-full transition-all ${roundsWarn ? "bg-destructive" : "bg-primary"}`} style={{ width: `${roundsPct}%` }} />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="space-y-1 pt-2">
+                  <div className="text-muted-foreground flex items-center justify-between text-[11px]">
+                    <span>{t("chat.budget.rounds")}</span>
+                    <span className={roundsWarn ? "text-destructive font-medium" : ""}>
+                      {roundsUsed} / {maxRounds}
+                    </span>
+                  </div>
+                  <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
+                    <div className={`h-full transition-all ${roundsWarn ? "bg-destructive" : "bg-primary"}`} style={{ width: `${roundsPct}%` }} />
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CollapsibleContent>
+            </Collapsible>
           )}
         </div>
       </div>

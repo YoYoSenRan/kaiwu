@@ -19,7 +19,7 @@ import { interpretReply } from "./interpret"
 import { stripMentionsForAgent } from "./mention-utils"
 import { newIdempotencyKey, runStep } from "../../agent/executor"
 import { decideTargets } from "./routing"
-import { getSession, insertMessage, listActiveMembers, nextSeq } from "./repository"
+import { getSession, insertMessage, insertTurn, listActiveMembers, nextSeq } from "./repository"
 import type { ChatBackend } from "../../agent/executor"
 import type { ChatMember, ChatMention, ChatMessage, DeliveryUpdateEvent, LoopEndedReason, LoopPausedEvent } from "./types"
 
@@ -183,6 +183,27 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
     const members = listActiveMembers(sessionId)
     const text = stripMentionsForAgent(extractText(incoming.content), members)
     log.info(`sendToMember calling runStep member=${target.id} agent=${target.agentId} key=${idempotencyKey} sessionKey=${target.openclawKey} msgLen=${text.length}`)
+
+    // 调试追踪:落库本轮完整的 prompt/context 快照
+    try {
+      insertTurn({
+        id: nanoid(),
+        sessionId,
+        memberId: target.id,
+        turnRunId: idempotencyKey,
+        sessionKey: target.openclawKey,
+        agentId: target.agentId,
+        model: null,
+        triggerMessageId: incoming.id,
+        systemPrompt: ctx.instruction,
+        historyText: ctx.sharedHistory ?? null,
+        sentMessage: text,
+        sentAt: Date.now(),
+      })
+    } catch (err) {
+      log.warn(`insertTurn failed member=${target.id}: ${(err as Error).message}`)
+    }
+
     deps.trackKeyStart(sessionId, idempotencyKey, target.openclawKey)
     let result
     try {

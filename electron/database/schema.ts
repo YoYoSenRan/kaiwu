@@ -109,6 +109,44 @@ export const chatMessages = sqliteTable("chat_messages", {
   created_at_remote: integer("created_at_remote", { mode: "number" }),
 })
 
+/**
+ * 每一次 agent turn 的运行快照:调 openclaw chat.send 前,kaiwu 注入给 plugin 的
+ * system_prompt / history_text + 实际发给 agent 的 sent_message 全部落库,用于链路追踪。
+ *
+ * 一次 user 消息 → fan-out 到 N 个 member → N 行 chat_turns(turn_run_id 唯一)。
+ * 可按 turn_run_id JOIN chat_messages 拉全链路(输入 + prompt + 上下文 + 输出)。
+ */
+export const chatTurns = sqliteTable("chat_turns", {
+  id: pk(),
+  session_id: text("session_id")
+    .notNull()
+    .references(() => chatSessions.id, { onDelete: "cascade" }),
+  member_id: text("member_id")
+    .notNull()
+    .references(() => chatSessionMembers.id, { onDelete: "cascade" }),
+  /** idempotencyKey,可 JOIN chat_messages.turn_run_id。 */
+  turn_run_id: text("turn_run_id").notNull().unique(),
+  /** openclaw 侧 sessionKey(用于定位该 run 在龙虾那边对应的 session)。 */
+  session_key: text("session_key").notNull(),
+  /** 冗余,便于按 agent 筛选无需 JOIN。 */
+  agent_id: text("agent_id").notNull(),
+  /** 该 member 当时配的 model.primary(可能与实际 session 运行时 model 不同)。 */
+  model: text("model"),
+  /** 触发本 run 的上游消息 id(user msg 或 agent msg,引用 chat_messages.id)。 */
+  trigger_message_id: text("trigger_message_id"),
+  /** kaiwu 推给 plugin 的 instruction(即 agent 看到的 system prompt)。 */
+  system_prompt: text("system_prompt").notNull(),
+  /** kaiwu 推给 plugin 的 sharedHistory(序列化的群聊流水)。 */
+  history_text: text("history_text"),
+  /** 剥离 @ 后真正发给 openclaw chat.send 的消息文本。 */
+  sent_message: text("sent_message").notNull(),
+  /** 推 context + chat.send 的时刻。 */
+  sent_at: integer("sent_at", { mode: "number" })
+    .notNull()
+    .$defaultFn(() => Date.now()),
+  created_at: createdAt(),
+})
+
 export const chatBudgetState = sqliteTable("chat_budget_state", {
   session_id: text("session_id")
     .primaryKey()

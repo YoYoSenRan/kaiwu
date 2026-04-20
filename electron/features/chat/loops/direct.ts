@@ -11,10 +11,11 @@
 
 import { nanoid } from "nanoid"
 import { scope } from "../../infra/logger"
+import { buildSharedContext } from "./context"
 import { interpretReply } from "./interpret"
 import { stripMentionsForAgent } from "./mention-utils"
 import { newIdempotencyKey, runStep } from "../../agent/executor"
-import { getSession, insertMessage, listActiveMembers, nextSeq } from "./repository"
+import { getSession, insertMessage, insertTurn, listActiveMembers, nextSeq } from "./repository"
 import type { ChatBackend } from "../../agent/executor"
 import type { ChatMember, ChatMessage, DeliveryUpdateEvent, LoopEndedReason } from "./types"
 
@@ -71,6 +72,28 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
   // 发给 agent 的文本剥离 @mention 标记(与 group 一致,即便单聊也去掉用户手动 @ 的情况)
   const text = stripMentionsForAgent(extractText(userMsg.content), [member])
   log.info(`sendDirect start session=${sessionId} agent=${member.agentId} key=${idempotencyKey} sessionKey=${member.openclawKey} msgLen=${text.length}`)
+
+  // 调试追踪:落库本轮 prompt/context 快照。单聊 kaiwu 不向 plugin 注入 instruction / sharedHistory
+  // (openclaw session 自带历史),此处用简标记占位,与群聊 turn_runs 结构统一便于 debug 视图。
+  try {
+    const ctx = buildSharedContext(sessionId, member, { includeHistory: false })
+    insertTurn({
+      id: nanoid(),
+      sessionId,
+      memberId: member.id,
+      turnRunId: idempotencyKey,
+      sessionKey: member.openclawKey,
+      agentId: member.agentId,
+      model: null,
+      triggerMessageId: userMsg.id,
+      systemPrompt: ctx.instruction,
+      historyText: null,
+      sentMessage: text,
+      sentAt: Date.now(),
+    })
+  } catch (err) {
+    log.warn(`insertTurn failed session=${sessionId}: ${(err as Error).message}`)
+  }
 
   // delivery 态锁定:必然以 done/error/aborted 之一结束
   let terminalEmitted = false

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { MessageSquare, MoreVertical, Plus, Search, Trash2, X } from "lucide-react"
+import { Bot, MoreVertical, Plus, Search, Trash2, Users, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -14,6 +14,7 @@ export function ChatSidebar() {
   const sessionActivity = useChatDataStore((s) => s.sessionActivity)
   const sessionLastText = useChatDataStore((s) => s.sessionLastText)
   const unread = useChatDataStore((s) => s.unread)
+  const members = useChatDataStore((s) => s.members)
   const refreshSessions = useChatDataStore((s) => s.refreshSessions)
   const refreshMessages = useChatDataStore((s) => s.refreshMessages)
   const refreshMembers = useChatDataStore((s) => s.refreshMembers)
@@ -125,7 +126,11 @@ export function ChatSidebar() {
                 onClick={() => handleSelect(s.id)}
                 className={`btn-focus group flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-3 text-sm text-left transition-colors ${active ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted/80"}`}
               >
-                <MessageSquare className={`size-4 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                {s.mode === "group" ? (
+                  <Users className={`size-4 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                ) : (
+                  <Bot className={`size-4 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                )}
                 <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
                   <div className="flex w-full items-center gap-2">
                     <span className="min-w-0 flex-1 truncate leading-none">{s.label ?? s.id}</span>
@@ -135,9 +140,12 @@ export function ChatSidebar() {
                       </span>
                     )}
                   </div>
-                  <span className={`w-full truncate text-[11px] leading-none ${active ? "text-primary/70" : "text-muted-foreground"}`}>
-                    {preview || s.mode}
-                  </span>
+                  <div className={`flex w-full items-center justify-between text-[11px] leading-none ${active ? "text-primary/70" : "text-muted-foreground"}`}>
+                    <span className="truncate">{preview || (s.mode === "group" ? t("chat.mode.group") : t("chat.mode.direct"))}</span>
+                    {s.mode === "group" && members[s.id]?.length > 0 && (
+                      <span className="shrink-0 ml-1">{members[s.id].length} {t("chat.members.count")}</span>
+                    )}
+                  </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

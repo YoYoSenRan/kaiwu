@@ -17,14 +17,15 @@ interface Props {
   onOpenChange: (open: boolean) => void
   /** 创建成功后回调：参数是新 sessionId，sidebar 用它切换选中 + 刷新列表。 */
   onCreated: (sessionId: string) => void
+  defaultMode?: Mode
 }
 
-export function CreateChatDialog({ open, onOpenChange, onCreated }: Props) {
+export function CreateChatDialog({ open, onOpenChange, onCreated, defaultMode }: Props) {
   const { t } = useTranslation()
   const listResult = useAgentCacheStore((s) => s.listResult)
   const setListResult = useAgentCacheStore((s) => s.setListResult)
 
-  const [mode, setMode] = useState<Mode>("direct")
+  const [mode, setMode] = useState<Mode>(defaultMode ?? "direct")
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [replyModes, setReplyModes] = useState<Record<string, ReplyMode>>({})
   const [label, setLabel] = useState("")
