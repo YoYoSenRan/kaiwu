@@ -12,16 +12,15 @@
  */
 
 import { nanoid } from "nanoid"
-import { scope } from "../../infra/logger"
-import { addTokens, checkAndIncrementRound, checkStopPhrase } from "./budget"
-import { buildSharedContext } from "./context"
-import { interpretReply } from "./interpret"
-import { stripMentionsForAgent } from "./mention-utils"
-import { newIdempotencyKey, runStep } from "../../agent/executor"
-import { decideTargets } from "./routing"
-import { getSession, insertMessage, insertTurn, listActiveMembers, nextSeq } from "./repository"
-import type { ChatBackend } from "../../agent/executor"
-import type { ChatMember, ChatMention, ChatMessage, DeliveryUpdateEvent, LoopEndedReason, LoopPausedEvent } from "./types"
+import { scope } from "../../../infra/logger"
+import { checkAndIncrementRound, checkStopPhrase } from "../budget"
+import { buildSharedContext, type ContextPayload } from "../context"
+import { interpretReply } from "../interpret"
+import { decideTargets, extractCardsFromText, parseMentionsFromText, stripMentionsForAgent } from "../routing"
+import { newIdempotencyKey, runStep } from "../../../agent/executor"
+import { getMessageById, getSession, insertMessage, insertTurn, listActiveMembers, nextSeq } from "../repository"
+import type { ChatBackend } from "../../../agent/executor"
+import type { ChatMember, ChatMention, ChatMessage, DeliveryUpdateEvent, LoopEndedReason, LoopPausedEvent } from "../types"
 
 const log = scope("chat:group")
 
@@ -29,7 +28,7 @@ const log = scope("chat:group")
 export interface GroupDeps {
   backend: ChatBackend
   /** 往 plugin context 域推 sharedHistory。 */
-  pushContext: (payload: { sessionKey: string; instruction: string; knowledge: string[]; sharedHistory?: string }) => Promise<void>
+  pushContext: (payload: ContextPayload) => Promise<void>
   /** 发事件给 renderer。 */
   emitMessage: (msg: ChatMessage) => void
   emitLoop: (kind: "started" | "ended", sessionId: string, reason?: LoopEndedReason) => void
@@ -38,8 +37,11 @@ export interface GroupDeps {
   emitStreamDelta: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, content: string) => void
   /** 流式结束（成功 / 失败 / aborted 均触发，兜底清 UI buffer）。 */
   emitStreamEnd: (sessionId: string, idempotencyKey: string, openclawSessionKey: string) => void
-  /** 运行错误事件（transient banner，不入 DB）。对齐 openclaw UI lastError 语义。 */
-  emitError: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, message: string) => void
+  /**
+   * 运行错误事件(transient banner,不入 DB)。对齐 openclaw UI lastError 语义。
+   * kind 显式传入:"disconnected"(kaiwu 合成) / "error"(其他) / 龙虾原生 errorKind(timeout/rate_limit/refusal/context_length)。
+   */
+  emitError: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, message: string, kind?: string) => void
   /** 投递态更新事件（transient）:每 member 对一条触发消息的处理进度。 */
   emitDelivery: (ev: DeliveryUpdateEvent) => void
   /** 查 agent 的 display name；失败返回 undefined。 */
@@ -90,7 +92,15 @@ export async function onNewMessage(deps: GroupDeps, sessionId: string, msg: Chat
   }
 
   const members = listActiveMembers(sessionId)
-  let targets = decideTargets(members, msg.mentions, msg.senderType)
+  // reply-to 隐式路由:user 无显式 @ 但回复了某 agent 消息 → 路由给该 agent
+  let replyToAgentId: string | null = null
+  if (msg.senderType === "user" && msg.inReplyToMessageId) {
+    const parent = getMessageById(msg.inReplyToMessageId)
+    if (parent?.senderType === "agent" && parent.senderId) {
+      replyToAgentId = parent.senderId
+    }
+  }
+  let targets = decideTargets(members, msg.mentions, msg.senderType, replyToAgentId)
   // 剔除 sender 自己：防御性兜底 —— agent 若 @ 自己时 routing 也不转给自己
   if (msg.senderType === "agent" && msg.senderId) {
     targets = targets.filter((t) => t.agentId !== msg.senderId)
@@ -144,6 +154,7 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
   log.info(`sendToMember enter member=${target.id} agent=${target.agentId}`)
 
   // delivery 态锁定:必然以 done/error/aborted 之一结束
+  // 态源全部来自龙虾 chat event(delta/final/aborted/error)或 runStep 异常,kaiwu 不做自判超时
   let terminalEmitted = false
   const emitTerminal = (status: "done" | "error" | "aborted", errorMsg?: string): void => {
     if (terminalEmitted) return
@@ -152,11 +163,7 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
   }
   deps.emitDelivery({ sessionId, anchorMsgId: incoming.id, memberId: target.id, status: "queued", at: Date.now() })
 
-  // queued 永久卡死 watchdog:pushContext / runStep 超 60s 无动静 → error
   let replyingEmitted = false
-  const startWatchdog = setTimeout(() => {
-    if (!replyingEmitted) emitTerminal("error", "start timeout")
-  }, 60_000)
 
   try {
     const displayName = await deps.resolveAgentDisplayName(target.agentId).catch((err) => {
@@ -196,7 +203,8 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
         model: null,
         triggerMessageId: incoming.id,
         systemPrompt: ctx.instruction,
-        historyText: ctx.sharedHistory ?? null,
+        // sharedHistory 现为结构化数组(对齐 discord plugin 格式),落库时 JSON 序列化
+        historyText: ctx.sharedHistory ? JSON.stringify(ctx.sharedHistory) : null,
         sentMessage: text,
         sentAt: Date.now(),
       })
@@ -214,7 +222,26 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
             deps.emitDelivery({ sessionId, anchorMsgId: incoming.id, memberId: target.id, status: "replying", at: Date.now() })
           }
           deps.emitStreamDelta(sessionId, idempotencyKey, target.openclawKey, ev.content)
+        } else if (ev.kind === "reasoning") {
+          // 模型在思考(尚未吐字) → thinking;已开始 replying 则不回退
+          if (!replyingEmitted) {
+            deps.emitDelivery({ sessionId, anchorMsgId: incoming.id, memberId: target.id, status: "thinking", at: Date.now() })
+          }
+        } else if (ev.kind === "tool") {
+          if (ev.phase === "start") {
+            deps.emitDelivery({ sessionId, anchorMsgId: incoming.id, memberId: target.id, status: "tool", toolName: ev.name, at: Date.now() })
+          } else {
+            // tool 结束:若尚未开始吐字 → 回 thinking;已开始 → 回 replying
+            deps.emitDelivery({
+              sessionId,
+              anchorMsgId: incoming.id,
+              memberId: target.id,
+              status: replyingEmitted ? "replying" : "thinking",
+              at: Date.now(),
+            })
+          }
         }
+        // lifecycle 事件暂不转为 delivery 态(queued 已在入口 emit;首 delta 转 replying)
       })
     } finally {
       deps.trackKeyEnd(sessionId, idempotencyKey)
@@ -227,14 +254,14 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
         // 对齐 openclaw UI：中断保留 partial 作为 assistant 消息
         const partial = result.content?.trim() ?? ""
         if (partial) {
-          const abortedMsg = buildAndInsertAbortedMessage(sessionId, target, result.content, idempotencyKey)
+          const abortedMsg = buildAndInsertAbortedMessage(sessionId, target, result.content, idempotencyKey, incoming.id)
           deps.emitMessage(abortedMsg)
         }
         emitTerminal("aborted")
         return
       }
       // 其他错误 → emit chat:error banner，不入 DB（对齐 openclaw UI）
-      deps.emitError(sessionId, idempotencyKey, target.openclawKey, result.error ?? "unknown error")
+      deps.emitError(sessionId, idempotencyKey, target.openclawKey, result.error ?? "unknown error", result.errorKind)
       emitTerminal("error", result.error ?? "unknown error")
       return
     }
@@ -253,15 +280,26 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
 
     // 从 openclaw chat.history 补元数据（usage / model / stopReason）——event stream 不带这些
     const meta = await deps.fetchAssistantMeta(target.openclawKey).catch(() => null)
+    // per-message usage 龙虾不在 chat.history 提供,结果通常为 null。session 级 usage 已由 MemberCard/sessions.list 展示
     const usage = meta?.usage ?? result.usage ?? null
     const model = meta?.model ?? null
     const stopReason = meta?.stopReason ?? result.stopReason ?? null
 
-    // 把这一轮消耗的 token 累计到 session 预算里；maxTokens 检查在下一轮 checkAndIncrementRound
-    const totalTokens = usage?.total ?? (usage?.input ?? 0) + (usage?.output ?? 0)
-    if (totalTokens > 0) addTokens(sessionId, totalTokens)
+    // 存两类 mention(UI 展示 + 路由区分都靠 source 字段):
+    //   - tool 事件(mention_next 工具触发) → source="tool" → 参与路由(确定意图)
+    //   - 正文 @<agentId>                  → source="plain" → 仅 UI 展示,不参与路由(见 routing.ts)
+    //   排除 sender 自己,防 agent @ 自己导致 onNewMessage 路由回自己
+    const activeMembers = listActiveMembers(sessionId)
+    const toolMentions = drainPendingMentions(sessionId)
+    const textMentions = parseMentionsFromText(interp.content, activeMembers, target.agentId)
+    const seenAgentIds = new Set<string>()
+    const mergedMentions: ChatMention[] = []
+    for (const m of [...toolMentions, ...textMentions]) {
+      if (seenAgentIds.has(m.agentId)) continue
+      seenAgentIds.add(m.agentId)
+      mergedMentions.push(m)
+    }
 
-    // 持久化 agent 回复 —— 顺便把此 turn 间累积的 mention_next 事件合并进来
     const assistantMsg: ChatMessage = {
       id: nanoid(),
       sessionId,
@@ -271,8 +309,12 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
       senderType: "agent",
       senderId: target.agentId,
       role: "assistant",
-      content: { text: interp.content },
-      mentions: drainPendingMentions(sessionId),
+      content: (() => {
+        const extracted = extractCardsFromText(interp.content)
+        return extracted.cards.length > 0 ? { text: extracted.text, cards: extracted.cards } : { text: interp.content }
+      })(),
+      mentions: mergedMentions,
+      inReplyToMessageId: incoming.id,
       turnRunId: idempotencyKey,
       tags: [],
       model,
@@ -292,6 +334,7 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
       role: assistantMsg.role,
       content: assistantMsg.content,
       mentions: assistantMsg.mentions,
+      inReplyToMessageId: assistantMsg.inReplyToMessageId,
       turnRunId: assistantMsg.turnRunId,
       tags: assistantMsg.tags,
       model: assistantMsg.model,
@@ -308,12 +351,17 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
     emitTerminal("error", (err as Error).message)
     throw err
   } finally {
-    clearTimeout(startWatchdog)
     if (!terminalEmitted) emitTerminal("error", "unknown termination")
   }
 }
 
-function buildAndInsertAbortedMessage(sessionId: string, target: ChatMember, content: string, idempotencyKey: string): ChatMessage {
+function buildAndInsertAbortedMessage(
+  sessionId: string,
+  target: ChatMember,
+  content: string,
+  idempotencyKey: string,
+  inReplyToMessageId: string | null,
+): ChatMessage {
   const msg: ChatMessage = {
     id: nanoid(),
     sessionId,
@@ -325,6 +373,7 @@ function buildAndInsertAbortedMessage(sessionId: string, target: ChatMember, con
     role: "assistant",
     content: { text: content },
     mentions: [],
+    inReplyToMessageId,
     turnRunId: idempotencyKey,
     tags: ["aborted"],
     model: null,
@@ -344,6 +393,7 @@ function buildAndInsertAbortedMessage(sessionId: string, target: ChatMember, con
     role: msg.role,
     content: msg.content,
     mentions: msg.mentions,
+    inReplyToMessageId: msg.inReplyToMessageId,
     turnRunId: msg.turnRunId,
     tags: msg.tags,
     model: msg.model,

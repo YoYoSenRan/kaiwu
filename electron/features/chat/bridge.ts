@@ -13,7 +13,7 @@ export const chat: ChatBridge = {
   },
   message: {
     list: (sessionId) => bridge.invoke("message:list", sessionId),
-    send: (sessionId, content) => bridge.invoke("message:send", sessionId, content),
+    send: (sessionId, content, mentions, inReplyToMessageId) => bridge.invoke("message:send", sessionId, content, mentions, inReplyToMessageId),
     answer: (sessionId, input) => bridge.invoke("message:answer", sessionId, input),
     abort: (sessionId) => bridge.invoke("message:abort", sessionId),
   },
@@ -30,6 +30,13 @@ export const chat: ChatBridge = {
   usage: {
     get: (sessionId) => bridge.invoke("usage:get", sessionId),
     getMembers: (sessionId) => bridge.invoke("usage:getMembers", sessionId),
+  },
+  inspect: {
+    getSessionDetail: (sessionId) => bridge.invoke("inspect:getSessionDetail", sessionId),
+    getTurn: (turnRunId) => bridge.invoke("inspect:getTurn", turnRunId),
+  },
+  debug: {
+    clearAll: () => bridge.invoke("debug:clearAll"),
   },
   on: {
     message: (l) => bridge.on("message:new", l),

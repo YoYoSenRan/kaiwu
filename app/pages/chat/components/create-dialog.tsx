@@ -31,8 +31,6 @@ export function CreateChatDialog({ open, onOpenChange, onCreated, defaultMode }:
   const [label, setLabel] = useState("")
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [maxRounds, setMaxRounds] = useState("")
-  const [maxTokens, setMaxTokens] = useState("")
-  const [wallClockSec, setWallClockSec] = useState("")
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(false)
 
@@ -64,8 +62,6 @@ export function CreateChatDialog({ open, onOpenChange, onCreated, defaultMode }:
     setLabel("")
     setAdvancedOpen(false)
     setMaxRounds("")
-    setMaxTokens("")
-    setWallClockSec("")
   }
 
   const toggleAgent = (agentId: string) => {
@@ -90,13 +86,9 @@ export function CreateChatDialog({ open, onOpenChange, onCreated, defaultMode }:
     if (!canSubmit) return
     setLoading(true)
     try {
-      const budget: { maxRounds?: number; maxTokens?: number; wallClockSec?: number } = {}
+      const budget: { maxRounds?: number } = {}
       const r = Number(maxRounds)
       if (Number.isFinite(r) && r > 0) budget.maxRounds = r
-      const tk = Number(maxTokens)
-      if (Number.isFinite(tk) && tk > 0) budget.maxTokens = tk
-      const w = Number(wallClockSec)
-      if (Number.isFinite(w) && w > 0) budget.wallClockSec = w
 
       const session = await window.electron.chat.session.create({
         mode,
@@ -215,14 +207,6 @@ export function CreateChatDialog({ open, onOpenChange, onCreated, defaultMode }:
                 <div className="space-y-1">
                   <Label>{t("chat.dialog.create.budgetRounds")}</Label>
                   <Input type="number" value={maxRounds} onChange={(e) => setMaxRounds(e.target.value)} placeholder={t("chat.dialog.create.budgetRoundsHint")} />
-                </div>
-                <div className="space-y-1">
-                  <Label>{t("chat.dialog.create.budgetTokens")}</Label>
-                  <Input type="number" value={maxTokens} onChange={(e) => setMaxTokens(e.target.value)} placeholder={t("chat.dialog.create.budgetTokensHint")} />
-                </div>
-                <div className="space-y-1">
-                  <Label>{t("chat.dialog.create.budgetWallClock")}</Label>
-                  <Input type="number" value={wallClockSec} onChange={(e) => setWallClockSec(e.target.value)} placeholder={t("chat.dialog.create.budgetWallClockHint")} />
                 </div>
               </div>
             )}

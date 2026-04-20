@@ -22,16 +22,38 @@ const AskUserParams = Type.Object({
   options: Type.Optional(Type.Array(Type.String(), { description: "可选：给用户选的选项列表" })),
 })
 
-/** mention_next 工具：agent 把发言权交给另一个成员。 */
+/**
+ * 允许调用 mention_next 的 agent 白名单。仅调度者(minion)可路由,
+ * 执行类 agent 不能转交发言权 → 一个中心化路由节点更确定,
+ * 避免每个 agent 都学"何时调工具"。
+ */
+const MENTION_NEXT_ALLOWED_AGENTS = new Set(["minion"])
+
+/** mention_next 工具:把发言权交给另一个成员(仅 minion 可调)。 */
 export function createMentionNextFactory(bridge: BridgeClient): OpenClawPluginToolFactory {
   return (ctx: OpenClawPluginToolContext) => {
     const sessionKey = ctx.sessionKey ?? ""
+    const selfAgentId = ctx.agentId ?? ""
     const tool: AnyAgentTool = {
       name: "mention_next",
       label: "Mention Next Agent",
-      description: "在群聊中把发言权交给另一个成员。调用后当前回合结束，被提及的成员会收到消息。",
+      description:
+        "在群聊中把发言权交给另一个成员。调用后当前回合结束,被提及的成员会收到消息。" +
+        "这是唯一的路由方式 — 在回复正文里写 @<name> 只用于引用/展示,不会触发对方接话。" +
+        "仅调度型 agent(例如 minion)可调用,其他成员调用会被拒绝。",
       parameters: MentionNextParams,
       execute: async (_toolCallId: string, rawParams: unknown) => {
+        if (!MENTION_NEXT_ALLOWED_AGENTS.has(selfAgentId)) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `mention_next is only available to orchestrator agents. "${selfAgentId}" cannot route — complete your task and yield silently.`,
+              },
+            ],
+            details: { rejected: true, reason: "agent not whitelisted", selfAgentId },
+          }
+        }
         const params = rawParams as Static<typeof MentionNextParams>
         const event: MentionNextEvent = {
           kind: "mention_next",

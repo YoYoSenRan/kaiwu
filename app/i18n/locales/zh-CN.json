@@ -44,9 +44,70 @@
     "knowledge": "知识库",
     "agent": "智能体",
     "chat": "对话",
+    "session": "会话",
     "workflow": "工作流",
     "connect": "连接",
     "settings": "设置"
+  },
+  "session": {
+    "title": "会话",
+    "untitled": "未命名会话",
+    "empty": "暂无会话",
+    "archived": "已归档",
+    "mode": {
+      "direct": "单聊",
+      "group": "群聊"
+    },
+    "filter": {
+      "all": "全部",
+      "search": "搜索会话",
+      "sortRecent": "最近活动",
+      "sortCreated": "创建时间",
+      "count": "共 {{count}} 个"
+    },
+    "detail": {
+      "noId": "无会话 id",
+      "loading": "加载中...",
+      "error": "加载失败:{{msg}}",
+      "notFound": "会话不存在",
+      "emptyMessages": "暂无消息",
+      "user": "用户",
+      "inspectTurn": "查看本轮"
+    },
+    "stats": {
+      "created": "创建于",
+      "updated": "最后活动",
+      "messages": "消息",
+      "userMsgs": "用户消息",
+      "agentMsgs": "智能体消息",
+      "aborted": "中断",
+      "errors": "异常",
+      "turns": "运行轮",
+      "tokens": "Token",
+      "totalTokens": "总计",
+      "inputTokens": "输入",
+      "outputTokens": "输出",
+      "cacheRead": "缓存读",
+      "cacheWrite": "缓存写"
+    },
+    "inspect": {
+      "title": "本轮运行详情",
+      "notFound": "未找到此轮记录",
+      "trigger": "触发消息",
+      "sentMessage": "实际发送",
+      "sentMessageHint": "剥离 @ 标记后真正发给智能体的文本",
+      "systemPrompt": "系统提示词",
+      "systemPromptHint": "kaiwu 每轮注入给智能体的 instruction",
+      "historyText": "共享历史",
+      "historyTextHint": "kaiwu 推给智能体的群聊流水",
+      "assistantReply": "智能体回复",
+      "copy": "复制",
+      "copied": "已复制",
+      "metaAgent": "智能体",
+      "metaModel": "模型",
+      "metaSentAt": "发送时刻",
+      "metaSessionKey": "龙虾 sessionKey"
+    }
   },
   "dashboard": {
     "title": "仪表台",
@@ -67,9 +128,24 @@
     "recentKnowledge": "最近知识库",
     "systemStatus": {
       "title": "系统概览",
-      "tasks": "任务队列",
+      "sessions": "活跃会话",
       "knowledgeBases": "知识库",
-      "documents": "文档总数"
+      "documents": "文档总数",
+      "agents": "智能体",
+      "messages": "消息"
+    },
+    "chatOverview": {
+      "title": "对话概览",
+      "totalSessions": "总会话",
+      "totalMessages": "总消息",
+      "unreadMessages": "未读消息"
+    },
+    "agentOverview": {
+      "title": "智能体概览",
+      "totalAgents": "总智能体",
+      "mine": "已同步",
+      "unsynced": "待同步",
+      "missing": "缺失"
     }
   },
   "task": {
@@ -275,10 +351,6 @@
         "advanced": "高级设置",
         "budgetRounds": "最大轮次",
         "budgetRoundsHint": "默认 200，超过自动停",
-        "budgetTokens": "最大 Token 数",
-        "budgetTokensHint": "默认 2,000,000",
-        "budgetWallClock": "最长时间（秒）",
-        "budgetWallClockHint": "默认 86400（24 小时）",
         "confirm": "创建"
       },
       "delete": {
@@ -294,8 +366,6 @@
       "loopEnded": {
         "noTarget": "无人回应（agent 需 @ 才会继续串话）",
         "budgetRounds": "已达最大轮次，已停止",
-        "budgetTokens": "已达 token 预算，已停止",
-        "budgetWallClock": "已达最长时间，已停止",
         "stopPhrase": "命中终止短语，已停止",
         "error": "循环出错，已停止"
       }
@@ -314,6 +384,9 @@
     },
     "delivery": {
       "queued": "排队中",
+      "thinking": "思考中",
+      "tool": "调用工具",
+      "toolNamed": "{{name}}",
       "replying": "回复中",
       "done": "完成",
       "error": "失败",
@@ -349,6 +422,11 @@
     "retry": "重试",
     "retryNoUserMsg": "找不到要重试的消息",
     "aborted": "已停止",
+    "reply": {
+      "action": "回复",
+      "replyingTo": "回复 {{name}}",
+      "cancel": "取消回复"
+    },
     "error": {
       "banner": "出错：{{msg}}",
       "disconnected": "连接已断，重连后自动同步",
@@ -455,6 +533,19 @@
     "openclaw": {
       "title": "OpenClaw 桥接",
       "description": "监控并管理本机 OpenClaw gateway 与 kaiwu 插件的同步状态"
+    },
+    "debugTitle": "调试",
+    "debugDescription": "开发与故障排查工具（危险操作,请谨慎使用）",
+    "debug": {
+      "clearAllTitle": "清空聊天数据库",
+      "clearAllHint": "删除所有会话、成员、消息、turn 运行记录与预算状态。openclaw 侧数据不受影响。此操作不可撤销。",
+      "clearAllAction": "一键清空",
+      "clearing": "清空中...",
+      "confirmTitle": "确认清空所有聊天数据",
+      "confirmDesc": "所有本地会话、消息、运行记录将被永久删除。此操作不可撤销,确定继续吗?",
+      "confirmOk": "确认清空",
+      "clearSuccess": "已清空 {{total}} 条记录",
+      "clearFailed": "清空失败:{{msg}}"
     }
   },
   "layout": {

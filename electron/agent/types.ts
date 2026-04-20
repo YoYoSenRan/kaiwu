@@ -20,12 +20,20 @@ export interface StepInput {
   idempotencyKey: string
 }
 
-/** 单步执行流式事件。 */
+/**
+ * 单步执行流式事件。
+ *
+ * delta/final/aborted/error 来自 openclaw `chat` channel;
+ * lifecycle/reasoning/tool 来自 `agent` channel(细粒度状态),供 UI 展示"思考中 / 调用工具 X"。
+ */
 export type StepEvent =
   | { kind: "delta"; idempotencyKey: string; content: string }
   | { kind: "final"; idempotencyKey: string; content: string; stopReason?: string; usage?: StepUsage }
   | { kind: "aborted"; idempotencyKey: string }
   | { kind: "error"; idempotencyKey: string; message: string; errorKind?: string }
+  | { kind: "lifecycle"; idempotencyKey: string; phase: "start" | "end" | "error" }
+  | { kind: "reasoning"; idempotencyKey: string }
+  | { kind: "tool"; idempotencyKey: string; phase: "start" | "end"; name?: string }
 
 export interface StepUsage {
   input?: number
@@ -43,4 +51,6 @@ export interface StepResult {
   stopReason?: string
   usage?: StepUsage
   error?: string
+  /** 错误分类(来自龙虾 errorKind 或 kaiwu 合成的 "disconnected")。 */
+  errorKind?: string
 }

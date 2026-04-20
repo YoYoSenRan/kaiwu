@@ -1,15 +1,16 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Send, Sparkles, AlertCircle, ArrowDown, ArrowUp, RotateCcw, Square, User as UserIcon, Bot, Users, ChevronDown, X } from "lucide-react"
+import { Send, Sparkles, AlertCircle, RotateCcw, Square, User as UserIcon, Bot, Users, ChevronDown, X, CornerUpLeft } from "lucide-react"
 import { toast } from "sonner"
 import { Streamdown, type BundledTheme } from "streamdown"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useAgentCacheStore } from "@/stores/agent"
 import { useChatDataStore, useChatUiStore, type StreamBuffer } from "@/stores/chat"
-import type { ChatMember, ChatMessage } from "../../../../electron/features/chat/types"
+import type { ChatCard, ChatMember, ChatMention, ChatMessage } from "../../../../electron/features/chat/types"
 import { CreateChatDialog } from "./create-dialog"
 import { DeliveryChips } from "./delivery-chips"
+import { MentionChip } from "./mention-chip"
 
 /** Shiki 代码高亮主题，light/dark 各一套。 */
 const SHIKI_THEME: [BundledTheme, BundledTheme] = ["github-light", "github-dark"]
@@ -23,30 +24,40 @@ function messageText(msg: ChatMessage): string {
   return c?.text ?? ""
 }
 
+function messageCards(msg: ChatMessage): ChatCard[] {
+  const c = msg.content as { cards?: ChatCard[] } | null
+  return Array.isArray(c?.cards) ? c.cards : []
+}
+
 function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 /**
- * 把 @agentId 包成行内标记,与正文文字区分开。仅匹配 members 中已存在的 agentId;跳过 code 块内的匹配。
+ * 把 @agentId 包成 Streamdown 自定义 HTML tag,由 MentionChip 渲染成 chip。
+ * 仅匹配 agentIds 中登记的成员;跳过 fenced code block / inline code。
  *
- * 样式按气泡色分流:
- *   - user 气泡(bg-primary): 用 `**@id**` 加粗(code 样式在 primary 背景上底色冲突)
- *   - agent 气泡(bg-muted): 用 `\`@id\`` 行内 code(现状)
+ * 输出示例:`嗨 <mention agent_id="scout">@scout</mention> 看一下`
  */
-function highlightMentions(text: string, agentIds: string[], isUser: boolean): string {
+function wrapMentionsWithTag(text: string, agentIds: string[]): string {
   if (!text || agentIds.length === 0) return text
   const parts = text.split(/(```[\s\S]*?```|`[^`\n]*`)/)
   for (let i = 0; i < parts.length; i += 2) {
     let seg = parts[i]
     for (const id of agentIds) {
       const re = new RegExp(`@${escapeRegex(id)}(?![\\w-])`, "g")
-      seg = seg.replace(re, isUser ? `**@${id}**` : `\`@${id}\``)
+      seg = seg.replace(re, `<mention agent_id="${id}">@${id}</mention>`)
     }
     parts[i] = seg
   }
   return parts.join("")
 }
+
+/** Streamdown mention tag 支持的属性白名单 + 字面子节点 + 组件映射。module-level 常量避免 re-render。 */
+const STREAMDOWN_ALLOWED_TAGS: { mention: string[] } = { mention: ["agent_id"] }
+const STREAMDOWN_LITERAL_TAGS: string[] = ["mention"]
+// biome-ignore lint: streamdown Components 类型含 node 等额外 props,用通用签名承接
+const STREAMDOWN_COMPONENTS = { mention: MentionChip as unknown as React.ElementType }
 
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -68,12 +79,6 @@ function formatDivider(ts: number): string {
   return `${datePart} ${hm}`
 }
 
-function formatCompact(n: number | undefined): string | null {
-  if (!n || n <= 0) return null
-  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}k`
-  return String(n)
-}
-
 /** 去掉 provider 前缀显 shortname (e.g. "anthropic/claude-sonnet-4-5" → "claude-sonnet-4-5")。 */
 function shortenModel(m: string | null): string | null {
   if (!m) return null
@@ -81,9 +86,29 @@ function shortenModel(m: string | null): string | null {
   return idx >= 0 ? m.slice(idx + 1) : m
 }
 
+/**
+ * 在文本里重新定位每个 agentId 的首个 `@<id>` 出现位置,返回带 range 的 structured mentions。
+ * 文本里已不存在对应 `@<id>` 的条目自动丢弃。
+ */
+function relocateMentions(text: string, agentIds: string[]): ChatMention[] {
+  const out: ChatMention[] = []
+  const seen = new Set<string>()
+  for (const id of agentIds) {
+    if (seen.has(id)) continue
+    const re = new RegExp(`@${escapeRegex(id)}(?![\\w-])`, "i")
+    const m = re.exec(text)
+    if (!m) continue
+    out.push({ agentId: id, source: "structured", range: [m.index, m.index + m[0].length] })
+    seen.add(id)
+  }
+  return out
+}
+
 export function ChatMain() {
   const { t } = useTranslation()
   const [input, setInput] = useState("")
+  const [draftMentionIds, setDraftMentionIds] = useState<string[]>([])
+  const [replyTarget, setReplyTarget] = useState<{ id: string; name: string; snippet: string } | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [createMode, setCreateMode] = useState<"direct" | "group">("direct")
 
@@ -92,7 +117,9 @@ export function ChatMain() {
   const setDraft = useChatUiStore((s) => s.setDraft)
   const clearDraft = useChatUiStore((s) => s.clearDraft)
   const sessions = useChatDataStore((s) => s.sessions)
-  const messages = useChatDataStore((s) => (currentSessionId ? (s.messages[currentSessionId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES))
+  const allMessages = useChatDataStore((s) => (currentSessionId ? (s.messages[currentSessionId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES))
+  const hiddenInSession = useChatDataStore((s) => (currentSessionId ? s.hiddenMessages[currentSessionId] : undefined))
+  const hideMessage = useChatDataStore((s) => s.hideMessage)
   const members = useChatDataStore((s) => (currentSessionId ? (s.members[currentSessionId] ?? EMPTY_MEMBERS) : EMPTY_MEMBERS))
   const pending = useChatDataStore((s) => s.pending)
   const setPending = useChatDataStore((s) => s.setPending)
@@ -101,13 +128,19 @@ export function ChatMain() {
   const lastError = useChatDataStore((s) => (currentSessionId ? s.lastError[currentSessionId] : undefined))
   const dismissError = useChatDataStore((s) => s.dismissError)
   const streamingMap = useChatDataStore((s) => (currentSessionId ? (s.streaming[currentSessionId] ?? EMPTY_STREAMING) : EMPTY_STREAMING))
-  const getGatewayRow = useAgentCacheStore((s) => s.getGatewayRow)
+  const byAgentId = useAgentCacheStore((s) => s.byAgentId)
   const setListResult = useAgentCacheStore((s) => s.setListResult)
   const listResult = useAgentCacheStore((s) => s.listResult)
 
   const session = sessions.find((s) => s.id === currentSessionId) ?? null
   const isHitl = pending !== null && pending.sessionId === currentSessionId
   const isRunning = loopStatus === "started" && !isHitl
+
+  // abort-hidden 过滤:abort 后立即撤回 user 气泡;若 agent 仍回了,store 会自动清 hidden 恢复
+  const messages = useMemo(() => {
+    if (!hiddenInSession || hiddenInSession.size === 0) return allMessages
+    return allMessages.filter((m) => !hiddenInSession.has(m.id))
+  }, [allMessages, hiddenInSession])
 
   // 进 chat 页若 agent cache 空则拉一次，保证头像/名字可渲染
   useEffect(() => {
@@ -130,6 +163,8 @@ export function ChatMain() {
     } else {
       setInput("")
     }
+    // reply target 不跨 session 保留
+    setReplyTarget(null)
     prevSessionIdRef.current = currentSessionId
     // 只在 currentSessionId 变化时同步；input 变化由 setDraft onChange 单独处理
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -149,8 +184,6 @@ export function ChatMain() {
     const key: Record<NonNullable<typeof reason>, string> = {
       no_target: "chat.toast.loopEnded.noTarget",
       budget_max_rounds: "chat.toast.loopEnded.budgetRounds",
-      budget_max_tokens: "chat.toast.loopEnded.budgetTokens",
-      budget_wall_clock: "chat.toast.loopEnded.budgetWallClock",
       stop_phrase: "chat.toast.loopEnded.stopPhrase",
       error: "chat.toast.loopEnded.error",
     }
@@ -160,6 +193,10 @@ export function ChatMain() {
 
   async function handleAbort() {
     if (!currentSessionId) return
+    // 立即隐藏当前 session 最后一条 user msg(乐观撤回);若 agent 稍后仍回复 →
+    // appendMessage 检测到 agent msg 会自动清该 session hidden 集合恢复 user msg。
+    const lastUser = [...allMessages].reverse().find((m) => m.senderType === "user")
+    if (lastUser) hideMessage(currentSessionId, lastUser.id)
     try {
       await window.electron.chat.message.abort(currentSessionId)
     } catch (err) {
@@ -188,7 +225,8 @@ export function ChatMain() {
     }
     dismissError(currentSessionId)
     try {
-      await window.electron.chat.message.send(currentSessionId, text)
+      const structured = userMsg.mentions.filter((m) => m.source === "structured")
+      await window.electron.chat.message.send(currentSessionId, text, structured.length > 0 ? structured : undefined)
     } catch (err) {
       toast.error((err as Error).message)
     }
@@ -216,13 +254,13 @@ export function ChatMain() {
     const q = mention.query.toLowerCase()
     return members
       .map((m) => {
-        const agent = getGatewayRow(m.agentId)
+        const agent = byAgentId[m.agentId]
         const name = agent?.name ?? m.agentId
         return { memberId: m.id, agentId: m.agentId, name, avatarUrl: agent?.identity?.avatarUrl, emoji: agent?.identity?.emoji }
       })
       .filter((c) => c.agentId.toLowerCase().includes(q) || c.name.toLowerCase().includes(q))
       .slice(0, 6)
-  }, [members, mention, getGatewayRow])
+  }, [members, mention, byAgentId])
 
   function detectMentionAt(value: string, caret: number): { start: number; query: string } | null {
     const before = value.slice(0, caret)
@@ -243,6 +281,8 @@ export function ChatMain() {
     const value = e.target.value
     setInput(value)
     if (currentSessionId) setDraft(currentSessionId, value)
+    // 清掉已经被编辑破坏的 mention:文本里不再能定位到对应 @<id> 即丢弃。
+    setDraftMentionIds((prev) => prev.filter((id) => new RegExp(`@${escapeRegex(id)}(?![\\w-])`, "i").test(value)))
     const caret = e.target.selectionStart ?? value.length
     updateMention(detectMentionAt(value, caret))
   }
@@ -262,6 +302,8 @@ export function ChatMain() {
     const next = input.slice(0, mention.start) + `@${agentId} ` + input.slice(caret)
     const nextCaret = mention.start + agentId.length + 2
     setInput(next)
+    if (currentSessionId) setDraft(currentSessionId, next)
+    setDraftMentionIds((prev) => (prev.includes(agentId) ? prev : [...prev, agentId]))
     setMention(null)
     // focus + caret 下一帧
     requestAnimationFrame(() => {
@@ -274,7 +316,11 @@ export function ChatMain() {
     e?.preventDefault()
     const text = input.trim()
     if (!text || !currentSessionId) return
+    const structuredMentions = relocateMentions(text, draftMentionIds)
+    const inReplyToMessageId = replyTarget?.id
     setInput("")
+    setDraftMentionIds([])
+    setReplyTarget(null)
     clearDraft(currentSessionId)
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
@@ -287,7 +333,12 @@ export function ChatMain() {
         await window.electron.chat.message.answer(currentSessionId, { pendingId: pending.pendingId, answer: text })
         setPending(null)
       } else {
-        await window.electron.chat.message.send(currentSessionId, text)
+        await window.electron.chat.message.send(
+          currentSessionId,
+          text,
+          structuredMentions.length > 0 ? structuredMentions : undefined,
+          inReplyToMessageId,
+        )
       }
     } catch (err) {
       toast.error((err as Error).message)
@@ -325,39 +376,59 @@ export function ChatMain() {
     }
   }
 
-  // ========== sticky bottom scroll ==========
-  // 核心设计:
-  //   - followBottomRef 追踪"是否应该跟随底部"(用户贴底 + 刚发送消息)
-  //   - 程序触发的 scrollTop = scrollHeight 会发 scroll 事件,需 programmaticScrollRef 防竞态
-  //     (否则 chip 异步挂载抬高 scrollHeight 时,scroll event 里 distance 被误判为 >40)
-  //   - ResizeObserver 观察稳定的 contentRef(而非 firstElementChild,避免条件渲染切换失效)
-  //   - 切 session / 发送 / 手动 jump 都强制 follow=true
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const followBottomRef = useRef(true)
   const programmaticScrollRef = useRef(false)
+  const scrollRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showJumpBtn, setShowJumpBtn] = useState(false)
 
-  /** 程序触发的底部滚动:设 flag 屏蔽一次 handleScroll 的竞态判定。 */
-  const scrollToBottomProgrammatic = () => {
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  }, [])
+
+  const scrollToBottomProgrammatic = (smooth = false) => {
     const el = scrollAreaRef.current
     if (!el) return
     programmaticScrollRef.current = true
-    el.scrollTop = el.scrollHeight
-    // 清 flag:scroll 事件可能 sync 或 next tick 派发,双保险用 rAF + setTimeout(0) 都不够稳,
-    // 最保险是 next microtask + rAF。setTimeout 0 够用且简单。
+
+    const useSmooth = smooth && !prefersReducedMotion
+    const scrollTop = el.scrollHeight
+
+    if (typeof el.scrollTo === "function" && useSmooth) {
+      el.scrollTo({ top: scrollTop, behavior: "smooth" })
+    } else {
+      el.scrollTop = scrollTop
+    }
+
     setTimeout(() => {
       programmaticScrollRef.current = false
     }, 0)
+
+    if (scrollRetryTimeoutRef.current) {
+      clearTimeout(scrollRetryTimeoutRef.current)
+    }
+    scrollRetryTimeoutRef.current = setTimeout(() => {
+      const el2 = scrollAreaRef.current
+      if (!el2 || !followBottomRef.current) return
+      const distance = el2.scrollHeight - el2.scrollTop - el2.clientHeight
+      if (distance > 1) {
+        programmaticScrollRef.current = true
+        el2.scrollTop = el2.scrollHeight
+        setTimeout(() => {
+          programmaticScrollRef.current = false
+        }, 0)
+      }
+    }, 100)
   }
 
   const handleScroll = () => {
-    // 程序触发的滚动跳过判定,避免 chip 异步挂载高度争用
     if (programmaticScrollRef.current) return
     const el = scrollAreaRef.current
     if (!el) return
     const distance = el.scrollHeight - el.scrollTop - el.clientHeight
-    const atBottom = distance < 40
+    const atBottom = distance < 150
     followBottomRef.current = atBottom
     setShowJumpBtn(!atBottom)
   }
@@ -365,27 +436,40 @@ export function ChatMain() {
   const jumpToBottom = () => {
     followBottomRef.current = true
     setShowJumpBtn(false)
-    scrollToBottomProgrammatic()
+    scrollToBottomProgrammatic(true)
   }
 
-  // 切 session 时重置
   useEffect(() => {
     followBottomRef.current = true
     setShowJumpBtn(false)
     scrollToBottomProgrammatic()
   }, [currentSessionId])
 
-  // 消息 / 流式长度变化时,follow 模式下贴底
   const streamingSig = useMemo(() => Object.values(streamingMap).reduce((acc, buf) => acc + buf.content.length, 0), [streamingMap])
   const sortedStreams = useMemo(() => Object.entries(streamingMap).sort((a, b) => a[1].startedAt - b[1].startedAt), [streamingMap])
 
-  useEffect(() => {
-    if (!followBottomRef.current) return
-    scrollToBottomProgrammatic()
-  }, [messages.length, streamingSig])
+  const prevStreamingMapRef = useRef<Record<string, { content: string }>>({})
+  const streamJustStarted = useMemo(() => {
+    const prev = prevStreamingMapRef.current
+    const current = streamingMap
+    const justStarted = Object.entries(current).some(([key, buf]) => {
+      const prevBuf = prev[key]
+      return (!prevBuf || prevBuf.content.length === 0) && buf.content.length > 0
+    })
+    prevStreamingMapRef.current = Object.fromEntries(
+      Object.entries(current).map(([k, v]) => [k, { content: v.content }])
+    )
+    return justStarted
+  }, [streamingMap])
 
-  // 观察稳定 contentRef 的高度变化:DeliveryChips / footer badges 等异步挂载节点使
-  // scrollHeight 增长时 messages.length 不变,useEffect 不触发,RO 兜底。
+  useEffect(() => {
+    if (!followBottomRef.current && !streamJustStarted) return
+    if (streamJustStarted) {
+      followBottomRef.current = true
+    }
+    scrollToBottomProgrammatic()
+  }, [messages.length, streamingSig, streamJustStarted])
+
   useEffect(() => {
     const content = contentRef.current
     if (!content) return
@@ -393,7 +477,12 @@ export function ChatMain() {
       if (followBottomRef.current) scrollToBottomProgrammatic()
     })
     ro.observe(content)
-    return () => ro.disconnect()
+    return () => {
+      ro.disconnect()
+      if (scrollRetryTimeoutRef.current) {
+        clearTimeout(scrollRetryTimeoutRef.current)
+      }
+    }
   }, [])
 
   if (!currentSessionId) {
@@ -429,7 +518,7 @@ export function ChatMain() {
           {members.length > 0 && (
             <div className="flex items-center -space-x-1">
               {members.slice(0, 3).map((m) => {
-                const agent = getGatewayRow(m.agentId)
+                const agent = byAgentId[m.agentId]
                 return (
                   <div
                     key={m.id}
@@ -536,7 +625,7 @@ export function ChatMain() {
           ) : (
             <div className="flex flex-col gap-3">
               {messages.map((msg, idx) => {
-                const agent = msg.senderId ? getGatewayRow(msg.senderId) : undefined
+                const agent = msg.senderId ? byAgentId[msg.senderId] : undefined
                 const prev = idx > 0 ? messages[idx - 1] : undefined
                 const needDivider = !prev || msg.createdAtLocal - prev.createdAtLocal > TIME_DIVIDER_GAP_MS
                 // 群聊 user 消息下显示多 agent 投递态 chips
@@ -551,6 +640,20 @@ export function ChatMain() {
                       emoji={agent?.identity?.emoji}
                       agentModel={agent?.model?.primary}
                       memberAgentIds={memberAgentIds}
+                      onReply={(m, name) => {
+                        const snippet = messageText(m).slice(0, 60)
+                        setReplyTarget({ id: m.id, name, snippet })
+                        textareaRef.current?.focus()
+                      }}
+                      onCardAction={async (_cardId, optionValue) => {
+                        if (!currentSessionId) return
+                        try {
+                          // 卡片按钮 = 带 reply-to 的结构化 user 消息,路由到卡片发起者
+                          await window.electron.chat.message.send(currentSessionId, optionValue, undefined, msg.id)
+                        } catch (err) {
+                          toast.error((err as Error).message)
+                        }
+                      }}
                     />
                     {showDeliveryChips && <DeliveryChips sessionId={currentSessionId} messageId={msg.id} />}
                   </Fragment>
@@ -560,7 +663,7 @@ export function ChatMain() {
               {sortedStreams.map(([key, buf]) => {
                 const member = members.find((m) => m.openclawKey === buf.openclawSessionKey)
                 const agentId = member?.agentId
-                const agent = agentId ? getGatewayRow(agentId) : undefined
+                const agent = agentId ? byAgentId[agentId] : undefined
                 return (
                   <StreamingRow
                     key={`stream:${key}`}
@@ -568,6 +671,7 @@ export function ChatMain() {
                     agentName={agent?.name ?? agentId ?? undefined}
                     avatarUrl={agent?.identity?.avatarUrl}
                     emoji={agent?.identity?.emoji}
+                    memberAgentIds={memberAgentIds}
                   />
                 )
               })}
@@ -579,9 +683,34 @@ export function ChatMain() {
 
       <div className="shrink-0 p-4">
         {isHitl && pending && (
-          <div className="mb-3 flex items-start gap-2 rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-sm text-yellow-700 dark:text-yellow-400">
-            <AlertCircle className="mt-0.5 size-4 shrink-0" />
-            <span>{t("chat.hitl.prompt", { agentId: pending.byAgentId, question: pending.question })}</span>
+          <div className="mb-3 flex flex-col gap-2 rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-sm text-yellow-700 dark:text-yellow-400">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" />
+              <span>{t("chat.hitl.prompt", { agentId: pending.byAgentId, question: pending.question })}</span>
+            </div>
+            {pending.options && pending.options.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pl-6">
+                {pending.options.map((opt, i) => (
+                  <Button
+                    key={`${i}-${opt}`}
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      if (!currentSessionId) return
+                      try {
+                        await window.electron.chat.message.answer(currentSessionId, { pendingId: pending.pendingId, answer: opt })
+                        setPending(null)
+                      } catch (err) {
+                        toast.error((err as Error).message)
+                      }
+                    }}
+                    className="h-7 border-yellow-500/30 bg-yellow-50 px-2 text-xs text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-300"
+                  >
+                    {opt}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -620,6 +749,22 @@ export function ChatMain() {
                   <span className="text-muted-foreground truncate text-[11px]">@{c.agentId}</span>
                 </button>
               ))}
+            </div>
+          )}
+          {replyTarget && (
+            <div className="border-foreground/10 text-muted-foreground flex items-center gap-2 border-b px-3 py-1.5 text-xs">
+              <CornerUpLeft className="size-3.5 shrink-0" />
+              <span className="font-medium">{t("chat.reply.replyingTo", { name: replyTarget.name })}</span>
+              {replyTarget.snippet && <span className="truncate opacity-70">— {replyTarget.snippet}</span>}
+              <button
+                type="button"
+                aria-label={t("chat.reply.cancel")}
+                title={t("chat.reply.cancel")}
+                onClick={() => setReplyTarget(null)}
+                className="hover:bg-accent ml-auto rounded p-0.5"
+              >
+                <X className="size-3.5" />
+              </button>
             </div>
           )}
           <Textarea
@@ -706,15 +851,20 @@ interface RowProps {
   emoji?: string
   agentModel?: string
   memberAgentIds: string[]
+  onReply?: (msg: ChatMessage, displayName: string) => void
+  onCardAction?: (cardId: string, optionValue: string) => void
 }
 
-function MessageRow({ msg, agentName, avatarUrl, emoji, agentModel, memberAgentIds }: RowProps) {
+function MessageRow({ msg, agentName, avatarUrl, emoji, agentModel, memberAgentIds, onReply, onCardAction }: RowProps) {
   const { t } = useTranslation()
   const isUser = msg.senderType === "user"
   const isAborted = msg.tags?.includes("aborted")
   const isSystem = msg.senderType === "system"
   const text = messageText(msg)
-  const rendered = isUser || !isSystem ? highlightMentions(text, memberAgentIds, isUser) : text
+  const cards = messageCards(msg)
+  const rendered = isUser || !isSystem ? wrapMentionsWithTag(text, memberAgentIds) : text
+  // user 自己的消息回复没意义,只对 agent 消息暴露 reply 按钮
+  const canReply = !isUser && !isSystem && !!onReply
 
   // system：居中、小字灰色、无气泡
   if (isSystem) {
@@ -726,20 +876,66 @@ function MessageRow({ msg, agentName, avatarUrl, emoji, agentModel, memberAgentI
   }
 
   return (
-    <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
+    <div className={`group flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
       <Avatar isUser={isUser} avatarUrl={avatarUrl} emoji={emoji} />
       <div className={`flex max-w-[85%] flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
+        <div className="flex items-start gap-1">
+          {canReply && (
+            <button
+              type="button"
+              aria-label={t("chat.reply.action")}
+              title={t("chat.reply.action")}
+              onClick={() => onReply?.(msg, agentName ?? msg.senderId ?? "")}
+              className="text-muted-foreground hover:text-foreground hover:bg-accent mt-1 opacity-0 rounded-md p-1 transition-opacity group-hover:opacity-100"
+            >
+              <CornerUpLeft className="size-3.5" />
+            </button>
+          )}
         <div
           className={`min-w-0 overflow-hidden rounded-2xl px-3 py-2 text-sm ${isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"} ${
             isAborted ? "ring-muted-foreground/40 ring-1 ring-dashed" : ""
           }`}
         >
-          <Streamdown mode="static" shikiTheme={SHIKI_THEME} className="markdown-prose">
+          <Streamdown
+            mode="static"
+            shikiTheme={SHIKI_THEME}
+            className="markdown-prose"
+            allowedTags={STREAMDOWN_ALLOWED_TAGS}
+            literalTagContent={STREAMDOWN_LITERAL_TAGS}
+            components={STREAMDOWN_COMPONENTS}
+          >
             {rendered || "—"}
           </Streamdown>
           {isAborted && <span className="text-muted-foreground mt-1 block text-[10px]">{t("chat.aborted")}</span>}
         </div>
+        </div>
+        {cards.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {cards.map((card) => (
+              <CardBlock key={card.id} card={card} onAction={onCardAction} />
+            ))}
+          </div>
+        )}
         <MessageFooter msg={msg} agentName={agentName} isUser={isUser} agentModel={agentModel} />
+      </div>
+    </div>
+  )
+}
+
+function CardBlock({ card, onAction }: { card: ChatCard; onAction?: (cardId: string, optionValue: string) => void }) {
+  return (
+    <div className="bg-card ring-foreground/10 flex flex-col gap-2 rounded-lg p-3 ring-1">
+      {card.title && <div className="text-sm font-medium">{card.title}</div>}
+      {card.description && <div className="text-muted-foreground text-xs">{card.description}</div>}
+      <div className="flex flex-wrap gap-1.5">
+        {card.options.map((opt, i) => {
+          const variant: "default" | "destructive" | "outline" = opt.style === "primary" ? "default" : opt.style === "danger" ? "destructive" : "outline"
+          return (
+            <Button key={`${card.id}-${i}`} variant={variant} size="sm" onClick={() => onAction?.(card.id, opt.value)}>
+              {opt.label}
+            </Button>
+          )
+        })}
       </div>
     </div>
   )
@@ -760,20 +956,32 @@ function StreamingRow({
   agentName,
   avatarUrl,
   emoji,
+  memberAgentIds,
 }: {
   content: string
   agentName?: string
   avatarUrl?: string
   emoji?: string
+  memberAgentIds: string[]
 }) {
+  const rendered = wrapMentionsWithTag(content, memberAgentIds)
   return (
     <div className="flex flex-row gap-3" aria-live="polite" aria-busy="true">
       <Avatar isUser={false} avatarUrl={avatarUrl} emoji={emoji} />
       <div className="flex max-w-[85%] flex-col items-start gap-1">
         <div className="bg-muted text-foreground ring-primary/30 rounded-2xl px-3 py-2 text-sm ring-1">
           {content ? (
-            <Streamdown mode="streaming" parseIncompleteMarkdown caret="block" shikiTheme={SHIKI_THEME} className="markdown-prose">
-              {content}
+            <Streamdown
+              mode="streaming"
+              parseIncompleteMarkdown
+              caret="block"
+              shikiTheme={SHIKI_THEME}
+              className="markdown-prose"
+              allowedTags={STREAMDOWN_ALLOWED_TAGS}
+              literalTagContent={STREAMDOWN_LITERAL_TAGS}
+              components={STREAMDOWN_COMPONENTS}
+            >
+              {rendered}
             </Streamdown>
           ) : (
             <span className="text-muted-foreground">…</span>
@@ -806,14 +1014,10 @@ function Avatar({ isUser, avatarUrl, emoji }: { isUser: boolean; avatarUrl?: str
 }
 
 function MessageFooter({ msg, agentName, isUser, agentModel }: { msg: ChatMessage; agentName?: string; isUser: boolean; agentModel?: string }) {
+  // per-message usage 龙虾 chat.history 不暴露,永远 null → 不展示 token 徽章。
+  // session 级 usage 已在 MemberCard / 会话详情页显示。
   const time = formatTime(msg.createdAtLocal)
-  // model: 优先 message 落库的 model（后续 chat.history 补全时会有），fallback 到 agent 配置的 primary
   const model = shortenModel(msg.model ?? agentModel ?? null)
-  const usage = msg.usage
-  const inTok = formatCompact(usage?.input)
-  const outTok = formatCompact(usage?.output)
-  const cacheR = formatCompact(usage?.cacheRead)
-  const cacheW = formatCompact(usage?.cacheWrite)
 
   const parts: React.ReactNode[] = []
   parts.push(
@@ -827,32 +1031,6 @@ function MessageFooter({ msg, agentName, isUser, agentModel }: { msg: ChatMessag
       <code key="m" className="bg-muted rounded px-1.5 py-0.5 text-[10px]">
         {model}
       </code>,
-    )
-  if (inTok)
-    parts.push(
-      <span key="in" title="input tokens" className="text-muted-foreground inline-flex items-center gap-0.5 cursor-help">
-        <ArrowUp className="size-2.5" aria-hidden />
-        {inTok}
-      </span>,
-    )
-  if (outTok)
-    parts.push(
-      <span key="out" title="output tokens" className="text-muted-foreground inline-flex items-center gap-0.5 cursor-help">
-        <ArrowDown className="size-2.5" aria-hidden />
-        {outTok}
-      </span>,
-    )
-  if (cacheR)
-    parts.push(
-      <span key="cr" title="cache read tokens" className="text-muted-foreground cursor-help">
-        R{cacheR}
-      </span>,
-    )
-  if (cacheW)
-    parts.push(
-      <span key="cw" title="cache write tokens" className="text-muted-foreground cursor-help">
-        W{cacheW}
-      </span>,
     )
   // 正常结束不显示 stopReason；只有异常值（max_tokens / tool_use / content_filter / error 等）才显
   const NORMAL_STOP = new Set(["end_turn", "stop", "stop_sequence"])

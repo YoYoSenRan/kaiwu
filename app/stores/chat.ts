@@ -6,6 +6,7 @@ import type { BudgetState, ChatErrorEvent, ChatMessage, ChatMember, ChatSession,
 export interface DeliveryState {
   status: DeliveryStatus
   errorMsg?: string
+  toolName?: string
   at: number
 }
 
@@ -88,7 +89,7 @@ interface ChatDataState {
   /** 每 session 未读数（sidebar 红点）。 */
   unread: Record<string, number>
   /** 每 session 最后一次运行错误（对齐 openclaw UI lastError；transient，不入 DB）。 */
-  lastError: Record<string, { text: string; ts: number; openclawSessionKey?: string; idempotencyKey?: string; kind?: "error" | "disconnected" }>
+  lastError: Record<string, { text: string; ts: number; openclawSessionKey?: string; idempotencyKey?: string; kind?: string }>
   /** 每 session 预算用量快照（按需 refresh，群聊用）。 */
   budgetStates: Record<string, BudgetState | null>
   /** 每 session usage 快照（单聊用，数据源 openclaw sessions.list）。 */
@@ -97,6 +98,11 @@ interface ChatDataState {
   memberUsages: Record<string, Record<string, SessionUsage>>
   /** 投递态:sessionId → anchorMsgId → memberId → DeliveryState。transient,不入 DB,重启清零。 */
   deliveries: Record<string, Record<string, Record<string, DeliveryState>>>
+  /**
+   * 运行态隐藏:abort 时立即"撤回"刚发出的 user 消息(UI 层过滤,不动 DB)。
+   * 若后续收到 agent 回复(abort 太晚),自动清空该 session 的 hidden 集合恢复显示。
+   */
+  hiddenMessages: Record<string, Set<string>>
 
   refreshSessions: () => Promise<void>
   refreshMembers: (sessionId: string) => Promise<void>
@@ -115,6 +121,10 @@ interface ChatDataState {
   refreshUsage: (sessionId: string) => Promise<void>
   refreshMemberUsages: (sessionId: string) => Promise<void>
   applyDelivery: (ev: DeliveryUpdateEvent) => void
+  /** abort 后立即把 msgId 加入 session 的 hidden 集合(UI 过滤不渲染)。 */
+  hideMessage: (sessionId: string, msgId: string) => void
+  /** 清空 session 的 hidden 集合(通常在 agent 回复到来时触发)。 */
+  restoreSessionHidden: (sessionId: string) => void
 }
 
 export const useChatDataStore = create<ChatDataState>((set) => ({
@@ -133,6 +143,7 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
   usageStates: {},
   memberUsages: {},
   deliveries: {},
+  hiddenMessages: {},
 
   refreshSessions: async () => {
     const sessions = await window.electron.chat.session.list()
@@ -164,6 +175,8 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
       delete nextDeliveries[sessionId]
       const nextMemberUsages = { ...s.memberUsages }
       delete nextMemberUsages[sessionId]
+      const nextHidden = { ...s.hiddenMessages }
+      delete nextHidden[sessionId]
       return {
         sessions: s.sessions.filter((x) => x.id !== sessionId),
         messages: nextMessages,
@@ -174,6 +187,7 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
         unread: nextUnread,
         deliveries: nextDeliveries,
         memberUsages: nextMemberUsages,
+        hiddenMessages: nextHidden,
         pending: s.pending?.sessionId === sessionId ? null : s.pending,
       }
     })
@@ -211,9 +225,29 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
       if (msg.sessionId !== currentId && msg.senderType !== "user") {
         next.unread = { ...s.unread, [msg.sessionId]: (s.unread[msg.sessionId] ?? 0) + 1 }
       }
+      // abort 后若 agent 仍然回了(abort 太晚),自动恢复该 session 所有被隐藏的 user msg
+      if (msg.senderType === "agent" && s.hiddenMessages[msg.sessionId]?.size) {
+        const nextHidden = { ...s.hiddenMessages }
+        delete nextHidden[msg.sessionId]
+        next.hiddenMessages = nextHidden
+      }
       return next
     })
   },
+  hideMessage: (sessionId, msgId) =>
+    set((s) => {
+      const prev = s.hiddenMessages[sessionId] ?? new Set<string>()
+      const nextSet = new Set(prev)
+      nextSet.add(msgId)
+      return { hiddenMessages: { ...s.hiddenMessages, [sessionId]: nextSet } }
+    }),
+  restoreSessionHidden: (sessionId) =>
+    set((s) => {
+      if (!s.hiddenMessages[sessionId]) return {}
+      const next = { ...s.hiddenMessages }
+      delete next[sessionId]
+      return { hiddenMessages: next }
+    }),
   clearUnread: (sessionId) =>
     set((s) => {
       if (!s.unread[sessionId]) return {}
@@ -265,7 +299,7 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
       const prev = anchorBucket[ev.memberId]
       // 终态锁定:done/error/aborted 后忽略后续事件,防乱序覆盖
       if (prev && TERMINAL_STATUSES.has(prev.status)) return {}
-      const nextMember: DeliveryState = { status: ev.status, errorMsg: ev.errorMsg, at: ev.at }
+      const nextMember: DeliveryState = { status: ev.status, errorMsg: ev.errorMsg, toolName: ev.toolName, at: ev.at }
       return {
         deliveries: {
           ...s.deliveries,

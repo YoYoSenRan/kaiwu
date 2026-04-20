@@ -44,9 +44,70 @@
     "knowledge": "Knowledge",
     "agent": "Agent",
     "chat": "Chat",
+    "session": "Session",
     "workflow": "Workflow",
     "connect": "Connect",
     "settings": "Settings"
+  },
+  "session": {
+    "title": "Sessions",
+    "untitled": "Untitled",
+    "empty": "No sessions yet",
+    "archived": "archived",
+    "mode": {
+      "direct": "Direct",
+      "group": "Group"
+    },
+    "filter": {
+      "all": "All",
+      "search": "Search sessions",
+      "sortRecent": "Most recent",
+      "sortCreated": "Created",
+      "count": "{{count}} total"
+    },
+    "detail": {
+      "noId": "No session id",
+      "loading": "Loading...",
+      "error": "Load failed: {{msg}}",
+      "notFound": "Session not found",
+      "emptyMessages": "No messages",
+      "user": "User",
+      "inspectTurn": "Inspect turn"
+    },
+    "stats": {
+      "created": "Created",
+      "updated": "Last activity",
+      "messages": "Messages",
+      "userMsgs": "User msgs",
+      "agentMsgs": "Agent msgs",
+      "aborted": "Aborted",
+      "errors": "Errors",
+      "turns": "Turn runs",
+      "tokens": "Tokens",
+      "totalTokens": "Total",
+      "inputTokens": "Input",
+      "outputTokens": "Output",
+      "cacheRead": "Cache read",
+      "cacheWrite": "Cache write"
+    },
+    "inspect": {
+      "title": "Turn detail",
+      "notFound": "Turn not found",
+      "trigger": "Trigger message",
+      "sentMessage": "Sent to agent",
+      "sentMessageHint": "Text actually sent to agent (mentions stripped)",
+      "systemPrompt": "System prompt",
+      "systemPromptHint": "Instruction kaiwu injects each turn",
+      "historyText": "Shared history",
+      "historyTextHint": "Group transcript kaiwu pushes to agent",
+      "assistantReply": "Assistant reply",
+      "copy": "Copy",
+      "copied": "Copied",
+      "metaAgent": "Agent",
+      "metaModel": "Model",
+      "metaSentAt": "Sent at",
+      "metaSessionKey": "openclaw sessionKey"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -67,9 +128,24 @@
     "recentKnowledge": "Recent Knowledge Bases",
     "systemStatus": {
       "title": "System Overview",
-      "tasks": "Task Queue",
+      "sessions": "Active Sessions",
       "knowledgeBases": "Knowledge Bases",
-      "documents": "Total Documents"
+      "documents": "Total Documents",
+      "agents": "Agents",
+      "messages": "Messages"
+    },
+    "chatOverview": {
+      "title": "Chat Overview",
+      "totalSessions": "Total Sessions",
+      "totalMessages": "Total Messages",
+      "unreadMessages": "Unread"
+    },
+    "agentOverview": {
+      "title": "Agent Overview",
+      "totalAgents": "Total Agents",
+      "mine": "Synced",
+      "unsynced": "Unsynced",
+      "missing": "Missing"
     }
   },
   "task": {
@@ -275,10 +351,6 @@
         "advanced": "Advanced",
         "budgetRounds": "Max rounds",
         "budgetRoundsHint": "Default 200, auto-stops when exceeded",
-        "budgetTokens": "Max tokens",
-        "budgetTokensHint": "Default 2,000,000",
-        "budgetWallClock": "Max wall-clock (sec)",
-        "budgetWallClockHint": "Default 86400 (24 hours)",
         "confirm": "Create"
       },
       "delete": {
@@ -294,8 +366,6 @@
       "loopEnded": {
         "noTarget": "No one replied (agents need @ to continue)",
         "budgetRounds": "Max rounds reached, stopped",
-        "budgetTokens": "Token budget reached, stopped",
-        "budgetWallClock": "Max wall-clock reached, stopped",
         "stopPhrase": "Stop phrase hit, stopped",
         "error": "Loop error, stopped"
       }
@@ -314,6 +384,9 @@
     },
     "delivery": {
       "queued": "queued",
+      "thinking": "thinking",
+      "tool": "using tool",
+      "toolNamed": "{{name}}",
       "replying": "replying",
       "done": "done",
       "error": "error",
@@ -349,6 +422,11 @@
     "retry": "Retry",
     "retryNoUserMsg": "No user message to retry",
     "aborted": "Stopped",
+    "reply": {
+      "action": "Reply",
+      "replyingTo": "Replying to {{name}}",
+      "cancel": "Cancel reply"
+    },
     "error": {
       "banner": "Error: {{msg}}",
       "disconnected": "Disconnected, will auto-sync on reconnect",
@@ -455,6 +533,19 @@
     "openclaw": {
       "title": "OpenClaw Bridge",
       "description": "Monitor and manage the sync state between local OpenClaw gateway and the kaiwu plugin"
+    },
+    "debugTitle": "Debug",
+    "debugDescription": "Developer & troubleshooting tools (destructive operations, use with caution)",
+    "debug": {
+      "clearAllTitle": "Clear chat database",
+      "clearAllHint": "Delete all sessions, members, messages, turn runs, and budget states. openclaw-side data is unaffected. Cannot be undone.",
+      "clearAllAction": "Clear all",
+      "clearing": "Clearing...",
+      "confirmTitle": "Confirm clearing all chat data",
+      "confirmDesc": "All local sessions, messages, and turn records will be permanently deleted. This cannot be undone. Continue?",
+      "confirmOk": "Confirm clear",
+      "clearSuccess": "Cleared {{total}} rows",
+      "clearFailed": "Clear failed: {{msg}}"
     }
   },
   "layout": {

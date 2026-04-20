@@ -10,14 +10,14 @@
  */
 
 import { nanoid } from "nanoid"
-import { scope } from "../../infra/logger"
-import { buildSharedContext } from "./context"
-import { interpretReply } from "./interpret"
-import { stripMentionsForAgent } from "./mention-utils"
-import { newIdempotencyKey, runStep } from "../../agent/executor"
-import { getSession, insertMessage, insertTurn, listActiveMembers, nextSeq } from "./repository"
-import type { ChatBackend } from "../../agent/executor"
-import type { ChatMember, ChatMessage, DeliveryUpdateEvent, LoopEndedReason } from "./types"
+import { scope } from "../../../infra/logger"
+import { buildSharedContext } from "../context"
+import { interpretReply } from "../interpret"
+import { extractCardsFromText, stripMentionsForAgent } from "../routing"
+import { newIdempotencyKey, runStep } from "../../../agent/executor"
+import { getSession, insertMessage, insertTurn, listActiveMembers, nextSeq } from "../repository"
+import type { ChatBackend } from "../../../agent/executor"
+import type { ChatMember, ChatMessage, DeliveryUpdateEvent, LoopEndedReason } from "../types"
 
 const log = scope("chat:direct")
 
@@ -27,8 +27,11 @@ export interface DirectDeps {
   emitLoop: (kind: "started" | "ended", sessionId: string, reason?: LoopEndedReason) => void
   emitStreamDelta: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, content: string) => void
   emitStreamEnd: (sessionId: string, idempotencyKey: string, openclawSessionKey: string) => void
-  /** 运行错误事件（transient banner，不入 DB）。对齐 openclaw UI lastError 语义。 */
-  emitError: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, message: string) => void
+  /**
+   * 运行错误事件(transient banner,不入 DB)。对齐 openclaw UI lastError 语义。
+   * kind 显式传入,见 GroupDeps.emitError 注释。
+   */
+  emitError: (sessionId: string, idempotencyKey: string, openclawSessionKey: string, message: string, kind?: string) => void
   /** 投递态更新事件(transient):user 消息发往成员后的处理进度。单聊只 1 个 member。 */
   emitDelivery: (ev: DeliveryUpdateEvent) => void
   trackKeyStart: (sessionId: string, idempotencyKey: string, openclawKey: string) => void
@@ -96,6 +99,7 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
   }
 
   // delivery 态锁定:必然以 done/error/aborted 之一结束
+  // 态源全部来自龙虾 chat event(delta/final/aborted/error)或 runStep 异常,kaiwu 不做自判超时
   let terminalEmitted = false
   const emitTerminal = (status: "done" | "error" | "aborted", errorMsg?: string): void => {
     if (terminalEmitted) return
@@ -104,11 +108,7 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
   }
   deps.emitDelivery({ sessionId, anchorMsgId: userMsg.id, memberId: member.id, status: "queued", at: Date.now() })
 
-  // queued 永久卡死 watchdog:60s 无 delta → error
   let replyingEmitted = false
-  const startWatchdog = setTimeout(() => {
-    if (!replyingEmitted) emitTerminal("error", "start timeout")
-  }, 60_000)
 
   deps.trackKeyStart(sessionId, idempotencyKey, member.openclawKey)
 
@@ -120,6 +120,22 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
           deps.emitDelivery({ sessionId, anchorMsgId: userMsg.id, memberId: member.id, status: "replying", at: Date.now() })
         }
         deps.emitStreamDelta(sessionId, idempotencyKey, member.openclawKey, ev.content)
+      } else if (ev.kind === "reasoning") {
+        if (!replyingEmitted) {
+          deps.emitDelivery({ sessionId, anchorMsgId: userMsg.id, memberId: member.id, status: "thinking", at: Date.now() })
+        }
+      } else if (ev.kind === "tool") {
+        if (ev.phase === "start") {
+          deps.emitDelivery({ sessionId, anchorMsgId: userMsg.id, memberId: member.id, status: "tool", toolName: ev.name, at: Date.now() })
+        } else {
+          deps.emitDelivery({
+            sessionId,
+            anchorMsgId: userMsg.id,
+            memberId: member.id,
+            status: replyingEmitted ? "replying" : "thinking",
+            at: Date.now(),
+          })
+        }
       }
     })
 
@@ -130,14 +146,14 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
         // 对齐 openclaw UI：中断时保留 partial 作为完整 assistant 消息，防数据丢失
         const partial = result.content?.trim() ?? ""
         if (partial) {
-          const abortedMsg = buildAndInsertAbortedMessage(sessionId, member, result.content, idempotencyKey)
+          const abortedMsg = buildAndInsertAbortedMessage(sessionId, member, result.content, idempotencyKey, userMsg.id)
           deps.emitMessage(abortedMsg)
         }
         emitTerminal("aborted")
         return
       }
       // 其他错误 → emit chat:error banner，不入 DB（对齐 openclaw UI）
-      deps.emitError(sessionId, idempotencyKey, member.openclawKey, result.error ?? "unknown error")
+      deps.emitError(sessionId, idempotencyKey, member.openclawKey, result.error ?? "unknown error", result.errorKind)
       emitTerminal("error", result.error ?? "unknown error")
       return
     }
@@ -168,8 +184,12 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
       senderType: "agent",
       senderId: member.agentId,
       role: "assistant",
-      content: { text: interp.content },
+      content: (() => {
+        const extracted = extractCardsFromText(interp.content)
+        return extracted.cards.length > 0 ? { text: extracted.text, cards: extracted.cards } : { text: interp.content }
+      })(),
       mentions: [],
+      inReplyToMessageId: userMsg.id,
       turnRunId: idempotencyKey,
       tags: [],
       model,
@@ -189,6 +209,7 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
       role: assistantMsg.role,
       content: assistantMsg.content,
       mentions: assistantMsg.mentions,
+      inReplyToMessageId: assistantMsg.inReplyToMessageId,
       turnRunId: assistantMsg.turnRunId,
       tags: assistantMsg.tags,
       model: assistantMsg.model,
@@ -202,7 +223,6 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
     emitTerminal("error", (err as Error).message)
     throw err
   } finally {
-    clearTimeout(startWatchdog)
     if (!terminalEmitted) emitTerminal("error", "unknown termination")
     deps.trackKeyEnd(sessionId, idempotencyKey)
     deps.emitStreamEnd(sessionId, idempotencyKey, member.openclawKey)
@@ -210,7 +230,13 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
   }
 }
 
-function buildAndInsertAbortedMessage(sessionId: string, member: ChatMember, content: string, idempotencyKey: string): ChatMessage {
+function buildAndInsertAbortedMessage(
+  sessionId: string,
+  member: ChatMember,
+  content: string,
+  idempotencyKey: string,
+  inReplyToMessageId: string | null,
+): ChatMessage {
   const msg: ChatMessage = {
     id: nanoid(),
     sessionId,
@@ -222,6 +248,7 @@ function buildAndInsertAbortedMessage(sessionId: string, member: ChatMember, con
     role: "assistant",
     content: { text: content },
     mentions: [],
+    inReplyToMessageId,
     turnRunId: idempotencyKey,
     tags: ["aborted"],
     model: null,
@@ -241,6 +268,7 @@ function buildAndInsertAbortedMessage(sessionId: string, member: ChatMember, con
     role: msg.role,
     content: msg.content,
     mentions: msg.mentions,
+    inReplyToMessageId: msg.inReplyToMessageId,
     turnRunId: msg.turnRunId,
     tags: msg.tags,
     model: msg.model,

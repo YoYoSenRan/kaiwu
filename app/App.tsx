@@ -7,6 +7,8 @@ import KnowledgeDetail from "@/pages/knowledge/detail"
 import AgentList from "@/pages/agent/list"
 import AgentDetail from "@/pages/agent/detail"
 import Chat from "@/pages/chat"
+import SessionList from "@/pages/session/list"
+import SessionDetail from "@/pages/session/detail"
 import Workflow from "@/pages/workflow"
 import { TitleBar } from "@/components/layout/titlebar"
 import { NanoDock } from "@/components/layout/dock"
@@ -18,6 +20,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { useThemeEffect } from "@/hooks/use-theme-effect"
 import { useEffect } from "react"
 import { attachChatListeners } from "@/stores/chat"
+import { useAgentCacheStore } from "@/stores/agent"
 
 function App() {
   useThemeEffect()
@@ -29,6 +32,27 @@ function App() {
   }, [])
 
   useEffect(() => attachChatListeners(), [])
+
+  // 全局 agent 列表预热:任何页面(chat / session / 等)进入前就已有缓存,避免"头像空白闪一下"。
+  // gateway 就绪后轮询重试(最多 30 次 × 1s),直到成功一次。
+  useEffect(() => {
+    let cancelled = false
+    const tryLoad = async (attempts = 0): Promise<void> => {
+      if (cancelled || useAgentCacheStore.getState().listResult) return
+      try {
+        const res = await window.electron.agent.list()
+        if (!cancelled) useAgentCacheStore.getState().setListResult(res)
+      } catch {
+        if (attempts < 30 && !cancelled) {
+          setTimeout(() => void tryLoad(attempts + 1), 1000)
+        }
+      }
+    }
+    void tryLoad()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <TooltipProvider>
@@ -54,6 +78,8 @@ function App() {
                   <Route path="/agent" element={<AgentList />} />
                   <Route path="/agent/:id" element={<AgentDetail />} />
                   <Route path="/chat" element={<Chat />} />
+                  <Route path="/session" element={<SessionList />} />
+                  <Route path="/session/:id" element={<SessionDetail />} />
                   <Route path="/workflow" element={<Workflow />} />
                   <Route path="/connect" element={<Connect />} />
                   <Route path="/settings" element={<Settings />} />

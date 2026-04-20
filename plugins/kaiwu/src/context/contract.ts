@@ -8,28 +8,39 @@
 
 // ---------- store 数据结构 ----------
 
+/** 群聊共享历史的单条记录(结构化,对齐 discord plugin 的 InboundHistory 格式)。 */
+export interface SharedHistoryEntry {
+  sender: string
+  body: string
+  timestamp_ms: number
+}
+
 /** 单个阶段要注入的上下文。 */
 export interface StageContext {
-  /** 阶段指令 → appendSystemContext（系统提示尾部，provider 可缓存）。 */
+  /** 阶段指令 → appendSystemContext(系统提示尾部,provider 可缓存)。 */
   instruction: string
-  /** 知识库片段 → prependContext（用户消息前面，每轮发送）。 */
+  /** 知识库片段 → prependContext(用户消息前面,每轮发送)。 */
   knowledge: string[]
-  /** 共享对话历史 → prependContext（用户消息前面，每轮发送）。 */
-  sharedHistory?: string
+  /**
+   * 共享对话历史(群聊其他成员发言) → prependContext 的 "untrusted JSON block"。
+   * 对齐 openclaw discord plugin 的做法(inbound-meta.ts:269),LLM 看到结构化 JSON + 明确 untrusted 标签,
+   * 不会把历史当作"要分析的素材"。
+   */
+  sharedHistory?: SharedHistoryEntry[]
 }
 
 // ---------- HTTP invoke action 参数 ----------
 
 /** action = "stage.set" 的 params。 */
 export interface StageSetParams {
-  /** 目标 session，格式由 kaiwu 主进程维护（如 "agent:{id}:kaiwu:task-{taskId}"）。 */
+  /** 目标 session,格式由 kaiwu 主进程维护(如 "agent:{id}:kaiwu:task-{taskId}")。 */
   sessionKey: string
   /** 阶段指令。空字符串表示不注入指令。 */
   instruction: string
   /** 知识库片段列表。空数组表示本阶段无知识库。 */
   knowledge: string[]
-  /** 共享对话历史。空字符串或省略表示本阶段无共享历史。 */
-  sharedHistory?: string
+  /** 共享对话历史(结构化)。省略或空数组表示本阶段无共享历史。 */
+  sharedHistory?: SharedHistoryEntry[]
 }
 
 /** action = "stage.clear" 的 params。 */

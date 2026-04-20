@@ -94,6 +94,8 @@ export const chatMessages = sqliteTable("chat_messages", {
   role: text("role").notNull().$type<"user" | "assistant" | "tool" | "system">(),
   content_json: text("content_json").notNull(),
   mentions_json: text("mentions_json"),
+  /** 本消息回复的目标消息 id(同表引用)。用于 reply-to 结构化路由 + thread 可视化。 */
+  in_reply_to_message_id: text("in_reply_to_message_id"),
   /** 关联的 idempotencyKey（openclaw 侧叫 runId）；字段名延续旧命名避免 schema 迁移。 */
   turn_run_id: text("turn_run_id"),
   tags_json: text("tags_json"),
@@ -152,9 +154,6 @@ export const chatBudgetState = sqliteTable("chat_budget_state", {
     .primaryKey()
     .references(() => chatSessions.id, { onDelete: "cascade" }),
   rounds_used: integer("rounds_used", { mode: "number" })
-    .notNull()
-    .$defaultFn(() => 0),
-  tokens_used: integer("tokens_used", { mode: "number" })
     .notNull()
     .$defaultFn(() => 0),
   started_at: integer("started_at", { mode: "number" })

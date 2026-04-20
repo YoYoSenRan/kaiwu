@@ -1,12 +1,14 @@
-import { Info, Palette } from "lucide-react"
+import { Bug, Info, Palette } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Separator } from "@/components/ui/separator"
 import { AboutCard } from "./components/about"
 import { AppearanceCard } from "./components/appearance"
+import { DebugCard } from "./components/debug"
 
 /** 设置模块定义。 */
 const MODULES = [
   { key: "appearance", icon: Palette, labelKey: "settings.appearanceTitle", descKey: "settings.appearanceDescription" },
+  { key: "debug", icon: Bug, labelKey: "settings.debugTitle", descKey: "settings.debugDescription" },
   { key: "about", icon: Info, labelKey: "settings.aboutTitle", descKey: "" },
 ] as const
 
@@ -48,6 +50,7 @@ export default function Settings() {
           <Separator />
         </div>
         {active === "appearance" && <AppearanceCard />}
+        {active === "debug" && <DebugCard />}
         {active === "about" && <AboutCard />}
       </div>
     </div>

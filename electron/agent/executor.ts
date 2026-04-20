@@ -35,7 +35,9 @@ export async function runStep(backend: ChatBackend, input: StepInput, onEvent?: 
     const unsub = backend.onEvent(input.idempotencyKey, (ev) => {
       onEvent?.(ev)
       if (ev.kind === "delta") {
-        buffer += ev.content
+        // 龙虾 delta 为 overwrite 语义:每帧是当前完整文本,非增量。
+        // 累加会重复堆叠,final 无 content 回退或 aborted partial 场景会拿到错乱字符串。
+        buffer = ev.content
       } else if (ev.kind === "final") {
         buffer = ev.content || buffer
         stopReason = ev.stopReason
@@ -47,13 +49,13 @@ export async function runStep(backend: ChatBackend, input: StepInput, onEvent?: 
         resolve({ idempotencyKey: input.idempotencyKey, success: false, content: buffer, error: "aborted" })
       } else if (ev.kind === "error") {
         unsub()
-        resolve({ idempotencyKey: input.idempotencyKey, success: false, content: buffer, error: ev.message })
+        resolve({ idempotencyKey: input.idempotencyKey, success: false, content: buffer, error: ev.message, errorKind: ev.errorKind })
       }
     })
 
-    backend.send({ sessionKey: input.sessionKey, message: input.message, idempotencyKey: input.idempotencyKey }).catch((err) => {
+    backend.send({ sessionKey: input.sessionKey, message: input.message, idempotencyKey: input.idempotencyKey }).catch((err: Error & { errorKind?: string }) => {
       unsub()
-      resolve({ idempotencyKey: input.idempotencyKey, success: false, content: "", error: (err as Error).message })
+      resolve({ idempotencyKey: input.idempotencyKey, success: false, content: "", error: err.message, errorKind: err.errorKind })
     })
   })
 }

@@ -25,7 +25,7 @@ export function ChatDetails() {
   const members = useChatDataStore((s) => (currentSessionId ? (s.members[currentSessionId] ?? EMPTY_MEMBERS) : EMPTY_MEMBERS))
   const memberUsages = useChatDataStore((s) => (currentSessionId ? (s.memberUsages[currentSessionId] ?? EMPTY_MEMBER_USAGES) : EMPTY_MEMBER_USAGES))
   const refreshMembers = useChatDataStore((s) => s.refreshMembers)
-  const getGatewayRow = useAgentCacheStore((s) => s.getGatewayRow)
+  const byAgentId = useAgentCacheStore((s) => s.byAgentId)
   const listResult = useAgentCacheStore((s) => s.listResult)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [removingId, setRemovingId] = useState<string | null>(null)
@@ -79,7 +79,7 @@ export function ChatDetails() {
   async function confirmRemoveMember() {
     const member = pendingRemove
     if (!member || !currentSessionId) return
-    const name = getGatewayRow(member.agentId)?.name ?? member.agentId
+    const name = byAgentId[member.agentId]?.name ?? member.agentId
     setRemovingId(member.id)
     setPendingRemove(null)
     try {
@@ -203,7 +203,7 @@ export function ChatDetails() {
           <DialogHeader>
             <DialogTitle>{t("chat.members.remove")}</DialogTitle>
             <DialogDescription>
-              {pendingRemove && t("chat.members.removeConfirm", { name: getGatewayRow(pendingRemove.agentId)?.name ?? pendingRemove.agentId })}
+              {pendingRemove && t("chat.members.removeConfirm", { name: byAgentId[pendingRemove.agentId]?.name ?? pendingRemove.agentId })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

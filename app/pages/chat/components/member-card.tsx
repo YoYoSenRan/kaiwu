@@ -9,7 +9,7 @@
 
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
-import { AlertTriangle, Bot, CheckCheck, MoreHorizontal, X } from "lucide-react"
+import { AlertTriangle, Bot, Brain, CheckCheck, MoreHorizontal, Wrench, X } from "lucide-react"
 import { useAgentCacheStore } from "@/stores/agent"
 import { useChatDataStore, type DeliveryState } from "@/stores/chat"
 import type { ChatMember, SessionUsage } from "../../../../electron/features/chat/types"
@@ -77,8 +77,8 @@ function formatRelative(ts: number | null, locale: string): string | null {
 
 export function MemberCard({ sessionId, member, usage, disabled, onToggleReplyMode, onRemove, allowRemove }: Props) {
   const { t, i18n } = useTranslation()
-  const getGatewayRow = useAgentCacheStore((s) => s.getGatewayRow)
-  const agent = getGatewayRow(member.agentId)
+  // 订阅 byAgentId(Record 引用随 listResult 变化)以触发 re-render;method ref 订阅无效
+  const agent = useAgentCacheStore((s) => s.byAgentId[member.agentId])
   const name = agent?.name ?? member.agentId
   const avatarUrl = agent?.identity?.avatarUrl
   const emoji = agent?.identity?.emoji
@@ -101,6 +101,8 @@ export function MemberCard({ sessionId, member, usage, disabled, onToggleReplyMo
   const ringCls = (() => {
     switch (delivery?.status) {
       case "queued":
+      case "thinking":
+      case "tool":
       case "replying":
         return "ring-2 ring-primary/60 animate-pulse"
       case "error":
@@ -129,7 +131,7 @@ export function MemberCard({ sessionId, member, usage, disabled, onToggleReplyMo
         </div>
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
           <span className="truncate text-sm font-medium leading-tight">{name}</span>
-          <StatusChip status={delivery?.status} />
+          <StatusChip state={delivery} />
         </div>
         <button
           type="button"
@@ -200,10 +202,16 @@ export function MemberCard({ sessionId, member, usage, disabled, onToggleReplyMo
   )
 }
 
-function StatusChip({ status }: { status: DeliveryState["status"] | undefined }) {
+function StatusChip({ state }: { state: DeliveryState | undefined }) {
   const { t } = useTranslation()
-  if (!status) return null
+  if (!state) return null
+  const status = state.status
   if (status === "queued") return <span className="text-muted-foreground inline-flex shrink-0 items-center gap-0.5 text-[10px]"><MoreHorizontal className="size-3" aria-hidden /> {t("chat.delivery.queued")}</span>
+  if (status === "thinking") return <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400"><Brain className="size-3 animate-pulse" aria-hidden /> {t("chat.delivery.thinking")}</span>
+  if (status === "tool") {
+    const label = state.toolName ? t("chat.delivery.toolNamed", { name: state.toolName }) : t("chat.delivery.tool")
+    return <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-sky-600 dark:text-sky-400"><Wrench className="size-3 animate-pulse" aria-hidden /> <span className="max-w-24 truncate">{label}</span></span>
+  }
   if (status === "replying") return (
     <span className="text-primary inline-flex shrink-0 items-center gap-1 text-[10px]">
       <TypingDots />

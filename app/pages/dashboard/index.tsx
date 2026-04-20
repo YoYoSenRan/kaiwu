@@ -4,8 +4,20 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useGatewayStore } from "@/stores/gateway"
+import { useChatDataStore } from "@/stores/chat"
+import { useAgentCacheStore } from "@/stores/agent"
 import { gatewayDotColor } from "@/utils/gateway"
-import { Activity, BrainCircuit, Cpu, Database, HardDrive, ListChecks, Plug, Plus, Terminal } from "lucide-react"
+import {
+  Activity,
+  Bot,
+  Database,
+  HardDrive,
+  ListChecks,
+  MessageSquare,
+  Plug,
+  Plus,
+  Terminal,
+} from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 type KnowledgeBase = Awaited<ReturnType<typeof window.electron.knowledge.base.list>>[number]
@@ -14,26 +26,83 @@ export default function Dashboard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [list, setList] = useState<KnowledgeBase[]>([])
+  const [agentData, setAgentData] = useState<Awaited<ReturnType<typeof window.electron.agent.list>> | null>(null)
+  const [monitorEvents, setMonitorEvents] = useState<MonitorEventItem[]>([])
+
+  const sessions = useChatDataStore((s) => s.sessions)
+  const messages = useChatDataStore((s) => s.messages)
+  const unread = useChatDataStore((s) => s.unread)
 
   useEffect(() => {
     void window.electron.knowledge.base.list().then(setList)
   }, [])
 
+  useEffect(() => {
+    void window.electron.agent.list().then((res) => {
+      setAgentData(res)
+      useAgentCacheStore.getState().setListResult(res)
+    })
+  }, [])
+
+  useEffect(() => {
+    const off = window.electron.openclaw.plugin.on.monitor((event) => {
+      setMonitorEvents((prev) => {
+        const next = [
+          {
+            id: `${event.ts}-${Math.random()}`,
+            time: new Date().toLocaleTimeString(),
+            msg: formatMonitorEvent(event),
+            ts: event.ts,
+          },
+          ...prev,
+        ]
+        return next.slice(0, 20)
+      })
+    })
+    return () => off()
+  }, [])
+
   const recent = list.slice(0, 3)
   const totalDocs = list.reduce((sum, kb) => sum + (kb.doc_count ?? 0), 0)
 
+  const activeSessions = sessions.filter((s) => !s.archived).length
+  const totalMessages = Object.values(messages).reduce((sum, msgs) => sum + msgs.length, 0)
+  const totalUnread = Object.values(unread).reduce((sum, count) => sum + count, 0)
+
+  const totalAgents = (agentData?.mine?.length ?? 0) + (agentData?.unsynced?.length ?? 0)
+  const mineCount = agentData?.mine?.length ?? 0
+  const unsyncedCount = agentData?.unsynced?.length ?? 0
+  const missingCount = agentData?.missing?.length ?? 0
+
   return (
     <div className="grid gap-5 xl:grid-cols-3">
-      {/* 左侧主要区域 */}
       <div className="space-y-5 xl:col-span-2">
-        {/* 系统概览指标 */}
         <div className="grid gap-5 sm:grid-cols-3">
-          <OverviewMetric title={t("dashboard.systemStatus.tasks", "Tasks")} value="0" icon={ListChecks} />
-          <OverviewMetric title={t("dashboard.systemStatus.knowledgeBases", "Knowledge Bases")} value={list.length.toString()} icon={Database} />
-          <OverviewMetric title={t("dashboard.systemStatus.documents", "Documents")} value={totalDocs.toString()} icon={HardDrive} />
+          <OverviewMetric
+            title={t("dashboard.systemStatus.sessions", "Active Sessions")}
+            value={activeSessions.toString()}
+            icon={MessageSquare}
+          />
+          <OverviewMetric
+            title={t("dashboard.systemStatus.knowledgeBases", "Knowledge Bases")}
+            value={list.length.toString()}
+            icon={Database}
+          />
+          <OverviewMetric
+            title={t("dashboard.systemStatus.documents", "Documents")}
+            value={totalDocs.toString()}
+            icon={HardDrive}
+          />
         </div>
 
         <QuickActions onNew={() => navigate("/knowledge")} onConnect={() => navigate("/connect")} onTasks={() => navigate("/task")} />
+
+        <AgentOverviewCard
+          totalAgents={totalAgents}
+          mineCount={mineCount}
+          unsyncedCount={unsyncedCount}
+          missingCount={missingCount}
+        />
 
         <Card>
           <CardHeader>
@@ -62,15 +131,19 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-
-        <RecentActivityCard />
       </div>
 
-      {/* 右侧边栏区域 */}
       <div className="space-y-5">
         <GatewayStatusCard />
-        <ResourceUsageCard />
-        <LocalModelsCard />
+
+        <ChatOverviewCard
+          totalSessions={sessions.length}
+          activeSessions={activeSessions}
+          totalMessages={totalMessages}
+          totalUnread={totalUnread}
+        />
+
+        <RecentActivityCard events={monitorEvents} />
       </div>
     </div>
   )
@@ -121,6 +194,116 @@ function QuickActions({ onNew, onConnect, onTasks }: { onNew: () => void; onConn
   )
 }
 
+function ChatOverviewCard({
+  totalSessions,
+  activeSessions,
+  totalMessages,
+  totalUnread,
+}: {
+  totalSessions: number
+  activeSessions: number
+  totalMessages: number
+  totalUnread: number
+}) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <span className="flex items-center gap-2">
+            <MessageSquare className="size-4" />
+            {t("dashboard.chatOverview.title", "Chat Overview")}
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1">
+            <p className="text-muted-foreground text-xs">{t("dashboard.chatOverview.totalSessions", "Total Sessions")}</p>
+            <p className="text-xl font-bold">{totalSessions}</p>
+            <p className="text-muted-foreground text-xs">{activeSessions} active</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-muted-foreground text-xs">{t("dashboard.chatOverview.totalMessages", "Total Messages")}</p>
+            <p className="text-xl font-bold">{totalMessages}</p>
+            {totalUnread > 0 && (
+              <p className="text-xs text-amber-500">{totalUnread} unread</p>
+            )}
+          </div>
+        </div>
+        <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => navigate("/chat")}>
+          <MessageSquare className="mr-1.5 size-4" />
+          Open Chat
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+function AgentOverviewCard({
+  totalAgents,
+  mineCount,
+  unsyncedCount,
+  missingCount,
+}: {
+  totalAgents: number
+  mineCount: number
+  unsyncedCount: number
+  missingCount: number
+}) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <span className="flex items-center gap-2">
+            <Bot className="size-4" />
+            {t("dashboard.agentOverview.title", "Agent Overview")}
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-sm">{t("dashboard.agentOverview.totalAgents", "Total Agents")}</span>
+            <span className="text-xl font-bold">{totalAgents}</span>
+          </div>
+          <div className="space-y-2">
+            <StatusBar label={t("dashboard.agentOverview.mine", "Synced")} count={mineCount} total={totalAgents} color="bg-emerald-500" />
+            <StatusBar label={t("dashboard.agentOverview.unsynced", "Unsynced")} count={unsyncedCount} total={totalAgents} color="bg-amber-500" />
+            <StatusBar label={t("dashboard.agentOverview.missing", "Missing")} count={missingCount} total={totalAgents} color="bg-red-500" />
+          </div>
+        </div>
+        <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => navigate("/agent")}>
+          <Bot className="mr-1.5 size-4" />
+          Manage Agents
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+function StatusBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-mono">
+          {count} ({pct}%)
+        </span>
+      </div>
+      <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
+        <div className={`h-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  )
+}
+
 function GatewayStatusCard() {
   const { t } = useTranslation()
   const status = useGatewayStore((s) => s.status)
@@ -153,100 +336,15 @@ function GatewayStatusCard() {
   )
 }
 
-function ResourceUsageCard() {
-  // 模拟的系统资源数据
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <span className="flex items-center gap-2">
-            <Cpu className="size-4" />
-            System Resources
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground font-medium">CPU</span>
-              <span className="font-mono">14%</span>
-            </div>
-            <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
-              <div className="bg-primary h-full w-[14%]" />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground font-medium">Memory (RAM)</span>
-              <span className="font-mono">8.2 / 32 GB</span>
-            </div>
-            <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
-              <div className="bg-primary h-full w-[25%]" />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground font-medium">GPU VRAM</span>
-              <span className="font-mono">2.1 / 24 GB</span>
-            </div>
-            <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
-              <div className="bg-primary h-full w-[8%]" />
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
+interface MonitorEventItem {
+  id: string
+  time: string
+  msg: string
+  ts: number
 }
 
-function LocalModelsCard() {
-  // 模拟的本地模型列表
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <span className="flex items-center gap-2">
-            <BrainCircuit className="size-4" />
-            Local AI Models
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="divide-foreground/10 divide-y">
-          <div className="flex items-center justify-between py-3">
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium">Qwen-1.5-7B</p>
-              <p className="text-muted-foreground text-xs">Text Generation</p>
-            </div>
-            <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-500">
-              <span className="size-1.5 rounded-full bg-emerald-500" /> Loaded
-            </span>
-          </div>
-          <div className="flex items-center justify-between py-3">
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium">BGE-M3</p>
-              <p className="text-muted-foreground text-xs">Embedding</p>
-            </div>
-            <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-500">
-              <span className="size-1.5 rounded-full bg-emerald-500" /> Loaded
-            </span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function RecentActivityCard() {
+function RecentActivityCard({ events }: { events: MonitorEventItem[] }) {
   const { t } = useTranslation()
-  // 模拟日志数据
-  const logs = [
-    { time: "Just now", msg: "Knowledge Base 'Internal Docs' index updated." },
-    { time: "2m ago", msg: "Gateway connection established successfully." },
-    { time: "15m ago", msg: "Model Qwen-1.5-7B loaded into memory (4.2GB)." },
-    { time: "1h ago", msg: "System initialization completed." },
-  ]
 
   return (
     <Card>
@@ -259,21 +357,47 @@ function RecentActivityCard() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {logs.map((log, i) => (
-            <div key={i} className="flex gap-4">
-              <div className="text-muted-foreground mt-[3px] w-16 shrink-0 text-right font-mono text-[10px] leading-none">{log.time}</div>
-              <div className="relative pt-0.5 pb-5 last:pb-0">
-                {/* Timeline line */}
-                {i !== logs.length - 1 && <div className="bg-foreground/10 absolute top-4 bottom-0 left-[3.5px] w-[1px]" />}
-                {/* Timeline dot */}
-                <div className="border-background bg-primary absolute top-1 left-0 size-2 rounded-full border-[1.5px]" />
-                <p className="text-foreground/80 pl-4 text-sm leading-snug">{log.msg}</p>
+        {events.length === 0 ? (
+          <p className="text-muted-foreground py-4 text-center text-sm">{t("dashboard.activityEmpty", "No activity yet")}</p>
+        ) : (
+          <div className="space-y-4">
+            {events.map((log, i) => (
+              <div key={log.id} className="flex gap-4">
+                <div className="text-muted-foreground mt-[3px] w-16 shrink-0 text-right font-mono text-[10px] leading-none">{log.time}</div>
+                <div className="relative pt-0.5 pb-5 last:pb-0">
+                  {i !== events.length - 1 && <div className="bg-foreground/10 absolute top-4 bottom-0 left-[3.5px] w-[1px]" />}
+                  <div className="border-background bg-primary absolute top-1 left-0 size-2 rounded-full border-[1.5px]" />
+                  <p className="text-foreground/80 pl-4 text-sm leading-snug">{log.msg}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
+}
+
+function formatMonitorEvent(event: { hookName: string; ctx?: { agentId?: string }; event?: unknown }): string {
+  const agentId = event.ctx?.agentId ?? "unknown"
+  switch (event.hookName) {
+    case "llm_input":
+      return `Agent ${agentId} started LLM call`
+    case "llm_output":
+      return `Agent ${agentId} received LLM response`
+    case "agent_end":
+      return `Agent ${agentId} completed turn`
+    case "before_tool_call":
+      return `Agent ${agentId} calling tool`
+    case "after_tool_call":
+      return `Agent ${agentId} tool call completed`
+    case "message_received":
+      return `Agent ${agentId} received message`
+    case "message_sending":
+      return `Agent ${agentId} sending message`
+    case "message_sent":
+      return `Agent ${agentId} message sent`
+    default:
+      return `Agent ${agentId}: ${event.hookName}`
+  }
 }

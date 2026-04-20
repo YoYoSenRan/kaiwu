@@ -10,13 +10,15 @@ import { Controller, Handle, IpcController, type IpcLifecycle } from "../../fram
 import { scope } from "../../infra/logger"
 import type { ChatBackend } from "../../agent/executor"
 import type { StepEvent, StepUsage } from "../../agent/types"
-import { hasPending, onAskUserEvent, onMentionNextEvent, onNewMessage, takePending, type GroupDeps } from "./group"
-import { sendDirect, type DirectDeps } from "./direct"
+import type { ContextPayload } from "./context"
+import { hasPending, onAskUserEvent, onMentionNextEvent, onNewMessage, sendDirect, takePending, type DirectDeps, type GroupDeps } from "./loops"
 import { buildSessionInitParams, parseOpenClawKey } from "./bootstrap"
 import {
+  clearAllChatTables,
   deleteSession as deleteSessionRow,
   getBudgetState,
   getSession,
+  getTurn,
   insertMember,
   insertMessage,
   insertSession,
@@ -25,6 +27,7 @@ import {
   listMembers,
   listMessages,
   listSessions,
+  listTurns,
   markMemberLeft,
   nextSeq,
   patchMember as patchMemberRow,
@@ -35,7 +38,7 @@ import { getBridgeServer, getGateway } from "../openclaw/runtime"
 import { call as invokePluginBridge } from "../openclaw/bridge/call"
 import type { EventFrame } from "../openclaw/gateway/contract"
 import type { PluginEvent } from "../openclaw/contracts/plugin"
-import { stripMentionsForAgent } from "./mention-utils"
+import { parseMentionsFromText, sanitizeStructuredMentions, stripMentionsForAgent } from "./routing"
 import { fetchManySessionUsages, fetchSessionUsage } from "./usage"
 import type {
   AddMemberInput,
@@ -47,6 +50,8 @@ import type {
   ChatMention,
   ChatMessage,
   ChatSession,
+  ChatSessionDetail,
+  ChatTurn,
   CreateSessionInput,
   DeliveryUpdateEvent,
   MemberPatch,
@@ -78,6 +83,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
   /** idempotencyKey → openclaw sessionKey。chat.abort 需要 sessionKey 定位。 */
   private readonly sessionKeyByKey = new Map<string, string>()
   private offGatewayEvents: (() => void) | null = null
+  private offAgentEvents: (() => void) | null = null
   private offPluginEvents: (() => void) | null = null
 
   async onReady(): Promise<void> {
@@ -95,9 +101,9 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
         this.emit("stream:delta", { sessionId, idempotencyKey, openclawSessionKey, content }),
       emitStreamEnd: (sessionId, idempotencyKey, openclawSessionKey) =>
         this.emit("stream:end", { sessionId, idempotencyKey, openclawSessionKey }),
-      emitError: (sessionId, idempotencyKey, openclawSessionKey, message) => {
-        const kind: "disconnected" | "error" = /disconnect/i.test(message) ? "disconnected" : "error"
-        this.emit("chat:error", { sessionId, idempotencyKey, openclawSessionKey, message, kind })
+      emitError: (sessionId, idempotencyKey, openclawSessionKey, message, kind) => {
+        // kind 显式从上游透传(龙虾 errorKind 或 kaiwu 合成 "disconnected"),不做 regex 推断
+        this.emit("chat:error", { sessionId, idempotencyKey, openclawSessionKey, message, kind: kind ?? "error" })
       },
       emitDelivery: (ev: DeliveryUpdateEvent) => this.emit("delivery:update", ev),
       resolveAgentDisplayName: (agentId) => this.resolveAgentDisplayName(agentId),
@@ -176,6 +182,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
 
   async onShutdown(): Promise<void> {
     this.offGatewayEvents?.()
+    this.offAgentEvents?.()
     this.offPluginEvents?.()
     if (this.connectionWatchdog) {
       clearInterval(this.connectionWatchdog)
@@ -237,8 +244,8 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     return listMessages(sessionId)
   }
 
-  @Handle("message:send") async sendUserMessage(sessionId: string, content: string): Promise<void> {
-    log.info(`message:send sessionId=${sessionId} contentLen=${content.length}`)
+  @Handle("message:send") async sendUserMessage(sessionId: string, content: string, mentions?: ChatMention[], inReplyToMessageId?: string): Promise<void> {
+    log.info(`message:send sessionId=${sessionId} contentLen=${content.length} mentionsLen=${mentions?.length ?? 0} inReplyTo=${inReplyToMessageId ?? "-"}`)
     if (!this.deps) {
       log.error("message:send called but deps not ready")
       throw new Error("chat service not ready")
@@ -259,6 +266,9 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
       throw new Error(`session ${sessionId} has no active members`)
     }
     log.info(`message:send activeMembers=${members.length} memberIds=${members.map((m) => m.id).join(",")}`)
+    // 路由决策来源:结构化优先(composer 点选),无则降级文本正则。
+    const structuredMentions = mentions && mentions.length > 0 ? sanitizeStructuredMentions(content, mentions, members) : []
+    const effectiveMentions = structuredMentions.length > 0 ? structuredMentions : parseMentionsFromText(content, members)
     const userMsg: ChatMessage = {
       id: nanoid(),
       sessionId,
@@ -269,7 +279,8 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
       senderId: null,
       role: "user",
       content: { text: content },
-      mentions: parseMentionsFromText(content, members),
+      mentions: effectiveMentions,
+      inReplyToMessageId: inReplyToMessageId ?? null,
       turnRunId: null,
       tags: [],
       model: null,
@@ -289,6 +300,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
       role: "user",
       content: userMsg.content,
       mentions: userMsg.mentions,
+      inReplyToMessageId: userMsg.inReplyToMessageId,
       turnRunId: null,
       tags: [],
       model: null,
@@ -407,6 +419,29 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     return out
   }
 
+  // ========== inspect (会话追踪页) ==========
+  @Handle("inspect:getSessionDetail") async inspectGetSessionDetail(sessionId: string): Promise<ChatSessionDetail | null> {
+    const session = getSession(sessionId)
+    if (!session) return null
+    return {
+      session,
+      members: listMembers(sessionId),
+      messages: listMessages(sessionId),
+      turns: listTurns(sessionId),
+    }
+  }
+
+  @Handle("inspect:getTurn") async inspectGetTurn(turnRunId: string): Promise<ChatTurn | null> {
+    return getTurn(turnRunId)
+  }
+
+  // ========== debug ==========
+  @Handle("debug:clearAll") async debugClearAll(): Promise<{ cleared: Record<string, number> }> {
+    const result = clearAllChatTables()
+    log.warn(`debug:clearAll invoked; cleared=${JSON.stringify(result.cleared)}`)
+    return result
+  }
+
   // ========== private ==========
   private buildBackend(): ChatBackend {
     return {
@@ -414,7 +449,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
         log.info(`chat.send RPC call sessionKey=${params.sessionKey} idempotencyKey=${params.idempotencyKey} msgLen=${params.message.length}`)
         // 预检 gateway 状态；断连时直接抛 disconnected，避免把传输问题当成真实错误
         if (getGateway().getState().status !== "connected") {
-          throw new Error("disconnected")
+          throw Object.assign(new Error("disconnected"), { errorKind: "disconnected" })
         }
         try {
           const res = await getGateway().call("chat.send", { sessionKey: params.sessionKey, message: params.message, idempotencyKey: params.idempotencyKey })
@@ -447,6 +482,8 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
       return
     }
     log.info("subscribing to gateway chat events")
+    // 并行订阅 agent channel 以获取 lifecycle / reasoning / tool 细粒度事件
+    this.subscribeGatewayAgentEvents(stream)
     this.offGatewayEvents = stream.on("chat", (frame: EventFrame) => {
       const p = (frame.payload ?? {}) as ChatEventPayload
       // 边界映射：openclaw payload 字段叫 runId，kaiwu 内部一律叫 idempotencyKey
@@ -485,6 +522,43 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
       } else if (p.state === "error") {
         log.warn(`chat error key=${idempotencyKey}, message=${p.errorMessage}, kind=${p.errorKind}`)
         listener({ kind: "error", idempotencyKey, message: p.errorMessage ?? "unknown", errorKind: p.errorKind })
+      }
+    })
+  }
+
+  /**
+   * 订阅龙虾 agent channel:
+   *   - stream="lifecycle" data.phase=start/end/error → 运行生命周期
+   *   - stream="reasoning" → 模型思考(用于"思考中"提示)
+   *   - stream="tool" data.phase=start/end + data.name → 工具调用
+   *   - stream="assistant"/"item"/"error" → 暂不消费(chat channel 已覆盖 assistant)
+   *
+   * 按 runId 映射到同一个 listenersByKey 注册的 listener,与 chat 事件统一出口。
+   */
+  private subscribeGatewayAgentEvents(stream: ReturnType<ReturnType<typeof getGateway>["getStream"]> & {}): void {
+    if (!stream) return
+    log.info("subscribing to gateway agent events")
+    this.offAgentEvents = stream.on("agent", (frame: EventFrame) => {
+      const p = (frame.payload ?? {}) as { runId?: string; stream?: string; data?: Record<string, unknown> }
+      const idempotencyKey = p.runId
+      if (!idempotencyKey) return
+      const listener = this.listenersByKey.get(idempotencyKey)
+      if (!listener) return
+      const streamKind = p.stream
+      const data = p.data ?? {}
+      if (streamKind === "lifecycle") {
+        const phase = data.phase as "start" | "end" | "error" | undefined
+        if (phase === "start" || phase === "end" || phase === "error") {
+          listener({ kind: "lifecycle", idempotencyKey, phase })
+        }
+      } else if (streamKind === "reasoning") {
+        listener({ kind: "reasoning", idempotencyKey })
+      } else if (streamKind === "tool") {
+        const phase = data.phase as "start" | "end" | undefined
+        const name = typeof data.name === "string" ? data.name : undefined
+        if (phase === "start" || phase === "end") {
+          listener({ kind: "tool", idempotencyKey, phase, name })
+        }
       }
     })
   }
@@ -600,6 +674,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
             role,
             content: { text: contentText },
             mentions: [],
+            inReplyToMessageId: null,
             turnRunId: null,
             tags: ["synced"],
             model: r.model ?? null,
@@ -716,7 +791,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     await getGateway().call("sessions.delete", { key: sessionKey })
   }
 
-  private async pushContext(payload: { sessionKey: string; instruction: string; knowledge: string[]; sharedHistory?: string }): Promise<void> {
+  private async pushContext(payload: ContextPayload): Promise<void> {
     const bridge = getBridgeServer()
     const creds = bridge?.getCredentials() ?? null
     await invokePluginBridge(creds?.token ?? null, { action: "context.set", params: payload })
@@ -769,18 +844,6 @@ function extractHistoryText(content: unknown): string {
   return ""
 }
 
-function parseMentionsFromText(content: string, members: ChatMember[]): ChatMention[] {
-  const found: ChatMention[] = []
-  for (const m of members) {
-    const re = new RegExp(`@${escapeRegex(m.agentId)}\\b`, "i")
-    if (re.test(content)) found.push({ agentId: m.agentId, source: "plain" })
-  }
-  return found
-}
-
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-}
 
 // Ensure ChatBridge type gets pulled in for consumers (preload bridge validates against it).
 export type { ChatBridge }
