@@ -108,7 +108,7 @@ export function MemberCard({ sessionId, member, usage, disabled, onToggleReplyMo
       case "error":
         return "ring-1 ring-destructive/60"
       case "done":
-        return "ring-1 ring-emerald-400/40"
+        return "ring-1 ring-success/40"
       case "aborted":
         return "ring-1 ring-muted-foreground/30"
       default:
@@ -116,7 +116,7 @@ export function MemberCard({ sessionId, member, usage, disabled, onToggleReplyMo
     }
   })()
 
-  const barCls = warn ? "bg-destructive" : notice ? "bg-amber-500" : "bg-primary"
+  const barCls = warn ? "bg-destructive" : notice ? "bg-warn" : "bg-primary"
 
   const tooltipTitle = [
     name,
@@ -220,14 +220,14 @@ function StatusChip({ state }: { state: DeliveryState | undefined }) {
     )
   if (status === "thinking")
     return (
-      <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400">
+      <span className="text-warn inline-flex shrink-0 items-center gap-0.5 text-[10px]">
         <Brain className="size-3 animate-pulse" aria-hidden /> {t("chat.delivery.thinking")}
       </span>
     )
   if (status === "tool") {
     const label = state.toolName ? t("chat.delivery.toolNamed", { name: state.toolName }) : t("chat.delivery.tool")
     return (
-      <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-sky-600 dark:text-sky-400">
+      <span className="text-info inline-flex shrink-0 items-center gap-0.5 text-[10px]">
         <Wrench className="size-3 animate-pulse" aria-hidden /> <span className="max-w-24 truncate">{label}</span>
       </span>
     )
@@ -241,7 +241,7 @@ function StatusChip({ state }: { state: DeliveryState | undefined }) {
     )
   if (status === "done")
     return (
-      <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-emerald-600 dark:text-emerald-400">
+      <span className="text-success inline-flex shrink-0 items-center gap-0.5 text-[10px]">
         <CheckCheck className="size-3" aria-hidden /> {t("chat.delivery.done")}
       </span>
     )

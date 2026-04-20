@@ -50,8 +50,8 @@ export interface ChatBridge {
     create: (input: CreateSessionInput) => Promise<ChatSession>
     delete: (id: string) => Promise<void>
     archive: (id: string, archived: boolean) => Promise<void>
-    /** 对账该 session 的消息:拉 openclaw chat.history 补齐 kaiwu 缺失消息。 */
-    reconcile: (id: string) => Promise<{ imported: number }>
+    /** 对账该 session 的消息:拉 openclaw chat.history,按 id/content 指纹 upsert 本地消息。 */
+    reconcile: (id: string) => Promise<{ imported: number; updated: number }>
   }
   message: {
     list: (sessionId: string) => Promise<ChatMessage[]>

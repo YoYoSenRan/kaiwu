@@ -50,6 +50,6 @@ export async function archive(id: string, archived: boolean): Promise<void> {
   setSessionArchived(id, archived)
 }
 
-export async function reconcile(svc: ChatService, sessionId: string): Promise<{ imported: number }> {
+export async function reconcile(svc: ChatService, sessionId: string): Promise<{ imported: number; updated: number }> {
   return svc.reconcileSession(sessionId)
 }

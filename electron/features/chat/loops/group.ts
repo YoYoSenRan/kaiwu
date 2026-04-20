@@ -50,13 +50,13 @@ export interface GroupDeps {
   trackKeyStart: (sessionId: string, idempotencyKey: string, openclawKey: string) => void
   /** 注销活跃 idempotencyKey。sendToMember 在 runStep 完成/异常后调用。 */
   trackKeyEnd: (sessionId: string, idempotencyKey: string) => void
-  /** 从 openclaw chat.history 取该 sessionKey 最后一条 assistant 消息的元数据。失败返 null 不阻塞。 */
-  fetchAssistantMeta: (sessionKey: string) => Promise<{
-    id?: string
-    model?: string
-    usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; total?: number }
-    stopReason?: string
-  } | null>
+  /**
+   * 对刚写入的本地消息做元数据对账:向 openclaw 拉 chat.history,按 content 指纹 + 时间窗口
+   * 精确匹配那一条,回填 openclawMessageId / usage / model / stopReason。
+   *
+   * 内部带重试 + 失败兜底;loop 调用方 fire-and-forget 即可。
+   */
+  resolveMessageMeta: (params: { sessionId: string; localMsgId: string; sessionKey: string; contentText: string; createdAtLocal: number }) => Promise<void>
 }
 
 /** 挂起状态登记：pendingId → { sessionId, byAgentId }。用于 answerAsk 回写。 */
@@ -278,12 +278,10 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
       return
     }
 
-    // 从 openclaw chat.history 补元数据（usage / model / stopReason）——event stream 不带这些
-    const meta = await deps.fetchAssistantMeta(target.openclawKey).catch(() => null)
-    // per-message usage 龙虾不在 chat.history 提供,结果通常为 null。session 级 usage 已由 MemberCard/sessions.list 展示
-    const usage = meta?.usage ?? result.usage ?? null
-    const model = meta?.model ?? null
-    const stopReason = meta?.stopReason ?? result.stopReason ?? null
+    // live 阶段只用 stream fallback;权威元数据(usage / model / stopReason / openclawMessageId)
+    // 交给 resolveMessageMeta 异步对账回填。
+    const usage = result.usage ?? null
+    const stopReason = result.stopReason ?? null
 
     // 存两类 mention(UI 展示 + 路由区分都靠 source 字段):
     //   - tool 事件(hand_off 工具触发) → source="tool" → 参与路由(确定意图)
@@ -300,24 +298,25 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
       mergedMentions.push(m)
     }
 
+    const content = (() => {
+      const extracted = extractCardsFromText(interp.content)
+      return extracted.cards.length > 0 ? { text: extracted.text, cards: extracted.cards } : { text: interp.content }
+    })()
     const assistantMsg: ChatMessage = {
       id: nanoid(),
       sessionId,
       seq: nextSeq(sessionId),
       openclawSessionKey: target.openclawKey,
-      openclawMessageId: meta?.id ?? null,
+      openclawMessageId: null,
       senderType: "agent",
       senderId: target.agentId,
       role: "assistant",
-      content: (() => {
-        const extracted = extractCardsFromText(interp.content)
-        return extracted.cards.length > 0 ? { text: extracted.text, cards: extracted.cards } : { text: interp.content }
-      })(),
+      content,
       mentions: mergedMentions,
       inReplyToMessageId: incoming.id,
       turnRunId: idempotencyKey,
       tags: [],
-      model,
+      model: null,
       usage,
       stopReason,
       createdAtLocal: Date.now(),
@@ -343,6 +342,14 @@ async function sendToMember(deps: GroupDeps, sessionId: string, incoming: ChatMe
       createdAtRemote: assistantMsg.createdAtRemote,
     })
     deps.emitMessage(assistantMsg)
+    // 异步对账:向 openclaw chat.history 拉权威元数据回填
+    void deps.resolveMessageMeta({
+      sessionId,
+      localMsgId: assistantMsg.id,
+      sessionKey: target.openclawKey,
+      contentText: content.text,
+      createdAtLocal: assistantMsg.createdAtLocal,
+    })
     emitTerminal("done")
 
     // 递归继续（下一个 target 由 decideTargets 根据新消息的 mentions 决定）

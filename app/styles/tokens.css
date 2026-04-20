@@ -23,6 +23,13 @@
   --accent-foreground: oklch(0.2435 0 0);
   --destructive: oklch(0.5523 0.1927 32.7272);
   --destructive-foreground: oklch(0.9934 0.0032 17.2118);
+  /* 语义态 token：warn=警示(HITL/断连)；success=成功(已送达)；info=中性信息(工具调用) */
+  --warn: oklch(0.7686 0.1647 70.0804);
+  --warn-foreground: oklch(0.3 0.08 70);
+  --success: oklch(0.6959 0.1491 162.4796);
+  --success-foreground: oklch(0.25 0.08 160);
+  --info: oklch(0.6231 0.188 259.8145);
+  --info-foreground: oklch(0.25 0.1 259);
   --border: oklch(0.9037 0 0);
   --input: oklch(0.9037 0 0);
   --ring: oklch(0.5568 0.1355 155.812);
@@ -83,6 +90,13 @@
   --accent-foreground: oklch(0.9851 0 0);
   --destructive: oklch(0.3123 0.0852 29.7877);
   --destructive-foreground: oklch(0.9368 0.0045 34.3092);
+  /* 语义态 token(暗)：对应明色系,提亮 chroma 保可读 */
+  --warn: oklch(0.8369 0.1644 84.4286);
+  --warn-foreground: oklch(0.2 0.05 70);
+  --success: oklch(0.7845 0.1325 181.912);
+  --success-foreground: oklch(0.15 0.05 160);
+  --info: oklch(0.7137 0.1434 254.624);
+  --info-foreground: oklch(0.15 0.06 259);
   --border: oklch(0.2809 0 0);
   --input: oklch(0.2809 0 0);
   --ring: oklch(0.5568 0.1355 155.812);
@@ -136,6 +150,12 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-warn: var(--warn);
+  --color-warn-foreground: var(--warn-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

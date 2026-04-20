@@ -36,13 +36,13 @@ export interface DirectDeps {
   emitDelivery: (ev: DeliveryUpdateEvent) => void
   trackKeyStart: (sessionId: string, idempotencyKey: string, openclawKey: string) => void
   trackKeyEnd: (sessionId: string, idempotencyKey: string) => void
-  /** 从 openclaw chat.history 取该 sessionKey 最后一条 assistant 消息的元数据。失败返 null 不阻塞。 */
-  fetchAssistantMeta: (sessionKey: string) => Promise<{
-    id?: string
-    model?: string
-    usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; total?: number }
-    stopReason?: string
-  } | null>
+  /**
+   * 对刚写入的本地消息做元数据对账:向 openclaw 拉 chat.history,按 content 指纹 + 时间窗口
+   * 精确匹配那一条,回填 openclawMessageId / usage / model / stopReason。
+   *
+   * 内部带重试 + 失败兜底;loop 调用方 fire-and-forget 即可。
+   */
+  resolveMessageMeta: (params: { sessionId: string; localMsgId: string; sessionKey: string; contentText: string; createdAtLocal: number }) => Promise<void>
 }
 
 /**
@@ -169,30 +169,30 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
       return
     }
 
-    // 从 openclaw chat.history 补元数据（id / usage / model / stopReason）——event stream 不带这些
-    const meta = await deps.fetchAssistantMeta(member.openclawKey).catch(() => null)
-    const usage = meta?.usage ?? result.usage ?? null
-    const model = meta?.model ?? null
-    const stopReason = meta?.stopReason ?? result.stopReason ?? null
+    // live 阶段只用 stream 自带 fallback(通常只有 input/output,缺 cacheRead/Write);
+    // 权威元数据(usage / model / stopReason / openclawMessageId)交给 resolveMessageMeta 异步对账回填。
+    const usage = result.usage ?? null
+    const stopReason = result.stopReason ?? null
 
+    const content = (() => {
+      const extracted = extractCardsFromText(interp.content)
+      return extracted.cards.length > 0 ? { text: extracted.text, cards: extracted.cards } : { text: interp.content }
+    })()
     const assistantMsg: ChatMessage = {
       id: nanoid(),
       sessionId,
       seq: nextSeq(sessionId),
       openclawSessionKey: member.openclawKey,
-      openclawMessageId: meta?.id ?? null,
+      openclawMessageId: null,
       senderType: "agent",
       senderId: member.agentId,
       role: "assistant",
-      content: (() => {
-        const extracted = extractCardsFromText(interp.content)
-        return extracted.cards.length > 0 ? { text: extracted.text, cards: extracted.cards } : { text: interp.content }
-      })(),
+      content,
       mentions: [],
       inReplyToMessageId: userMsg.id,
       turnRunId: idempotencyKey,
       tags: [],
-      model,
+      model: null,
       usage,
       stopReason,
       createdAtLocal: Date.now(),
@@ -218,6 +218,14 @@ export async function sendDirect(deps: DirectDeps, sessionId: string, userMsg: C
       createdAtRemote: assistantMsg.createdAtRemote,
     })
     deps.emitMessage(assistantMsg)
+    // 异步对账:向 openclaw chat.history 拉权威元数据回填(usage 完整 + model + stopReason)
+    void deps.resolveMessageMeta({
+      sessionId,
+      localMsgId: assistantMsg.id,
+      sessionKey: member.openclawKey,
+      contentText: content.text,
+      createdAtLocal: assistantMsg.createdAtLocal,
+    })
     emitTerminal("done")
   } catch (err) {
     emitTerminal("error", (err as Error).message)

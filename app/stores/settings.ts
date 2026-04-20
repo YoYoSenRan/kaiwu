@@ -8,8 +8,11 @@ export type ResolvedTheme = "dark" | "light"
 interface SettingsState {
   lang: Lang
   theme: Theme
+  /** 聊天页右侧详情面板是否展开。首帧即需,走 zustand persist。 */
+  chatDetailOpen: boolean
   setLang: (lang: Lang) => void
   setTheme: (theme: Theme) => void
+  setChatDetailOpen: (open: boolean) => void
 }
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
@@ -63,22 +66,25 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       lang: "zh-CN",
       theme: "system",
+      chatDetailOpen: true,
       setLang: (lang) => set({ lang }),
       setTheme: (theme) => {
         // 立即 apply class，保证切换在下一次 render 之前就生效
         applyThemeClass(theme)
         set({ theme })
       },
+      setChatDetailOpen: (open) => set({ chatDetailOpen: open }),
     }),
     {
       name: "settings",
-      version: 2,
-      // v1 无 sidebarCollapsed 字段，补默认值避免 undefined 被读进组件
+      version: 3,
+      // v1 无 sidebarCollapsed 字段；v2 无 chatDetailOpen 字段——各自补默认值
       migrate: (persisted, version) => {
-        if (version < 2) {
-          return { ...(persisted as SettingsState), sidebarCollapsed: false }
-        }
-        return persisted as SettingsState
+        const base = persisted as Partial<SettingsState>
+        const next: Partial<SettingsState> = { ...base }
+        if (version < 2) (next as { sidebarCollapsed?: boolean }).sidebarCollapsed = false
+        if (version < 3) next.chatDetailOpen = true
+        return next as SettingsState
       },
     },
   ),

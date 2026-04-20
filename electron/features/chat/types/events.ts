@@ -43,7 +43,7 @@ export interface StreamEndEvent {
 /** 通知 renderer 该 session 的消息列表需要 re-fetch(对账后外部消息入库、旁路监听等)。 */
 export interface MessagesRefreshEvent {
   sessionId: string
-  reason: "reconcile" | "external"
+  reason: "reconcile" | "external" | "meta"
 }
 
 /**

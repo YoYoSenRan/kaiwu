@@ -17,9 +17,8 @@ import type { StepEvent, StepUsage } from "../../agent/types"
 import { onAskUserEvent, onMentionNextEvent, type DirectDeps, type GroupDeps } from "./loops"
 import type { ContextPayload } from "./loops/prompt"
 import { parseOpenClawKey } from "./bootstrap"
-import { insertMessage, listMembers, listMessages, listOpenclawMessageIds, listSessions, nextSeq, getSession } from "./repository"
-import { nanoid } from "nanoid"
-import { stripMentionsForAgent } from "./routing"
+import { listMembers, listMessages, listSessions, getSession, updateMessageMeta } from "./repository"
+import { matchOpenclawMessage, normalizeUsage, type OpenclawHistoryMessage } from "./usage-match"
 import { getBridgeServer, getGateway } from "../openclaw/runtime"
 import { call as invokePluginBridge } from "../openclaw/bridge/call"
 import type { EventFrame } from "../openclaw/gateway/contract"
@@ -49,6 +48,9 @@ import type {
 } from "./types"
 
 const log = scope("chat:service")
+
+/** Anthropic/Gateway 正常结束的 stopReason。非此集合的 assistant 消息视为工具调用中间步骤,不对账。 */
+const NORMAL_STOP: ReadonlySet<string> = new Set(["stop", "end_turn", "stop_sequence"])
 
 interface ChatEventPayload {
   runId?: string
@@ -87,7 +89,17 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
       backend: this.buildBackend(),
       pushContext: (payload) => this.pushContext(payload),
       emitMessage: (msg) => this.emit("message:new", msg),
-      emitLoop: (kind, sessionId, reason) => this.emit("loop:event", { sessionId, kind, reason }),
+      emitLoop: (kind, sessionId, reason) => {
+        this.emit("loop:event", { sessionId, kind, reason })
+        // loop 结束时后台再跑一次全量对账,兜底 resolveMessageMeta 没拿到的消息。
+        if (kind === "ended") {
+          void this.reconcileSession(sessionId)
+            .then((r) => {
+              if (r.imported > 0 || r.updated > 0) this.emit("messages:refresh", { sessionId, reason: "reconcile" })
+            })
+            .catch(() => {})
+        }
+      },
       emitPaused: (ev) => this.emit("loop:paused", ev),
       emitStreamDelta: (sessionId, idempotencyKey, openclawSessionKey, content) => this.emit("stream:delta", { sessionId, idempotencyKey, openclawSessionKey, content }),
       emitStreamEnd: (sessionId, idempotencyKey, openclawSessionKey) => this.emit("stream:end", { sessionId, idempotencyKey, openclawSessionKey }),
@@ -109,10 +121,10 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
         this.activeKeysBySession.get(sessionId)?.delete(idempotencyKey)
         this.sessionKeyByKey.delete(idempotencyKey)
       },
-      fetchAssistantMeta: (sessionKey) => this.fetchAssistantMeta(sessionKey),
+      resolveMessageMeta: (params) => this.resolveMessageMeta(params),
     }
 
-    const d = this.deps
+    const d = this.deps as GroupDeps
     this.directDeps = {
       backend: d.backend,
       emitMessage: d.emitMessage,
@@ -123,7 +135,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
       emitDelivery: d.emitDelivery,
       trackKeyStart: d.trackKeyStart,
       trackKeyEnd: d.trackKeyEnd,
-      fetchAssistantMeta: d.fetchAssistantMeta,
+      resolveMessageMeta: d.resolveMessageMeta,
     }
 
     void this.reconcileAllOnStartup()
@@ -158,36 +170,35 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     await getGateway().call("sessions.delete", { key: sessionKey })
   }
 
-  /** ipc/session.ts 对账。 */
-  async reconcileSession(sessionId: string): Promise<{ imported: number }> {
+  /**
+   * 对账:拉 openclaw chat.history,按 id / content 指纹匹配本地消息。
+   *
+   * - 有匹配 → updateMessageMeta(usage / model / stopReason / openclawMessageId)刷新权威元数据
+   * - 无匹配 → insertMessage 新增(外部工具或旁路写入的消息)
+   *
+   * 这样 live 路径缺的 usage 字段能在切 session 时被补齐,实现最终一致性。
+   */
+  async reconcileSession(sessionId: string): Promise<{ imported: number; updated: number }> {
     const session = getSession(sessionId)
-    if (!session) return { imported: 0 }
+    if (!session) return { imported: 0, updated: 0 }
     const members = listMembers(sessionId)
-    if (members.length === 0) return { imported: 0 }
+    if (members.length === 0) return { imported: 0, updated: 0 }
     const gw = getGateway()
-    if (gw.getState().status !== "connected") return { imported: 0 }
+    if (gw.getState().status !== "connected") return { imported: 0, updated: 0 }
 
-    const existingKeys = this.buildFuzzyKeySet(sessionId)
-    const existingOpenclawIds = listOpenclawMessageIds(sessionId)
-    const activeMembers = members
-    let imported = 0
+    const localMessages = listMessages(sessionId)
+    const localByOpenclawId = new Map<string, (typeof localMessages)[number]>()
+    for (const m of localMessages) {
+      if (m.openclawMessageId) localByOpenclawId.set(m.openclawMessageId, m)
+    }
+    const imported = 0
+    let updated = 0
 
     for (const member of members) {
       const sessionKey = member.openclawKey
       try {
         const resp = await Promise.race([
-          gw.call<{
-            sessionKey?: string
-            messages?: Array<{
-              role: string
-              content: unknown
-              timestamp?: number
-              model?: string
-              stopReason?: string
-              usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; totalTokens?: number }
-              __openclaw?: { id?: string; seq?: number; kind?: string }
-            }>
-          }>("chat.history", { sessionKey }),
+          gw.call<{ messages?: OpenclawHistoryMessage[] }>("chat.history", { sessionKey }),
           new Promise<never>((_, rej) => setTimeout(() => rej(new Error("chat.history timeout 10s")), 10_000)),
         ])
         const messages = resp?.messages
@@ -195,56 +206,66 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
 
         const sorted = [...messages].sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0))
         for (const r of sorted) {
+          // 过滤非最终 assistant 消息:
+          //   - user 消息:源头是 kaiwu,openclaw 里是镜像,跳过
+          //   - tool / system 消息:openclaw 的工具调用/结果中间步骤,不入 kaiwu 视图
+          //   - assistant + stopReason=toolUse 等非正常结束:工具调用中间片段,也跳过
+          if (r.role !== "assistant") continue
+          if (r.stopReason && !NORMAL_STOP.has(r.stopReason)) continue
+
           const contentText = extractHistoryText(r.content)
           const strongId = r.__openclaw?.id ?? null
-          const syntheticId = !strongId && r.timestamp ? `${r.role}:${r.timestamp}` : null
-          const storedId = strongId ?? syntheticId
-          const fuzzyKey = `${r.role}:${stripMentionsForAgent(contentText, activeMembers).slice(0, 80)}`
-          if (storedId && existingOpenclawIds.has(storedId)) continue
-          if (existingKeys.has(fuzzyKey)) continue
+          // 优先 id 精确匹配;其次 content 指纹(子串) + 时间窗
+          let localMatch = strongId ? localByOpenclawId.get(strongId) : undefined
+          if (!localMatch) {
+            const fp = contentText.trim()
+            const ts = r.timestamp ?? 0
+            localMatch = localMessages.find((m) => {
+              if (m.openclawSessionKey !== sessionKey) return false
+              if (m.senderType !== "agent") return false
+              const mText = ((m.content as { text?: string } | null)?.text ?? "").trim()
+              if (!mText || !fp) return false
+              // live msg 可能合并了 tool 输出 + final,openclaw final 只是最后一段 → 用子串匹配
+              if (!mText.includes(fp) && !fp.includes(mText)) return false
+              if (ts > 0 && Math.abs(m.createdAtLocal - ts) > 60_000) return false
+              return true
+            })
+          }
 
-          const usage = r.usage
-            ? {
-                input: r.usage.input,
-                output: r.usage.output,
-                cacheRead: r.usage.cacheRead,
-                cacheWrite: r.usage.cacheWrite,
-                total: r.usage.totalTokens,
-              }
-            : null
-          const senderType: "user" | "agent" = r.role === "user" ? "user" : "agent"
-          const role: "user" | "assistant" | "tool" | "system" = r.role === "user" ? "user" : r.role === "assistant" ? "assistant" : r.role === "tool" ? "tool" : "system"
+          if (!localMatch) {
+            // 找不到对应 live msg:agent 消息源头也是 kaiwu 自己(loop 触发 chat.send 后 openclaw 回写)。
+            // 若连指纹都对不上,多半是 live insert 失败或数据异常。不自动 insert 避免重复,打 warn 告警。
+            log.warn(`reconcile orphan assistant message sessionKey=${sessionKey} fp=${contentText.slice(0, 40)}...`)
+            continue
+          }
 
-          insertMessage({
-            id: nanoid(),
-            sessionId,
-            seq: nextSeq(sessionId),
-            openclawSessionKey: sessionKey,
-            openclawMessageId: storedId,
-            senderType,
-            senderId: senderType === "agent" ? member.agentId : null,
-            role,
-            content: { text: contentText },
-            mentions: [],
-            inReplyToMessageId: null,
-            turnRunId: null,
-            tags: ["synced"],
-            model: r.model ?? null,
-            usage,
-            stopReason: r.stopReason ?? null,
-            createdAtRemote: r.timestamp ?? null,
-          })
-          existingKeys.add(fuzzyKey)
-          if (storedId) existingOpenclawIds.add(storedId)
-          imported++
+          // upsert:只刷新权威字段。避免把 null 覆盖掉 live 阶段已有的 fallback(用 nullish 判空)
+          const nextUsage = normalizeUsage(r.usage)
+          const nextModel = r.model ?? null
+          const nextStopReason = r.stopReason ?? null
+          const nextOpenclawId = strongId
+          const needUpdate =
+            (nextOpenclawId && nextOpenclawId !== localMatch.openclawMessageId) ||
+            (nextUsage && JSON.stringify(nextUsage) !== JSON.stringify(localMatch.usage)) ||
+            (nextModel && nextModel !== localMatch.model) ||
+            (nextStopReason && nextStopReason !== localMatch.stopReason)
+          if (needUpdate) {
+            updateMessageMeta(localMatch.id, {
+              openclawMessageId: nextOpenclawId ?? undefined,
+              usage: nextUsage ?? undefined,
+              model: nextModel ?? undefined,
+              stopReason: nextStopReason ?? undefined,
+            })
+            updated++
+          }
         }
       } catch (err) {
         log.warn(`reconcile member=${member.id} sessionKey=${sessionKey} failed: ${(err as Error).message}`)
       }
     }
 
-    if (imported > 0) log.info(`reconcile session=${sessionId} imported=${imported} messages`)
-    return { imported }
+    if (imported > 0 || updated > 0) log.info(`reconcile session=${sessionId} imported=${imported} updated=${updated}`)
+    return { imported, updated }
   }
 
   // ---------- @Handle ----------
@@ -439,7 +460,7 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
 
   private async handleExternalFinal(member: ChatMember): Promise<void> {
     const res = await this.reconcileSession(member.sessionId)
-    if (res.imported > 0) this.emit("messages:refresh", { sessionId: member.sessionId, reason: "external" })
+    if (res.imported > 0 || res.updated > 0) this.emit("messages:refresh", { sessionId: member.sessionId, reason: "external" })
   }
 
   private async reconcileAllOnStartup(): Promise<void> {
@@ -457,45 +478,41 @@ export class ChatService extends IpcController<ChatEvents> implements IpcLifecyc
     }
   }
 
-  private buildFuzzyKeySet(sessionId: string): Set<string> {
-    const members = listMembers(sessionId)
-    const set = new Set<string>()
-    for (const m of listMessages(sessionId)) {
-      const text = extractHistoryText(m.content)
-      const cleaned = stripMentionsForAgent(text, members)
-      const role = m.senderType === "user" ? "user" : m.senderType === "agent" ? "assistant" : m.role
-      set.add(`${role}:${cleaned.slice(0, 80)}`)
+  /**
+   * 对单条刚写入的本地消息做元数据对账:向 openclaw 拉 chat.history,
+   * 用 content 指纹 + 时间窗精确匹配到对应消息,回填 openclawMessageId / usage / model / stopReason。
+   *
+   * openclaw 写 JSONL 可能晚于 stream end 事件,所以分三次重试(200ms / 500ms / 1s)。
+   * 全部失败也不 throw;切 session 的 reconcileSession 会做兜底对账。
+   */
+  private async resolveMessageMeta(params: { sessionId: string; localMsgId: string; sessionKey: string; contentText: string; createdAtLocal: number }): Promise<void> {
+    const delays = [200, 500, 1000]
+    for (const delay of delays) {
+      await new Promise<void>((r) => setTimeout(r, delay))
+      const gw = getGateway()
+      if (gw.getState().status !== "connected") continue
+      try {
+        const resp = await gw.call<{ messages?: OpenclawHistoryMessage[] }>("chat.history", { sessionKey: params.sessionKey })
+        const history = resp?.messages
+        if (!Array.isArray(history) || history.length === 0) continue
+        const matched = matchOpenclawMessage(
+          { openclawMessageId: null, contentText: params.contentText, createdAtLocal: params.createdAtLocal },
+          history,
+        )
+        if (!matched) continue
+        updateMessageMeta(params.localMsgId, {
+          openclawMessageId: matched.__openclaw?.id ?? null,
+          usage: normalizeUsage(matched.usage),
+          model: matched.model ?? null,
+          stopReason: matched.stopReason ?? null,
+        })
+        this.emit("messages:refresh", { sessionId: params.sessionId, reason: "meta" })
+        return
+      } catch (err) {
+        log.warn(`resolveMessageMeta retry delay=${delay}ms failed: ${(err as Error).message}`)
+      }
     }
-    return set
-  }
-
-  private async fetchAssistantMeta(sessionKey: string): Promise<{
-    id?: string
-    model?: string
-    usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; total?: number }
-    stopReason?: string
-  } | null> {
-    try {
-      const resp = await getGateway().call<{
-        messages?: Array<{
-          role: string
-          model?: string
-          stopReason?: string
-          usage?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; totalTokens?: number }
-          __openclaw?: { id?: string }
-        }>
-      }>("chat.history", { sessionKey })
-      const history = resp?.messages
-      if (!Array.isArray(history) || history.length === 0) return null
-      const last = [...history].reverse().find((m) => m.role === "assistant")
-      if (!last) return null
-      const u = last.usage
-      const usage = u ? { input: u.input, output: u.output, cacheRead: u.cacheRead, cacheWrite: u.cacheWrite, total: u.totalTokens } : undefined
-      return { id: last.__openclaw?.id, model: last.model, usage, stopReason: last.stopReason }
-    } catch (err) {
-      log.warn(`fetchAssistantMeta failed sessionKey=${sessionKey}: ${(err as Error).message}`)
-      return null
-    }
+    log.warn(`resolveMessageMeta exhausted localMsgId=${params.localMsgId} sessionKey=${params.sessionKey}`)
   }
 
   private async pushContext(payload: ContextPayload): Promise<void> {

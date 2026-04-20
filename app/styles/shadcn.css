@@ -30,3 +30,32 @@
   grid-template-columns: repeat(2, 1fr);
   width: 100%;
 }
+
+/* ===== chat 页面专用 hook ===== */
+
+/* 聊天输入框：textarea 嵌在带 ring 的圆容器里,去掉自身边框/圆角/focus ring */
+.chat-composer [data-slot="textarea"] {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  min-height: 40px;
+  max-height: 200px;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  resize: none;
+  field-sizing: content;
+}
+.chat-composer [data-slot="textarea"]:focus-visible {
+  border: 0;
+  box-shadow: none;
+  outline: none;
+  --tw-ring-shadow: 0 0 transparent;
+}
+
+/* sidebar 搜索框：为左右图标腾 padding,略缩字号 */
+.sidebar-search [data-slot="input"] {
+  padding-inline: 2rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}

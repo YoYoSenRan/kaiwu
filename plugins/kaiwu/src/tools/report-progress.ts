@@ -21,16 +21,26 @@
  *   - 已经通过文字在 stream 吐"第 3 步:分析..."这类内容(重复)
  */
 
-import { Type, type Static } from "@sinclair/typebox"
 import type { AnyAgentTool, OpenClawPluginToolContext, OpenClawPluginToolFactory } from "../../api.js"
 import type { BridgeClient } from "../bridge/transport.js"
 import { CHAT_CHANNEL, type ReportProgressEvent } from "../bridge/chat.js"
 
-const ReportProgressParams = Type.Object({
-  step: Type.String({ description: "当前步骤的简短描述,如 '分析发现 3' 或 '下载文件 README.md'" }),
-  current: Type.Number({ description: "当前步骤序号(1-based 或从 0 开始都行,但需一致)" }),
-  total: Type.Optional(Type.Number({ description: "总步骤数(已知时传,UI 可显进度条)" })),
-})
+const ReportProgressParams = {
+  type: "object",
+  properties: {
+    step: { type: "string", description: "当前步骤的简短描述,如 '分析发现 3' 或 '下载文件 README.md'" },
+    current: { type: "number", description: "当前步骤序号(1-based 或从 0 开始都行,但需一致)" },
+    total: { type: "number", description: "总步骤数(已知时传,UI 可显进度条)" },
+  },
+  required: ["step", "current"],
+  additionalProperties: false,
+} as never
+
+interface ReportProgressArgs {
+  step: string
+  current: number
+  total?: number
+}
 
 export function createReportProgressFactory(bridge: BridgeClient): OpenClawPluginToolFactory {
   return (ctx: OpenClawPluginToolContext) => {
@@ -41,7 +51,7 @@ export function createReportProgressFactory(bridge: BridgeClient): OpenClawPlugi
       description: "长任务分步进度上报。调用后 UI 显当前步骤 + 可选进度条。" + "适用多步任务(扫文件 / 批处理)让用户看到推进。短任务不用调。",
       parameters: ReportProgressParams,
       execute: async (_toolCallId: string, rawParams: unknown) => {
-        const params = rawParams as Static<typeof ReportProgressParams>
+        const params = rawParams as ReportProgressArgs
         const event: ReportProgressEvent = {
           kind: "report_progress",
           sessionKey,

@@ -13,11 +13,14 @@ export type ActionHandler = (params: unknown) => { ok: boolean; error?: string; 
 /** 全局 action 注册表。key 是完整 action 名(如 "context.set")。 */
 const registry = new Map<string, ActionHandler>()
 
-/** 注册一个 action handler。 */
+/**
+ * 注册一个 action handler。
+ *
+ * 幂等:openclaw 在不同 request scope 下可能反复 loadOpenClawPlugins → registerBridgePlugin → setupRoutes。
+ * registry 是 module-level 单例,第二次注册若 throw 会让 openclaw 进入 unhandled rejection。
+ * 直接覆盖保持幂等 — handler 引用变化时也是期望行为(热更新)。
+ */
 export function registerAction(action: string, handler: ActionHandler): void {
-  if (registry.has(action)) {
-    throw new Error(`action "${action}" already registered`)
-  }
   registry.set(action, handler)
 }
 

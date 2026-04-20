@@ -312,6 +312,34 @@
     "new": "新对话",
     "search": "搜索历史...",
     "placeholder": "提问任何内容...（输入 @ 可 mention 代理）",
+    "placeholderRunning": "正在回复中，可以继续草拟下一条…",
+    "action": {
+      "send": "发送",
+      "stop": "停止"
+    },
+    "detailPanel": {
+      "toggle": "切换会话详情面板",
+      "show": "显示详情",
+      "hide": "隐藏详情"
+    },
+    "abort": {
+      "agentReplyLater": "agent 已开始回复，刚才的消息已恢复显示",
+      "confirmed": "已停止本轮"
+    },
+    "newMenu": {
+      "direct": "新建单聊",
+      "group": "新建群聊"
+    },
+    "message": {
+      "copy": "复制",
+      "copied": "已复制",
+      "delete": "从对话中移除",
+      "deleted": "已移除此消息"
+    },
+    "mention": {
+      "all": "全体成员",
+      "allHint": "同时 @ 所有参与者"
+    },
     "empty": {
       "title": "有什么我可以帮您的？",
       "description": "提问、探索知识库或触发本地工具"

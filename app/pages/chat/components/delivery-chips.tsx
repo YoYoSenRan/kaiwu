@@ -50,10 +50,10 @@ export function DeliveryChips({ sessionId, messageId }: Props) {
 /** 状态 → 色调类(bg + text + ring)。色调语义化,参考 Slack 的 activity 指示器。 */
 const TONE: Record<DeliveryState["status"], string> = {
   queued: "bg-muted/70 text-muted-foreground ring-foreground/10",
-  thinking: "bg-amber-500/10 text-amber-700 ring-amber-500/30 dark:text-amber-400",
-  tool: "bg-sky-500/10 text-sky-700 ring-sky-500/30 dark:text-sky-400",
+  thinking: "bg-warn/10 text-warn ring-warn/30",
+  tool: "bg-info/10 text-info ring-info/30",
   replying: "bg-primary/10 text-primary ring-primary/30",
-  done: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 dark:text-emerald-400",
+  done: "bg-success/10 text-success ring-success/30",
   error: "bg-destructive/10 text-destructive ring-destructive/30",
   aborted: "bg-muted/60 text-muted-foreground/80 ring-foreground/10",
 }

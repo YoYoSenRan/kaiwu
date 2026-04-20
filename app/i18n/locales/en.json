@@ -312,6 +312,34 @@
     "new": "New Chat",
     "search": "Search history...",
     "placeholder": "Ask anything... (@ to mention agents)",
+    "placeholderRunning": "Replying… you can draft the next message.",
+    "action": {
+      "send": "Send",
+      "stop": "Stop"
+    },
+    "detailPanel": {
+      "toggle": "Toggle chat details panel",
+      "show": "Show details",
+      "hide": "Hide details"
+    },
+    "abort": {
+      "agentReplyLater": "Agent replied anyway; your message is restored.",
+      "confirmed": "Turn stopped."
+    },
+    "newMenu": {
+      "direct": "New direct chat",
+      "group": "New group chat"
+    },
+    "message": {
+      "copy": "Copy",
+      "copied": "Copied",
+      "delete": "Remove from view",
+      "deleted": "Message hidden"
+    },
+    "mention": {
+      "all": "Everyone",
+      "allHint": "Mention all participants"
+    },
     "empty": {
       "title": "How can I help you today?",
       "description": "Ask questions, explore knowledge bases, or trigger local tools."

@@ -22,15 +22,24 @@
  *   不要每句话都调 — 变化时才调。
  */
 
-import { Type, type Static } from "@sinclair/typebox"
 import type { AnyAgentTool, OpenClawPluginToolContext, OpenClawPluginToolFactory } from "../../api.js"
 import type { BridgeClient } from "../bridge/transport.js"
 import { CHAT_CHANNEL, type SetStatusEvent } from "../bridge/chat.js"
 
-const SetStatusParams = Type.Object({
-  status: Type.Union([Type.Literal("thinking"), Type.Literal("working"), Type.Literal("waiting"), Type.Literal("idle")], { description: "当前状态" }),
-  hint: Type.Optional(Type.String({ description: "可选:给用户的提示文案,如 '正在扫描文件'" })),
-})
+const SetStatusParams = {
+  type: "object",
+  properties: {
+    status: { type: "string", enum: ["thinking", "working", "waiting", "idle"], description: "当前状态" },
+    hint: { type: "string", description: "可选:给用户的提示文案,如 '正在扫描文件'" },
+  },
+  required: ["status"],
+  additionalProperties: false,
+} as never
+
+interface SetStatusArgs {
+  status: "thinking" | "working" | "waiting" | "idle"
+  hint?: string
+}
 
 export function createSetStatusFactory(bridge: BridgeClient): OpenClawPluginToolFactory {
   return (ctx: OpenClawPluginToolContext) => {
@@ -41,7 +50,7 @@ export function createSetStatusFactory(bridge: BridgeClient): OpenClawPluginTool
       description: "主动告诉 UI 你当前的状态(thinking/working/waiting/idle),可附提示文案。" + "用于长任务时让用户知道你没卡住。变化时调即可,不用每句话都调。",
       parameters: SetStatusParams,
       execute: async (_toolCallId: string, rawParams: unknown) => {
-        const params = rawParams as Static<typeof SetStatusParams>
+        const params = rawParams as SetStatusArgs
         const event: SetStatusEvent = {
           kind: "set_status",
           sessionKey,

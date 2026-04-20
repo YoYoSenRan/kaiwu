@@ -14,15 +14,24 @@
  *   双保险避免 LLM 在 hand_off 后继续输出啰嗦尾巴。
  */
 
-import { Type, type Static } from "@sinclair/typebox"
 import type { AnyAgentTool, OpenClawPluginToolContext, OpenClawPluginToolFactory } from "../../api.js"
 import type { BridgeClient } from "../bridge/transport.js"
 import { CHAT_CHANNEL, type HandOffEvent } from "../bridge/chat.js"
 
-const HandOffParams = Type.Object({
-  agent_id: Type.String({ description: "要交接给的成员 agent id" }),
-  reason: Type.Optional(Type.String({ description: "可选:交接理由" })),
-})
+const HandOffParams = {
+  type: "object",
+  properties: {
+    agent_id: { type: "string", description: "要交接给的成员 agent id" },
+    reason: { type: "string", description: "可选:交接理由" },
+  },
+  required: ["agent_id"],
+  additionalProperties: false,
+} as never
+
+interface HandOffArgs {
+  agent_id: string
+  reason?: string
+}
 
 /** 仅允许这些 agent 调 kaiwu_hand_off。中心化调度,其他 agent 完成任务静默退出。 */
 const ALLOWED_AGENTS = new Set<string>(["minion"])
@@ -51,7 +60,7 @@ export function createHandOffFactory(bridge: BridgeClient): OpenClawPluginToolFa
             details: { rejected: true, reason: "agent not whitelisted", selfAgentId },
           }
         }
-        const params = rawParams as Static<typeof HandOffParams>
+        const params = rawParams as HandOffArgs
         const event: HandOffEvent = {
           kind: "hand_off",
           sessionKey,

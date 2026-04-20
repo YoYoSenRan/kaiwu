@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Info, Bot, ChevronDown, Plus, RotateCcw } from "lucide-react"
+import { Info, Bot, ChevronDown, ChevronRight, Plus, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useAgentCacheStore } from "@/stores/agent"
 import { useChatDataStore, useChatUiStore } from "@/stores/chat"
+import { useSettingsStore } from "@/stores/settings"
 import { MemberCard } from "./member-card"
 import type { ChatMember, ReplyMode } from "../../../../electron/features/chat/types"
 
@@ -98,11 +99,39 @@ export function ChatDetails() {
   const roundsPct = Math.min(100, (roundsUsed / maxRounds) * 100)
   const roundsWarn = roundsPct >= 80
 
+  const chatDetailOpen = useSettingsStore((s) => s.chatDetailOpen)
+  const setChatDetailOpen = useSettingsStore((s) => s.setChatDetailOpen)
+
+  if (!chatDetailOpen) {
+    return (
+      <button
+        type="button"
+        onClick={() => setChatDetailOpen(true)}
+        aria-label={t("chat.detailPanel.show")}
+        title={t("chat.detailPanel.show")}
+        className="btn-focus bg-card text-muted-foreground hover:text-foreground ring-foreground/10 hidden w-10 shrink-0 items-center justify-center rounded-xl ring-1 transition-colors md:flex"
+      >
+        <ChevronRight className="size-4" />
+      </button>
+    )
+  }
+
   return (
-    <div className="bg-card text-card-foreground ring-foreground/10 hidden w-80 flex-col overflow-hidden rounded-xl ring-1 xl:flex">
-      <div className="border-border/50 flex h-16 shrink-0 items-center gap-2 border-b px-5">
-        <Info className="text-muted-foreground size-5" />
-        <h3 className="text-sm font-semibold tracking-tight">{t("chat.details.title")}</h3>
+    <div className="bg-card text-card-foreground ring-foreground/10 hidden w-80 flex-col overflow-hidden rounded-xl ring-1 md:flex">
+      <div className="border-border/50 flex h-16 shrink-0 items-center justify-between gap-2 border-b px-5">
+        <div className="flex items-center gap-2">
+          <Info className="text-muted-foreground size-5" />
+          <h3 className="text-sm font-semibold tracking-tight">{t("chat.details.title")}</h3>
+        </div>
+        <button
+          type="button"
+          onClick={() => setChatDetailOpen(false)}
+          aria-label={t("chat.detailPanel.hide")}
+          title={t("chat.detailPanel.hide")}
+          className="btn-focus text-muted-foreground hover:text-foreground hover:bg-muted flex size-7 items-center justify-center rounded-md transition-colors"
+        >
+          <ChevronRight className="size-4 rotate-180" />
+        </button>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-4">

@@ -23,14 +23,21 @@ import { createReportProgressFactory } from "./report-progress.js"
 import { createSetStatusFactory } from "./set-status.js"
 import { createShowCardFactory } from "./show-card.js"
 
+/**
+ * 对齐 openclaw 内置 feishu 插件写法:registerTool 显式传 opts.name。
+ * openclaw registry 在 factory 未调用前就能知道工具名,tools.allow/deny 检查更早触发,过滤更可靠。
+ */
+const ENTRIES: ReadonlyArray<readonly [string, (bridge: BridgeClient) => Parameters<OpenClawPluginApi["registerTool"]>[0]]> = [
+  ["kaiwu_hand_off", createHandOffFactory],
+  ["kaiwu_ask_user", createAskUserFactory],
+  ["kaiwu_end_turn", createEndTurnFactory],
+  ["kaiwu_show_card", createShowCardFactory],
+  ["kaiwu_set_status", createSetStatusFactory],
+  ["kaiwu_report_progress", createReportProgressFactory],
+]
+
 export function setupTools(api: OpenClawPluginApi, bridge: BridgeClient): void {
-  const factories = [
-    createHandOffFactory(bridge),
-    createAskUserFactory(bridge),
-    createEndTurnFactory(bridge),
-    createShowCardFactory(bridge),
-    createSetStatusFactory(bridge),
-    createReportProgressFactory(bridge),
-  ]
-  for (const factory of factories) api.registerTool(factory)
+  for (const [name, make] of ENTRIES) {
+    api.registerTool(make(bridge), { name })
+  }
 }

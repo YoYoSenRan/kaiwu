@@ -46,13 +46,23 @@ function extractPreview(msg: ChatMessage): string {
  * 持久化的是 UI 偏好（currentSessionId）；会话数据走主进程 IPC 实时拉取，不缓存。
  */
 
+/** 引用回复目标：点击消息 reply 按钮时记录要回复的那条消息。 */
+export interface ReplyTarget {
+  id: string
+  name: string
+  snippet: string
+}
+
 interface ChatUiState {
   currentSessionId: string | null
   /** 草稿：每 session 当前未发送的输入文本。切 session 保留，关闭应用也保留。 */
   drafts: Record<string, string>
+  /** 回复目标：per-session，仅内存(不持久化),切回保留上下文。 */
+  replyTargets: Record<string, ReplyTarget | null>
   setCurrent: (id: string | null) => void
   setDraft: (sessionId: string, text: string) => void
   clearDraft: (sessionId: string) => void
+  setReplyTarget: (sessionId: string, target: ReplyTarget | null) => void
 }
 
 export const useChatUiStore = create<ChatUiState>()(
@@ -60,6 +70,7 @@ export const useChatUiStore = create<ChatUiState>()(
     (set) => ({
       currentSessionId: null,
       drafts: {},
+      replyTargets: {},
       setCurrent: (id) => set({ currentSessionId: id }),
       setDraft: (sessionId, text) =>
         set((s) => {
@@ -77,6 +88,16 @@ export const useChatUiStore = create<ChatUiState>()(
           const next = { ...s.drafts }
           delete next[sessionId]
           return { drafts: next }
+        }),
+      setReplyTarget: (sessionId, target) =>
+        set((s) => {
+          if (!target) {
+            if (!s.replyTargets[sessionId]) return {}
+            const next = { ...s.replyTargets }
+            delete next[sessionId]
+            return { replyTargets: next }
+          }
+          return { replyTargets: { ...s.replyTargets, [sessionId]: target } }
         }),
     }),
     { name: "chat-ui", version: 1, partialize: (s) => ({ drafts: s.drafts }) },
@@ -237,12 +258,6 @@ export const useChatDataStore = create<ChatDataState>((set) => ({
       // 非当前 session + 非 user 自己发的 → 未读 +1
       if (msg.sessionId !== currentId && msg.senderType !== "user") {
         next.unread = { ...s.unread, [msg.sessionId]: (s.unread[msg.sessionId] ?? 0) + 1 }
-      }
-      // abort 后若 agent 仍然回了(abort 太晚),自动恢复该 session 所有被隐藏的 user msg
-      if (msg.senderType === "agent" && s.hiddenMessages[msg.sessionId]?.size) {
-        const nextHidden = { ...s.hiddenMessages }
-        delete nextHidden[msg.sessionId]
-        next.hiddenMessages = nextHidden
       }
       return next
     })

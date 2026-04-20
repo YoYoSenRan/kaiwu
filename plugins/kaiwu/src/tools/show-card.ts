@@ -14,23 +14,39 @@
  *   kaiwu_show_card → 不挂起,卡片只是本轮回复的增强展示;用户点或不点都可以
  */
 
-import { Type, type Static } from "@sinclair/typebox"
 import type { AnyAgentTool, OpenClawPluginToolContext, OpenClawPluginToolFactory } from "../../api.js"
 import type { BridgeClient } from "../bridge/transport.js"
 import { CHAT_CHANNEL, type ShowCardEvent } from "../bridge/chat.js"
 
-const ShowCardParams = Type.Object({
-  title: Type.Optional(Type.String({ description: "卡片标题(可选)" })),
-  description: Type.Optional(Type.String({ description: "标题下的说明文字(可选)" })),
-  options: Type.Array(
-    Type.Object({
-      label: Type.String({ description: "按钮上显示的文字" }),
-      value: Type.String({ description: "点击后作为新消息发回给你的文本内容" }),
-      style: Type.Optional(Type.Union([Type.Literal("primary"), Type.Literal("default"), Type.Literal("danger")], { description: "按钮样式" })),
-    }),
-    { description: "按钮选项列表。至少 1 个。" },
-  ),
-})
+const ShowCardParams = {
+  type: "object",
+  properties: {
+    title: { type: "string", description: "卡片标题(可选)" },
+    description: { type: "string", description: "标题下的说明文字(可选)" },
+    options: {
+      type: "array",
+      description: "按钮选项列表。至少 1 个。",
+      items: {
+        type: "object",
+        properties: {
+          label: { type: "string", description: "按钮上显示的文字" },
+          value: { type: "string", description: "点击后作为新消息发回给你的文本内容" },
+          style: { type: "string", enum: ["primary", "default", "danger"], description: "按钮样式" },
+        },
+        required: ["label", "value"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["options"],
+  additionalProperties: false,
+} as never
+
+interface ShowCardArgs {
+  title?: string
+  description?: string
+  options: Array<{ label: string; value: string; style?: "primary" | "default" | "danger" }>
+}
 
 export function createShowCardFactory(bridge: BridgeClient): OpenClawPluginToolFactory {
   return (ctx: OpenClawPluginToolContext) => {
@@ -44,7 +60,7 @@ export function createShowCardFactory(bridge: BridgeClient): OpenClawPluginToolF
         "不会挂起对话 — 卡片只是本轮回复的附加展示。需要强制等待用户输入请用 kaiwu_ask_user。",
       parameters: ShowCardParams,
       execute: async (_toolCallId: string, rawParams: unknown) => {
-        const params = rawParams as Static<typeof ShowCardParams>
+        const params = rawParams as ShowCardArgs
         if (!params.options || params.options.length === 0) {
           return {
             content: [{ type: "text", text: "kaiwu_show_card failed: options array must contain at least one entry." }],

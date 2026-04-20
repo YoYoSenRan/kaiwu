@@ -67,6 +67,30 @@ export function nextSeq(sessionId: string): number {
   return Math.max(...rows.map((r) => r.seq)) + 1
 }
 
+/**
+ * 更新消息元数据(openclawMessageId / usage / model / stopReason)。
+ * 仅 patch 非 undefined 的字段;undefined 表示"不动该字段"。
+ *
+ * 用于 upsert 对账流程:live 阶段先插空架消息,后续拉 openclaw history 精确匹配后再回填。
+ */
+export function updateMessageMeta(
+  id: string,
+  patch: {
+    openclawMessageId?: string | null
+    usage?: MessageUsage | null
+    model?: string | null
+    stopReason?: string | null
+  },
+): void {
+  const values: Record<string, unknown> = {}
+  if (patch.openclawMessageId !== undefined) values.openclaw_message_id = patch.openclawMessageId
+  if (patch.usage !== undefined) values.usage_json = patch.usage ? JSON.stringify(patch.usage) : null
+  if (patch.model !== undefined) values.model = patch.model
+  if (patch.stopReason !== undefined) values.stop_reason = patch.stopReason
+  if (Object.keys(values).length === 0) return
+  database().update(chatMessages).set(values).where(eq(chatMessages.id, id)).run()
+}
+
 /** 取 session 内所有已登记的 openclaw_message_id(对账幂等查询)。 */
 export function listOpenclawMessageIds(sessionId: string): Set<string> {
   const rows = database().select({ id: chatMessages.openclaw_message_id }).from(chatMessages).where(eq(chatMessages.session_id, sessionId)).all()

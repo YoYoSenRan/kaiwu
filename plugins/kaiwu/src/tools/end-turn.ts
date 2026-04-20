@@ -21,14 +21,21 @@
  *   end_turn 主要用于"我调了其他工具,这条回复不需要文字内容"的场景。
  */
 
-import { Type, type Static } from "@sinclair/typebox"
 import type { AnyAgentTool, OpenClawPluginToolContext, OpenClawPluginToolFactory } from "../../api.js"
 import type { BridgeClient } from "../bridge/transport.js"
 import { CHAT_CHANNEL, type EndTurnEvent } from "../bridge/chat.js"
 
-const EndTurnParams = Type.Object({
-  reason: Type.Optional(Type.String({ description: "可选:简短说明为何现在结束回合(调试用)" })),
-})
+const EndTurnParams = {
+  type: "object",
+  properties: {
+    reason: { type: "string", description: "可选:简短说明为何现在结束回合(调试用)" },
+  },
+  additionalProperties: false,
+} as never
+
+interface EndTurnArgs {
+  reason?: string
+}
 
 export function createEndTurnFactory(bridge: BridgeClient): OpenClawPluginToolFactory {
   return (ctx: OpenClawPluginToolContext) => {
@@ -40,7 +47,7 @@ export function createEndTurnFactory(bridge: BridgeClient): OpenClawPluginToolFa
         "显式结束本轮回复。调用后不要再输出任何文字 — 本轮到此为止。" + "典型用法:调 kaiwu_hand_off / kaiwu_ask_user 后立即调 kaiwu_end_turn,告诉系统你已交付,不需要继续生成内容。",
       parameters: EndTurnParams,
       execute: async (_toolCallId: string, rawParams: unknown) => {
-        const params = rawParams as Static<typeof EndTurnParams>
+        const params = rawParams as EndTurnArgs
         const event: EndTurnEvent = {
           kind: "end_turn",
           sessionKey,

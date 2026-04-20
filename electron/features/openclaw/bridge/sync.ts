@@ -1,7 +1,13 @@
 import { promises as fs } from "node:fs"
 import path from "node:path"
+import { scope } from "../../../infra/logger"
 import { PLUGIN_SOURCE_DIR } from "../discovery/version"
 import { bridgeDir, bridgePackageJson } from "./paths"
+
+const log = scope("plugin:sync")
+
+/** openclaw `tools.allow` 匹配按 pluginId 或 toolName(src/plugins/tools.ts)。加 pluginId 一把激活所有 kaiwu_* 工具。 */
+const PLUGIN_ALLOW_ID = "kaiwu"
 
 /** 同步到 OpenClaw extensions 目录时排除的文件/目录名。 */
 const EXCLUDE_NAMES = new Set(["node_modules", ".git", ".DS_Store", "dist", ".kaiwu-handshake.json"])
@@ -27,7 +33,40 @@ export async function syncPlugin(extensionsDir: string): Promise<InstallResult> 
   await copyDir(PLUGIN_SOURCE_DIR, staging, stats)
   await atomicReplace(staging, target)
 
+  // 把 "kaiwu" 注入 openclaw.json 的 tools.allow,否则 agent 的工具 policy 会把 kaiwu_* 全过滤掉。
+  // openclaw.json 和 extensionsDir 同级(extensionsDir=<configRoot>/extensions → configRoot=extensionsDir 的父目录)
+  const configRoot = path.dirname(extensionsDir)
+  await ensureKaiwuInToolsAllow(path.join(configRoot, "openclaw.json")).catch((err) => {
+    log.warn(`failed to patch openclaw.json tools.allow: ${(err as Error).message}`)
+  })
+
   return { installed: true, targetDir: target, bytesWritten: stats.bytesWritten, filesCopied: stats.filesCopied }
+}
+
+/**
+ * 幂等地把 PLUGIN_ALLOW_ID 加到 openclaw.json 的 tools.allow 数组。
+ * 文件不存在或格式异常时 warn 跳过,不阻塞同步。
+ */
+async function ensureKaiwuInToolsAllow(openclawJsonPath: string): Promise<void> {
+  let raw: string
+  try {
+    raw = await fs.readFile(openclawJsonPath, "utf-8")
+  } catch {
+    log.info(`openclaw.json not found at ${openclawJsonPath}, skip allow patch`)
+    return
+  }
+  const cfg = JSON.parse(raw) as { tools?: { allow?: unknown } }
+  if (!cfg.tools || typeof cfg.tools !== "object") cfg.tools = {}
+  if (!Array.isArray(cfg.tools.allow)) {
+    log.info(`openclaw.json tools.allow not an array; skip patch`)
+    return
+  }
+  const allow = cfg.tools.allow as string[]
+  if (allow.includes(PLUGIN_ALLOW_ID)) return
+  allow.push(PLUGIN_ALLOW_ID)
+  const next = JSON.stringify(cfg, null, 2) + "\n"
+  await fs.writeFile(openclawJsonPath, next, "utf-8")
+  log.info(`added "${PLUGIN_ALLOW_ID}" to openclaw.json tools.allow`)
 }
 
 /** 卸载已同步的 kaiwu 插件。不存在时静默返回。 */
