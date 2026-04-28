@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf ~/.claude/plugins/cache/claude-plugins-official/github)",
+      "Bash(rm -rf ~/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github)",
+      "Bash(rtk ls *)",
+      "Bash(rtk grep *)"
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+/* ===== 元素级 reset 与全局基础样式 ===== */
+
+/* 锁死窗口滚动，把滚动宿主交给 .app-main，避免滚动条穿过 titlebar */
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  /* Tailwind v4 取消原生 button 的 pointer cursor，统一补回交互元素的指针态 */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+  /* 修 Radix + Chromium focus-visible 误判：弹出型触发器（DropdownMenu / Select / Dialog / Sheet /
+     Popover / ContextMenu 等）关闭时 Radix 会把 focus 送回 trigger，Chromium 若用户最近有过
+     键盘动作会把这次 programmatic focus 判为 focus-visible，导致鼠标点完后按钮残留 ring。
+     统一对所有带 aria-haspopup 的元素在 focus-visible 时抹掉 outline / ring / border 变色。
+     !important 的理由：Tailwind 的 focus-visible:ring-* 和本选择器 specificity 相同，
+     utilities 层在 base 后加载，不加 !important 盖不住。 */
+  [aria-haspopup]:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+  }
+  body {
+    @apply bg-background text-foreground;
+    letter-spacing: var(--tracking-normal);
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--foreground);
+  }
+}
