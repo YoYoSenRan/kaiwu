@@ -1,0 +1,600 @@
+{
+  "common": {
+    "confirm": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "clear": "清空",
+    "loading": "加载中...",
+    "noData": "暂无数据",
+    "detail": "详情",
+    "unknownPage": "未知页面",
+    "toggleThemeHint": "按 D 切换主题",
+    "back": "返回"
+  },
+  "footer": {
+    "ping": "{{ms}}ms",
+    "retryIn": "{{seconds}}s 后重试",
+    "tooltip": {
+      "mode": "模式",
+      "modeScan": "自动扫描",
+      "modeManual": "手动连接",
+      "address": "地址",
+      "latency": "延迟",
+      "error": "错误",
+      "retryHint": "{{seconds}}s 后自动重试",
+      "noRetry": "认证失败需手动处理",
+      "clickToOpen": "点击查看连接详情"
+    }
+  },
+  "update": {
+    "checkUpdate": "检查更新",
+    "checking": "检查中...",
+    "update": "更新",
+    "newVersion": "最新版本: v{{version}}",
+    "downloadError": "下载最新版本出错",
+    "updateProgress": "更新进度:",
+    "installNow": "立即安装",
+    "later": "稍后"
+  },
+  "nav": {
+    "dashboard": "仪表台",
+    "task": "任务",
+    "knowledge": "知识库",
+    "agent": "智能体",
+    "chat": "对话",
+    "session": "会话",
+    "workflow": "工作流",
+    "connect": "连接",
+    "settings": "设置"
+  },
+  "session": {
+    "title": "会话",
+    "untitled": "未命名会话",
+    "empty": "暂无会话",
+    "archived": "已归档",
+    "mode": {
+      "direct": "单聊",
+      "group": "群聊"
+    },
+    "filter": {
+      "all": "全部",
+      "search": "搜索会话",
+      "sortRecent": "最近活动",
+      "sortCreated": "创建时间",
+      "count": "共 {{count}} 个"
+    },
+    "detail": {
+      "noId": "无会话 id",
+      "loading": "加载中...",
+      "error": "加载失败:{{msg}}",
+      "notFound": "会话不存在",
+      "emptyMessages": "暂无消息",
+      "user": "用户",
+      "inspectTurn": "查看本轮"
+    },
+    "stats": {
+      "created": "创建于",
+      "updated": "最后活动",
+      "messages": "消息",
+      "userMsgs": "用户消息",
+      "agentMsgs": "智能体消息",
+      "aborted": "中断",
+      "errors": "异常",
+      "turns": "运行轮",
+      "tokens": "Token",
+      "totalTokens": "总计",
+      "inputTokens": "输入",
+      "outputTokens": "输出",
+      "cacheRead": "缓存读",
+      "cacheWrite": "缓存写"
+    },
+    "inspect": {
+      "title": "本轮运行详情",
+      "notFound": "未找到此轮记录",
+      "trigger": "触发消息",
+      "sentMessage": "实际发送",
+      "sentMessageHint": "剥离 @ 标记后真正发给智能体的文本",
+      "systemPrompt": "系统提示词",
+      "systemPromptHint": "kaiwu 每轮注入给智能体的 instruction",
+      "historyText": "共享历史",
+      "historyTextHint": "kaiwu 推给智能体的群聊流水",
+      "assistantReply": "智能体回复",
+      "copy": "复制",
+      "copied": "已复制",
+      "metaAgent": "智能体",
+      "metaModel": "模型",
+      "metaSentAt": "发送时刻",
+      "metaSessionKey": "龙虾 sessionKey"
+    }
+  },
+  "dashboard": {
+    "title": "仪表台",
+    "description": "运行状态与核心指标一览",
+    "topology": "神经系统拓扑 (Neural Topology)",
+    "stats": {
+      "tasks": "任务",
+      "knowledge": "知识库"
+    },
+    "activityTitle": "最近活动",
+    "activityEmpty": "暂无活动记录",
+    "quickActions": {
+      "title": "快捷入口",
+      "newKnowledge": "新建知识库",
+      "connect": "连接管理",
+      "viewTasks": "查看任务"
+    },
+    "recentKnowledge": "最近知识库",
+    "systemStatus": {
+      "title": "系统概览",
+      "sessions": "活跃会话",
+      "knowledgeBases": "知识库",
+      "documents": "文档总数",
+      "agents": "智能体",
+      "messages": "消息"
+    },
+    "chatOverview": {
+      "title": "对话概览",
+      "totalSessions": "总会话",
+      "totalMessages": "总消息",
+      "unreadMessages": "未读消息"
+    },
+    "agentOverview": {
+      "title": "智能体概览",
+      "totalAgents": "总智能体",
+      "mine": "已同步",
+      "unsynced": "待同步",
+      "missing": "缺失"
+    }
+  },
+  "task": {
+    "title": "任务",
+    "description": "任务队列与执行记录",
+    "emptyTitle": "任务队列为空",
+    "emptyDescription": "创建或派发任务后将在这里展示"
+  },
+  "knowledge": {
+    "title": "知识库",
+    "description": "向量索引与文档管理",
+    "count": "{{count}} 个知识库",
+    "create": "新建知识库",
+    "upload": "上传文档",
+    "emptyTitle": "知识库为空",
+    "emptyDescription": "创建知识库并上传文档，构建你的私有知识",
+    "tabs": {
+      "documents": "文档",
+      "search": "检索测试",
+      "graph": "图谱",
+      "settings": "设置"
+    },
+    "doc": {
+      "pending": "等待处理",
+      "processing": "处理中",
+      "ready": "就绪",
+      "failed": "失败",
+      "retry": "重试",
+      "noChunks": "暂无分块数据",
+      "chunkPosition": "分块 #{{position}}",
+      "chunkCount": "{{count}} 个字符"
+    },
+    "search": {
+      "placeholder": "输入查询内容...",
+      "noResults": "未找到相关内容",
+      "score": "相似度"
+    },
+    "bind": {
+      "title": "关联知识库",
+      "empty": "未关联任何知识库",
+      "select": "选择知识库"
+    },
+    "delete": {
+      "title": "删除知识库",
+      "confirm": "确认删除知识库「{{name}}」？所有文档和向量数据将被永久删除。"
+    },
+    "form": {
+      "name": "名称",
+      "namePlaceholder": "输入知识库名称",
+      "description": "描述",
+      "descriptionPlaceholder": "可选，简要描述知识库内容"
+    }
+  },
+  "agent": {
+    "title": "智能体",
+    "description": "管理智能体、工作空间与模型绑定",
+    "count": "{{count}} 个智能体",
+    "create": "新建智能体",
+    "emptyTitle": "暂无智能体",
+    "emptyDescription": "创建智能体以在对话与工作流中使用",
+    "tabs": {
+      "list": {
+        "mine": "我的",
+        "unsynced": "未同步",
+        "missing": "已失联"
+      },
+      "overview": "概览",
+      "workspace": "工作空间",
+      "skills": "技能",
+      "settings": "设置"
+    },
+    "detail": {
+      "description": "智能体详情",
+      "defaultBadge": "默认"
+    },
+    "list": {
+      "gatewayOffline": "网关未连接，仅展示本地引用",
+      "emptyGateway": "网关当前无 agent，禁用批量操作",
+      "unsyncedBanner": "发现 {{count}} 个网关 agent 未本地化",
+      "unsyncedEmpty": "没有未同步的 agent",
+      "missingBanner": "本地引用了 {{count}} 个网关已不存在的 agent",
+      "missingEmpty": "没有失联的 agent",
+      "syncAll": "一键同步",
+      "unlink": "从本地删除"
+    },
+    "dialog": {
+      "create": {
+        "title": "新建智能体",
+        "description": "配置智能体的名称、工作空间与主模型",
+        "name": "名称",
+        "workspace": "工作空间路径",
+        "model": "主模型",
+        "modelPlaceholder": "选择模型（可选）",
+        "emoji": "Emoji",
+        "avatar": "头像（URL / 路径）",
+        "confirm": "创建"
+      },
+      "delete": {
+        "title": "删除智能体",
+        "purge": "彻底删除（网关 + 本地引用）",
+        "purgeHint": "从 openclaw 网关删除 agent 配置；可选同时清理 workspace 文件",
+        "deleteFiles": "同时删除 workspace 文件",
+        "unlink": "仅从 kaiwu 移除引用",
+        "unlinkHint": "保留网关 agent，仅删除本地索引；agent 将出现在未同步 tab",
+        "confirm": "确认删除"
+      }
+    },
+    "toast": {
+      "create": {
+        "success": "Agent 已创建",
+        "error": "创建失败：{{msg}}"
+      },
+      "update": {
+        "success": "已保存",
+        "error": "保存失败：{{msg}}"
+      },
+      "delete": {
+        "purge": "Agent 已删除",
+        "unlink": "引用已解除",
+        "error": "删除失败：{{msg}}"
+      },
+      "sync": {
+        "success": "已同步 {{n}} 个 agent",
+        "error": "同步失败：{{msg}}"
+      },
+      "fileSave": {
+        "success": "{{filename}} 已保存",
+        "error": "保存失败：{{msg}}"
+      }
+    },
+    "overview": {
+      "name": "名称",
+      "workspace": "工作空间",
+      "primaryModel": "主模型",
+      "fallbacks": "回退模型",
+      "theme": "主题",
+      "emoji": "Emoji",
+      "avatar": "头像",
+      "copied": "{{field}} 已复制"
+    },
+    "workspace": {
+      "selectFile": "选择左侧文件以查看 / 编辑",
+      "readonly": "只读",
+      "dirty": "未保存",
+      "preview": "预览",
+      "edit": "编辑",
+      "save": "保存"
+    },
+    "skills": {
+      "name": "名称",
+      "enabled": "状态",
+      "reasons": "原因",
+      "on": "启用",
+      "off": "禁用"
+    },
+    "settings": {
+      "danger": "危险操作",
+      "dangerHint": "删除此 agent 或解除本地引用"
+    }
+  },
+  "chat": {
+    "title": "对话",
+    "description": "与知识库和工具交互",
+    "new": "新对话",
+    "search": "搜索历史...",
+    "placeholder": "提问任何内容...（输入 @ 可 mention 代理）",
+    "placeholderRunning": "正在回复中，可以继续草拟下一条…",
+    "action": {
+      "send": "发送",
+      "stop": "停止"
+    },
+    "detailPanel": {
+      "toggle": "切换会话详情面板",
+      "show": "显示详情",
+      "hide": "隐藏详情"
+    },
+    "abort": {
+      "agentReplyLater": "agent 已开始回复，刚才的消息已恢复显示",
+      "confirmed": "已停止本轮"
+    },
+    "newMenu": {
+      "direct": "新建单聊",
+      "group": "新建群聊"
+    },
+    "message": {
+      "copy": "复制",
+      "copied": "已复制",
+      "delete": "从对话中移除",
+      "deleted": "已移除此消息"
+    },
+    "mention": {
+      "all": "全体成员",
+      "allHint": "同时 @ 所有参与者"
+    },
+    "empty": {
+      "title": "有什么我可以帮您的？",
+      "description": "提问、探索知识库或触发本地工具"
+    },
+    "sample": {
+      "title": "UI 布局设计",
+      "description": "多智能体协作",
+      "previous": "历史会话"
+    },
+    "time": {
+      "justNow": "刚刚",
+      "hoursAgo": "{{count}} 小时前"
+    },
+    "details": {
+      "title": "对话详情",
+      "participants": "参与者",
+      "configuration": "配置",
+      "defaultModel": "默认模型",
+      "toolsAvailable": "可用工具",
+      "enabledCount": "{{count}} 个已启用"
+    },
+    "sessions": {
+      "empty": "暂无会话",
+      "noMatch": "没有匹配的会话"
+    },
+    "dialog": {
+      "create": {
+        "title": "新建对话",
+        "description": "选择模式和参与的智能体",
+        "mode": "模式",
+        "modeDirect": "单聊",
+        "modeGroup": "群聊",
+        "agents": "参与者",
+        "emptyAgents": "尚无可用智能体，请先到「智能体」模块创建或同步",
+        "label": "名称（可选）",
+        "labelPlaceholder": "为此会话命名",
+        "advanced": "高级设置",
+        "budgetRounds": "最大轮次",
+        "budgetRoundsHint": "默认 200，超过自动停",
+        "confirm": "创建"
+      },
+      "delete": {
+        "title": "删除会话",
+        "confirm": "确认删除会话「{{name}}」？此操作不可恢复，会话中的所有消息将被永久删除。"
+      }
+    },
+    "toast": {
+      "create": {
+        "success": "会话已创建",
+        "error": "创建失败：{{msg}}"
+      },
+      "loopEnded": {
+        "noTarget": "无人回应（agent 需 @ 才会继续串话）",
+        "budgetRounds": "已达最大轮次，已停止",
+        "stopPhrase": "命中终止短语，已停止",
+        "error": "循环出错，已停止"
+      }
+    },
+    "budget": {
+      "title": "预算",
+      "rounds": "轮次",
+      "tokens": "Token",
+      "reset": "重置",
+      "resetDone": "预算已重置",
+      "resetFailed": "重置失败：{{msg}}"
+    },
+    "usage": {
+      "context": "上下文",
+      "stale": "缓存"
+    },
+    "delivery": {
+      "queued": "排队中",
+      "thinking": "思考中",
+      "tool": "调用工具",
+      "toolNamed": "{{name}}",
+      "replying": "回复中",
+      "done": "完成",
+      "error": "失败",
+      "aborted": "已中断"
+    },
+    "memberCard": {
+      "noModel": "未配置模型",
+      "noContext": "暂无上下文",
+      "lastCompaction": "上次压缩 {{when}}"
+    },
+    "members": {
+      "empty": "暂无成员",
+      "count": "成员",
+      "replyAuto": "自动",
+      "replyMention": "仅 @",
+      "replyModeHint": "点击切换回复模式",
+      "patchFailed": "更新成员失败：{{msg}}",
+      "add": "加成员",
+      "addTitle": "添加成员",
+      "addConfirm": "添加",
+      "addFailed": "添加失败：{{msg}}",
+      "addedToast": "已添加 {{name}}",
+      "remove": "踢出",
+      "removeConfirm": "将 {{name}} 从会话中移除？",
+      "removeFailed": "移除失败：{{msg}}",
+      "removedToast": "已移除 {{name}}",
+      "allAdded": "所有可用智能体已在会话中"
+    },
+    "mode": {
+      "direct": "单聊",
+      "group": "群聊"
+    },
+    "status": {
+      "running": "运行中"
+    },
+    "hitl": {
+      "prompt": "{{agentId}} 问你：{{question}}"
+    },
+    "select": "请选择会话",
+    "jumpToBottom": "回到最新",
+    "retry": "重试",
+    "retryNoUserMsg": "找不到要重试的消息",
+    "aborted": "已停止",
+    "reply": {
+      "action": "回复",
+      "replyingTo": "回复 {{name}}",
+      "cancel": "取消回复"
+    },
+    "error": {
+      "banner": "出错：{{msg}}",
+      "disconnected": "连接已断，重连后自动同步",
+      "dismiss": "关闭"
+    }
+  },
+  "workflow": {
+    "title": "工作流",
+    "description": "可视化编排与自动化流程",
+    "empty": "暂未配置工作流"
+  },
+  "connect": {
+    "title": "连接",
+    "description": "管理与 OpenClaw gateway 的连接",
+    "banner": {
+      "connected": "已连接到 OpenClaw Gateway",
+      "disconnected": "未连接到 OpenClaw Gateway",
+      "error": "连接出错"
+    },
+    "section": {
+      "status": "连接状态",
+      "statusDescription": "当前 gateway 的运行与连接情况",
+      "manual": "手动连接",
+      "manualDescription": "直接指定 gateway 地址与凭据"
+    },
+    "status": {
+      "idle": "未连接",
+      "detecting": "正在扫描",
+      "connecting": "正在连接",
+      "connected": "已连接",
+      "disconnected": "已断开",
+      "auth-error": "认证失败",
+      "error": "连接错误"
+    },
+    "mode": {
+      "scan": "自动扫描",
+      "manual": "手动连接"
+    },
+    "label": {
+      "url": "地址",
+      "mode": "模式",
+      "auth": "认证方式",
+      "error": "错误信息"
+    },
+    "gateway": {
+      "title": "网关连接",
+      "description": "管理与 OpenClaw Gateway 的 WebSocket 连接"
+    },
+    "plugin": {
+      "title": "本地插件",
+      "description": "监控并管理本机 OpenClaw gateway 与 kaiwu 插件的同步状态",
+      "statusInstalled": "已安装",
+      "statusMissing": "未检测到",
+      "statusRunning": "运行中",
+      "statusStopped": "已停止",
+      "hostVersion": "主机版本",
+      "gatewayPort": "网关端口",
+      "bridgeStatus": "插件状态",
+      "bridgeInstalled": "已同步",
+      "bridgeMissing": "未同步",
+      "compat": "兼容性",
+      "compatOk": "兼容",
+      "compatFail": "不兼容",
+      "unknown": "—",
+      "detectedBy": "侦测来源",
+      "configDir": "配置目录",
+      "detect": "重新探测",
+      "sync": "同步插件",
+      "uninstall": "卸载插件",
+      "restart": "重启网关",
+      "events": "桥接事件",
+      "noEvents": "暂无事件",
+      "syncOk": "插件已同步",
+      "syncFail": "同步失败：{{message}}",
+      "uninstallOk": "插件已卸载",
+      "restartOk": "网关已重启",
+      "restartFail": "重启失败：{{message}}"
+    },
+    "action": {
+      "connect": "连接",
+      "disconnect": "断开",
+      "scan": "扫描本机"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "description": "偏好、外观、语言",
+    "appearanceTitle": "外观",
+    "appearanceDescription": "主题、语言和布局偏好",
+    "themeLabel": "主题",
+    "langLabel": "语言",
+    "sidebarLabel": "折叠侧边栏",
+    "sidebarHint": "默认折叠左侧导航（可随时按 Cmd/Ctrl+B 切换）",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "themeSystem": "系统",
+    "languageZh": "简体中文",
+    "languageEn": "English",
+    "aboutTitle": "关于",
+    "versionLabel": "版本",
+    "buildLabel": "构建",
+    "deviceId": "设备 ID",
+    "envLabel": "环境",
+    "openclaw": {
+      "title": "OpenClaw 桥接",
+      "description": "监控并管理本机 OpenClaw gateway 与 kaiwu 插件的同步状态"
+    },
+    "debugTitle": "调试",
+    "debugDescription": "开发与故障排查工具（危险操作,请谨慎使用）",
+    "debug": {
+      "clearAllTitle": "清空聊天数据库",
+      "clearAllHint": "删除所有会话、成员、消息、turn 运行记录与预算状态。openclaw 侧数据不受影响。此操作不可撤销。",
+      "clearAllAction": "一键清空",
+      "clearing": "清空中...",
+      "confirmTitle": "确认清空所有聊天数据",
+      "confirmDesc": "所有本地会话、消息、运行记录将被永久删除。此操作不可撤销,确定继续吗?",
+      "confirmOk": "确认清空",
+      "clearSuccess": "已清空 {{total}} 条记录",
+      "clearFailed": "清空失败:{{msg}}"
+    }
+  },
+  "layout": {
+    "omnibar": {
+      "placeholder": "按 ⌘ K 唤醒开物"
+    },
+    "status": {
+      "connected": "网关已连接",
+      "offline": "网关已离线",
+      "sessions": "会话",
+      "knowledgeBases": "知识库",
+      "agents": "智能体",
+      "systemReady": "系统就绪"
+    }
+  }
+}

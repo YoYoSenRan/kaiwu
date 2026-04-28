@@ -1,0 +1,1 @@
+ALTER TABLE `chat_budget_state` DROP COLUMN `tokens_used`;

@@ -1,0 +1,112 @@
+/**
+ * chat_messages 表数据访问。
+ */
+
+import { asc, eq } from "drizzle-orm"
+import { database } from "../../../database/client"
+import { chatMessages } from "../../../database/schema"
+import type { ChatMention, ChatMessage, MessageUsage } from "../types"
+
+/**
+ * 落库一条消息。直接接收 ChatMessage 对象,内部负责 JSON 序列化。
+ * 调用方不再需要逐字段拷贝(节省 ~18 行/调用点)。
+ *
+ * 注意:`createdAtLocal` 由 DB 自动填(默认值),传入也会被忽略。
+ */
+export function insertMessage(m: ChatMessage): void {
+  database()
+    .insert(chatMessages)
+    .values({
+      id: m.id,
+      session_id: m.sessionId,
+      seq: m.seq,
+      openclaw_session_key: m.openclawSessionKey,
+      openclaw_message_id: m.openclawMessageId,
+      sender_type: m.senderType,
+      sender_id: m.senderId,
+      role: m.role,
+      content_json: JSON.stringify(m.content),
+      mentions_json: JSON.stringify(m.mentions),
+      in_reply_to_message_id: m.inReplyToMessageId,
+      turn_run_id: m.turnRunId,
+      tags_json: JSON.stringify(m.tags),
+      model: m.model,
+      usage_json: m.usage ? JSON.stringify(m.usage) : null,
+      stop_reason: m.stopReason,
+      created_at_remote: m.createdAtRemote,
+    })
+    .run()
+}
+
+export function listMessages(sessionId: string): ChatMessage[] {
+  const rows = database().select().from(chatMessages).where(eq(chatMessages.session_id, sessionId)).orderBy(asc(chatMessages.seq)).all()
+  return rows.map(rowToMessage)
+}
+
+export function getMessageById(id: string): ChatMessage | null {
+  const row = database().select().from(chatMessages).where(eq(chatMessages.id, id)).get()
+  return row ? rowToMessage(row) : null
+}
+
+/** 分配 session 内下一个 seq(max+1,全新 session 从 1 开始)。 */
+export function nextSeq(sessionId: string): number {
+  const rows = database().select({ seq: chatMessages.seq }).from(chatMessages).where(eq(chatMessages.session_id, sessionId)).all()
+  if (rows.length === 0) return 1
+  return Math.max(...rows.map((r) => r.seq)) + 1
+}
+
+/**
+ * 更新消息元数据(openclawMessageId / usage / model / stopReason)。
+ * 仅 patch 非 undefined 的字段;undefined 表示"不动该字段"。
+ *
+ * 用于 upsert 对账流程:live 阶段先插空架消息,后续拉 openclaw history 精确匹配后再回填。
+ */
+export function updateMessageMeta(
+  id: string,
+  patch: {
+    openclawMessageId?: string | null
+    usage?: MessageUsage | null
+    model?: string | null
+    stopReason?: string | null
+  },
+): void {
+  const values: Record<string, unknown> = {}
+  if (patch.openclawMessageId !== undefined) values.openclaw_message_id = patch.openclawMessageId
+  if (patch.usage !== undefined) values.usage_json = patch.usage ? JSON.stringify(patch.usage) : null
+  if (patch.model !== undefined) values.model = patch.model
+  if (patch.stopReason !== undefined) values.stop_reason = patch.stopReason
+  if (Object.keys(values).length === 0) return
+  database().update(chatMessages).set(values).where(eq(chatMessages.id, id)).run()
+}
+
+/** 取 session 内所有已登记的 openclaw_message_id(对账幂等查询)。 */
+export function listOpenclawMessageIds(sessionId: string): Set<string> {
+  const rows = database().select({ id: chatMessages.openclaw_message_id }).from(chatMessages).where(eq(chatMessages.session_id, sessionId)).all()
+  const set = new Set<string>()
+  for (const r of rows) if (r.id) set.add(r.id)
+  return set
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToMessage(row: any): ChatMessage {
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    seq: row.seq,
+    openclawSessionKey: row.openclaw_session_key,
+    openclawMessageId: row.openclaw_message_id,
+    senderType: row.sender_type,
+    senderId: row.sender_id,
+    role: row.role,
+    content: JSON.parse(row.content_json),
+    mentions: row.mentions_json ? (JSON.parse(row.mentions_json) as ChatMention[]) : [],
+    inReplyToMessageId: row.in_reply_to_message_id ?? null,
+    turnRunId: row.turn_run_id,
+    tags: row.tags_json ? (JSON.parse(row.tags_json) as string[]) : [],
+    model: row.model ?? null,
+    usage: row.usage_json ? (JSON.parse(row.usage_json) as MessageUsage) : null,
+    stopReason: row.stop_reason ?? null,
+    createdAtLocal: row.created_at_local,
+    createdAtRemote: row.created_at_remote,
+  }
+}

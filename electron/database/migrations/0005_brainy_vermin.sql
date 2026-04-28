@@ -1,0 +1,1 @@
+ALTER TABLE `chat_messages` ADD `in_reply_to_message_id` text;

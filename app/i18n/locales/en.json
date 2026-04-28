@@ -1,0 +1,600 @@
+{
+  "common": {
+    "confirm": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "clear": "Clear",
+    "loading": "Loading...",
+    "noData": "No data",
+    "detail": "Detail",
+    "unknownPage": "Unknown page",
+    "toggleThemeHint": "Press D to toggle theme",
+    "back": "Back"
+  },
+  "footer": {
+    "ping": "{{ms}}ms",
+    "retryIn": "Retry in {{seconds}}s",
+    "tooltip": {
+      "mode": "Mode",
+      "modeScan": "Auto scan",
+      "modeManual": "Manual",
+      "address": "Address",
+      "latency": "Latency",
+      "error": "Error",
+      "retryHint": "Auto retry in {{seconds}}s",
+      "noRetry": "Auth failed — manual fix required",
+      "clickToOpen": "Click for connection details"
+    }
+  },
+  "update": {
+    "checkUpdate": "Check update",
+    "checking": "Checking...",
+    "update": "Update",
+    "newVersion": "The latest version is: v{{version}}",
+    "downloadError": "Error downloading the latest version",
+    "updateProgress": "Update progress:",
+    "installNow": "Install now",
+    "later": "Later"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "task": "Task",
+    "knowledge": "Knowledge",
+    "agent": "Agent",
+    "chat": "Chat",
+    "session": "Session",
+    "workflow": "Workflow",
+    "connect": "Connect",
+    "settings": "Settings"
+  },
+  "session": {
+    "title": "Sessions",
+    "untitled": "Untitled",
+    "empty": "No sessions yet",
+    "archived": "archived",
+    "mode": {
+      "direct": "Direct",
+      "group": "Group"
+    },
+    "filter": {
+      "all": "All",
+      "search": "Search sessions",
+      "sortRecent": "Most recent",
+      "sortCreated": "Created",
+      "count": "{{count}} total"
+    },
+    "detail": {
+      "noId": "No session id",
+      "loading": "Loading...",
+      "error": "Load failed: {{msg}}",
+      "notFound": "Session not found",
+      "emptyMessages": "No messages",
+      "user": "User",
+      "inspectTurn": "Inspect turn"
+    },
+    "stats": {
+      "created": "Created",
+      "updated": "Last activity",
+      "messages": "Messages",
+      "userMsgs": "User msgs",
+      "agentMsgs": "Agent msgs",
+      "aborted": "Aborted",
+      "errors": "Errors",
+      "turns": "Turn runs",
+      "tokens": "Tokens",
+      "totalTokens": "Total",
+      "inputTokens": "Input",
+      "outputTokens": "Output",
+      "cacheRead": "Cache read",
+      "cacheWrite": "Cache write"
+    },
+    "inspect": {
+      "title": "Turn detail",
+      "notFound": "Turn not found",
+      "trigger": "Trigger message",
+      "sentMessage": "Sent to agent",
+      "sentMessageHint": "Text actually sent to agent (mentions stripped)",
+      "systemPrompt": "System prompt",
+      "systemPromptHint": "Instruction kaiwu injects each turn",
+      "historyText": "Shared history",
+      "historyTextHint": "Group transcript kaiwu pushes to agent",
+      "assistantReply": "Assistant reply",
+      "copy": "Copy",
+      "copied": "Copied",
+      "metaAgent": "Agent",
+      "metaModel": "Model",
+      "metaSentAt": "Sent at",
+      "metaSessionKey": "openclaw sessionKey"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Runtime status and core metrics at a glance",
+    "topology": "Neural Topology",
+    "stats": {
+      "tasks": "Tasks",
+      "knowledge": "Knowledge"
+    },
+    "activityTitle": "Recent Activity",
+    "activityEmpty": "No activity yet",
+    "quickActions": {
+      "title": "Quick Actions",
+      "newKnowledge": "New Knowledge Base",
+      "connect": "Connection",
+      "viewTasks": "View Tasks"
+    },
+    "recentKnowledge": "Recent Knowledge Bases",
+    "systemStatus": {
+      "title": "System Overview",
+      "sessions": "Active Sessions",
+      "knowledgeBases": "Knowledge Bases",
+      "documents": "Total Documents",
+      "agents": "Agents",
+      "messages": "Messages"
+    },
+    "chatOverview": {
+      "title": "Chat Overview",
+      "totalSessions": "Total Sessions",
+      "totalMessages": "Total Messages",
+      "unreadMessages": "Unread"
+    },
+    "agentOverview": {
+      "title": "Agent Overview",
+      "totalAgents": "Total Agents",
+      "mine": "Synced",
+      "unsynced": "Unsynced",
+      "missing": "Missing"
+    }
+  },
+  "task": {
+    "title": "Task",
+    "description": "Task queue and execution history",
+    "emptyTitle": "Task queue is empty",
+    "emptyDescription": "Created or dispatched tasks will appear here"
+  },
+  "knowledge": {
+    "title": "Knowledge Base",
+    "description": "Vector indexes and document management",
+    "count": "{{count}} knowledge bases",
+    "create": "New Knowledge Base",
+    "upload": "Upload Document",
+    "emptyTitle": "Knowledge base is empty",
+    "emptyDescription": "Upload documents to build your private knowledge base",
+    "tabs": {
+      "documents": "Documents",
+      "search": "Search Test",
+      "graph": "Graph",
+      "settings": "Settings"
+    },
+    "doc": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "ready": "Ready",
+      "failed": "Failed",
+      "retry": "Retry",
+      "noChunks": "No chunks available",
+      "chunkPosition": "Chunk #{{position}}",
+      "chunkCount": "{{count}} characters"
+    },
+    "search": {
+      "placeholder": "Enter search query...",
+      "noResults": "No relevant content found",
+      "score": "Similarity"
+    },
+    "bind": {
+      "title": "Linked Knowledge Bases",
+      "empty": "No knowledge bases linked",
+      "select": "Select Knowledge Bases"
+    },
+    "delete": {
+      "title": "Delete Knowledge Base",
+      "confirm": "Delete knowledge base \"{{name}}\"? All documents and vector data will be permanently deleted."
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Enter knowledge base name",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional, briefly describe the content"
+    }
+  },
+  "agent": {
+    "title": "Agent",
+    "description": "Manage agents, workspaces and model bindings",
+    "count": "{{count}} agents",
+    "create": "New Agent",
+    "emptyTitle": "No agents",
+    "emptyDescription": "Create an agent to use in chats and workflows",
+    "tabs": {
+      "list": {
+        "mine": "Mine",
+        "unsynced": "Unsynced",
+        "missing": "Missing"
+      },
+      "overview": "Overview",
+      "workspace": "Workspace",
+      "skills": "Skills",
+      "settings": "Settings"
+    },
+    "detail": {
+      "description": "Agent details",
+      "defaultBadge": "Default"
+    },
+    "list": {
+      "gatewayOffline": "Gateway disconnected, showing local references only",
+      "emptyGateway": "Gateway has no agents; batch operations disabled",
+      "unsyncedBanner": "Found {{count}} gateway agents not registered locally",
+      "unsyncedEmpty": "No unsynced agents",
+      "missingBanner": "{{count}} local agents no longer exist on gateway",
+      "missingEmpty": "No missing agents",
+      "syncAll": "Sync all",
+      "unlink": "Remove locally"
+    },
+    "dialog": {
+      "create": {
+        "title": "New Agent",
+        "description": "Configure agent name, workspace and primary model",
+        "name": "Name",
+        "workspace": "Workspace path",
+        "model": "Primary model",
+        "modelPlaceholder": "Select model (optional)",
+        "emoji": "Emoji",
+        "avatar": "Avatar (URL / path)",
+        "confirm": "Create"
+      },
+      "delete": {
+        "title": "Delete agent",
+        "purge": "Purge (gateway + local)",
+        "purgeHint": "Delete agent from openclaw gateway; optionally clean up workspace files",
+        "deleteFiles": "Also delete workspace files",
+        "unlink": "Unlink only (keep on gateway)",
+        "unlinkHint": "Keep gateway agent; only remove local index. Agent will appear in Unsynced tab",
+        "confirm": "Confirm"
+      }
+    },
+    "toast": {
+      "create": {
+        "success": "Agent created",
+        "error": "Create failed: {{msg}}"
+      },
+      "update": {
+        "success": "Saved",
+        "error": "Save failed: {{msg}}"
+      },
+      "delete": {
+        "purge": "Agent deleted",
+        "unlink": "Reference unlinked",
+        "error": "Delete failed: {{msg}}"
+      },
+      "sync": {
+        "success": "Synced {{n}} agents",
+        "error": "Sync failed: {{msg}}"
+      },
+      "fileSave": {
+        "success": "{{filename}} saved",
+        "error": "Save failed: {{msg}}"
+      }
+    },
+    "overview": {
+      "name": "Name",
+      "workspace": "Workspace",
+      "primaryModel": "Primary model",
+      "fallbacks": "Fallbacks",
+      "theme": "Theme",
+      "emoji": "Emoji",
+      "avatar": "Avatar",
+      "copied": "{{field}} copied"
+    },
+    "workspace": {
+      "selectFile": "Select a file to view / edit",
+      "readonly": "Read-only",
+      "dirty": "Unsaved",
+      "preview": "Preview",
+      "edit": "Edit",
+      "save": "Save"
+    },
+    "skills": {
+      "name": "Name",
+      "enabled": "Status",
+      "reasons": "Reasons",
+      "on": "Enabled",
+      "off": "Disabled"
+    },
+    "settings": {
+      "danger": "Danger zone",
+      "dangerHint": "Delete this agent or unlink local reference"
+    }
+  },
+  "chat": {
+    "title": "Chat",
+    "description": "Interact with knowledge bases and tools",
+    "new": "New Chat",
+    "search": "Search history...",
+    "placeholder": "Ask anything... (@ to mention agents)",
+    "placeholderRunning": "Replying… you can draft the next message.",
+    "action": {
+      "send": "Send",
+      "stop": "Stop"
+    },
+    "detailPanel": {
+      "toggle": "Toggle chat details panel",
+      "show": "Show details",
+      "hide": "Hide details"
+    },
+    "abort": {
+      "agentReplyLater": "Agent replied anyway; your message is restored.",
+      "confirmed": "Turn stopped."
+    },
+    "newMenu": {
+      "direct": "New direct chat",
+      "group": "New group chat"
+    },
+    "message": {
+      "copy": "Copy",
+      "copied": "Copied",
+      "delete": "Remove from view",
+      "deleted": "Message hidden"
+    },
+    "mention": {
+      "all": "Everyone",
+      "allHint": "Mention all participants"
+    },
+    "empty": {
+      "title": "How can I help you today?",
+      "description": "Ask questions, explore knowledge bases, or trigger local tools."
+    },
+    "sample": {
+      "title": "UI Layout Design",
+      "description": "Multi-agent collaboration",
+      "previous": "Previous Session"
+    },
+    "time": {
+      "justNow": "Just now",
+      "hoursAgo": "{{count}} hours ago"
+    },
+    "details": {
+      "title": "Chat Details",
+      "participants": "Participants",
+      "configuration": "Configuration",
+      "defaultModel": "Default Model",
+      "toolsAvailable": "Tools Available",
+      "enabledCount": "{{count}} Enabled"
+    },
+    "sessions": {
+      "empty": "No sessions",
+      "noMatch": "No matching sessions"
+    },
+    "dialog": {
+      "create": {
+        "title": "New Chat",
+        "description": "Pick a mode and participating agents",
+        "mode": "Mode",
+        "modeDirect": "Direct",
+        "modeGroup": "Group",
+        "agents": "Participants",
+        "emptyAgents": "No agents available. Create or sync one in the Agent module first",
+        "label": "Name (optional)",
+        "labelPlaceholder": "Name this session",
+        "advanced": "Advanced",
+        "budgetRounds": "Max rounds",
+        "budgetRoundsHint": "Default 200, auto-stops when exceeded",
+        "confirm": "Create"
+      },
+      "delete": {
+        "title": "Delete Chat",
+        "confirm": "Delete chat \"{{name}}\"? This action cannot be undone and all messages will be permanently deleted."
+      }
+    },
+    "toast": {
+      "create": {
+        "success": "Chat created",
+        "error": "Create failed: {{msg}}"
+      },
+      "loopEnded": {
+        "noTarget": "No one replied (agents need @ to continue)",
+        "budgetRounds": "Max rounds reached, stopped",
+        "stopPhrase": "Stop phrase hit, stopped",
+        "error": "Loop error, stopped"
+      }
+    },
+    "budget": {
+      "title": "Budget",
+      "rounds": "Rounds",
+      "tokens": "Tokens",
+      "reset": "Reset",
+      "resetDone": "Budget reset",
+      "resetFailed": "Reset failed: {{msg}}"
+    },
+    "usage": {
+      "context": "Context",
+      "stale": "stale"
+    },
+    "delivery": {
+      "queued": "queued",
+      "thinking": "thinking",
+      "tool": "using tool",
+      "toolNamed": "{{name}}",
+      "replying": "replying",
+      "done": "done",
+      "error": "error",
+      "aborted": "aborted"
+    },
+    "memberCard": {
+      "noModel": "no model",
+      "noContext": "no context yet",
+      "lastCompaction": "compacted {{when}}"
+    },
+    "members": {
+      "empty": "No members",
+      "count": "members",
+      "replyAuto": "Auto",
+      "replyMention": "Only @",
+      "replyModeHint": "Click to toggle reply mode",
+      "patchFailed": "Failed to update member: {{msg}}",
+      "add": "Add member",
+      "addTitle": "Add member",
+      "addConfirm": "Add",
+      "addFailed": "Add failed: {{msg}}",
+      "addedToast": "Added {{name}}",
+      "remove": "Remove",
+      "removeConfirm": "Remove {{name}} from this session?",
+      "removeFailed": "Remove failed: {{msg}}",
+      "removedToast": "Removed {{name}}",
+      "allAdded": "All available agents already in session"
+    },
+    "mode": {
+      "direct": "Direct",
+      "group": "Group"
+    },
+    "status": {
+      "running": "Running"
+    },
+    "hitl": {
+      "prompt": "{{agentId}} asks: {{question}}"
+    },
+    "select": "Select a session",
+    "jumpToBottom": "Jump to latest",
+    "retry": "Retry",
+    "retryNoUserMsg": "No user message to retry",
+    "aborted": "Stopped",
+    "reply": {
+      "action": "Reply",
+      "replyingTo": "Replying to {{name}}",
+      "cancel": "Cancel reply"
+    },
+    "error": {
+      "banner": "Error: {{msg}}",
+      "disconnected": "Disconnected, will auto-sync on reconnect",
+      "dismiss": "Dismiss"
+    }
+  },
+  "workflow": {
+    "title": "Workflow",
+    "description": "Visual pipeline and automation design",
+    "empty": "No workflows configured yet"
+  },
+  "connect": {
+    "title": "Connect",
+    "description": "Manage the connection to OpenClaw gateway",
+    "banner": {
+      "connected": "Connected to OpenClaw Gateway",
+      "disconnected": "Disconnected from OpenClaw Gateway",
+      "error": "Connection error"
+    },
+    "section": {
+      "status": "Connection Status",
+      "statusDescription": "Current gateway runtime and connection state",
+      "manual": "Manual Connect",
+      "manualDescription": "Specify the gateway URL and credentials directly"
+    },
+    "status": {
+      "idle": "Disconnected",
+      "detecting": "Scanning",
+      "connecting": "Connecting",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "auth-error": "Auth Failed",
+      "error": "Connection Error"
+    },
+    "mode": {
+      "scan": "Auto Scan",
+      "manual": "Manual"
+    },
+    "label": {
+      "url": "URL",
+      "mode": "Mode",
+      "auth": "Authentication",
+      "error": "Error"
+    },
+    "gateway": {
+      "title": "Gateway Connection",
+      "description": "Manage the WebSocket connection to OpenClaw Gateway"
+    },
+    "plugin": {
+      "title": "Local Plugin",
+      "description": "Monitor and manage the sync state between local OpenClaw gateway and the kaiwu plugin",
+      "statusInstalled": "Installed",
+      "statusMissing": "Not found",
+      "statusRunning": "Running",
+      "statusStopped": "Stopped",
+      "hostVersion": "Host version",
+      "gatewayPort": "Gateway port",
+      "bridgeStatus": "Plugin status",
+      "bridgeInstalled": "Synced",
+      "bridgeMissing": "Not synced",
+      "compat": "Compatibility",
+      "compatOk": "Compatible",
+      "compatFail": "Incompatible",
+      "unknown": "—",
+      "detectedBy": "Detected by",
+      "configDir": "Config dir",
+      "detect": "Re-detect",
+      "sync": "Sync plugin",
+      "uninstall": "Uninstall plugin",
+      "restart": "Restart gateway",
+      "events": "Bridge events",
+      "noEvents": "No events yet",
+      "syncOk": "Plugin synced",
+      "syncFail": "Sync failed: {{message}}",
+      "uninstallOk": "Plugin uninstalled",
+      "restartOk": "Gateway restarted",
+      "restartFail": "Restart failed: {{message}}"
+    },
+    "action": {
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "scan": "Scan Local"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Preferences, appearance, and language",
+    "appearanceTitle": "Appearance",
+    "appearanceDescription": "Theme, language and layout preferences",
+    "themeLabel": "Theme",
+    "langLabel": "Language",
+    "sidebarLabel": "Collapse sidebar",
+    "sidebarHint": "Collapse the left navigation by default (toggle anytime with Cmd/Ctrl+B)",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "languageZh": "简体中文",
+    "languageEn": "English",
+    "aboutTitle": "About",
+    "versionLabel": "Version",
+    "buildLabel": "Build",
+    "deviceId": "Device ID",
+    "envLabel": "Environment",
+    "openclaw": {
+      "title": "OpenClaw Bridge",
+      "description": "Monitor and manage the sync state between local OpenClaw gateway and the kaiwu plugin"
+    },
+    "debugTitle": "Debug",
+    "debugDescription": "Developer & troubleshooting tools (destructive operations, use with caution)",
+    "debug": {
+      "clearAllTitle": "Clear chat database",
+      "clearAllHint": "Delete all sessions, members, messages, turn runs, and budget states. openclaw-side data is unaffected. Cannot be undone.",
+      "clearAllAction": "Clear all",
+      "clearing": "Clearing...",
+      "confirmTitle": "Confirm clearing all chat data",
+      "confirmDesc": "All local sessions, messages, and turn records will be permanently deleted. This cannot be undone. Continue?",
+      "confirmOk": "Confirm clear",
+      "clearSuccess": "Cleared {{total}} rows",
+      "clearFailed": "Clear failed: {{msg}}"
+    }
+  },
+  "layout": {
+    "omnibar": {
+      "placeholder": "Press ⌘ K to wake Kaiwu"
+    },
+    "status": {
+      "connected": "Gateway Connected",
+      "offline": "Gateway Offline",
+      "sessions": "Sessions",
+      "knowledgeBases": "Knowledge Bases",
+      "agents": "Agents",
+      "systemReady": "System Ready"
+    }
+  }
+}

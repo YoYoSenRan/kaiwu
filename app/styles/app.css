@@ -1,0 +1,68 @@
+/* ===== 自定义 class：布局壳 + titlebar ===== */
+/* CSS 变量定义在 tokens.css，元素级 reset 在 base.css */
+
+/* 原生 <button> 键盘焦点 ring（WCAG 2.4.7 可见焦点）。
+   shadcn Button 自带 focus 样式；本 class 给不走 shadcn 的原生按钮用。
+   用 var(--ring) 保持 token 单一来源。 */
+.btn-focus:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 60%, transparent);
+}
+
+.app-shell {
+  position: absolute;
+  top: var(--titlebar-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  display: flex;
+}
+
+/* ===== 自定义标题栏 ===== */
+
+.titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--titlebar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 9999;
+  user-select: none;
+}
+
+.titlebar-macos-spacer {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.titlebar-controls {
+  display: flex;
+  margin-left: auto;
+  height: 100%;
+}
+
+.titlebar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.titlebar-btn:hover {
+  background-color: var(--accent);
+}
+
+.titlebar-btn-close:hover {
+  background-color: var(--titlebar-close-hover);
+  color: white;
+}
